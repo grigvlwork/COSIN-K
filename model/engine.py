@@ -1,6 +1,8 @@
 # model/engine.py
 from typing import List, Callable, Optional
 from dataclasses import dataclass, field
+import random
+from model import Card, Suit, Rank, Pile, GameState, RuleSet, HistoryManager
 
 
 @dataclass
@@ -24,22 +26,56 @@ class GameState:
 
 
 class SolitaireEngine:
-    def __init__(self, rules, player_id: str):
+    def __init__(self, rules: RuleSet, player_id: str):
         self.rules = rules
         self.player_id = player_id
-        self._state: Optional[GameState] = None
-        self._history: List[GameState] = []
+        self.state: Optional[GameState] = None
+        self.history = HistoryManager(limit=5000)
 
     @property
     def state(self) -> GameState:
         return self._state
 
-    def new_game(self, seed=None):
-        # ... логика раздачи
-        self._state = self._deal()
-        self._history.clear()
-        self._save_state()
-        self._state.notify("game_started", {"seed": seed})
+    def new_game(self, seed: Optional[int] = None):
+        """Начать новую игру."""
+        # 1. Перемешиваем
+        deck = self._create_shuffled_deck(seed)
+
+        # 2. Раздаём через правила
+        dealt_piles = self.rules.deal(deck)
+
+        # 3. Остаток в колоду
+        dealt_count = sum(len(p) for p in dealt_piles.values())
+        stock_cards = deck[dealt_count:]
+
+        # 4. Создаём состояние
+        self.state = GameState(
+            piles=dealt_piles,
+            stock=Pile("stock", stock_cards),
+            waste=Pile("waste"),
+            score=0,
+            moves_count=0
+        )
+
+        # 5. История для undo
+        self.history.clear()
+        self.history.push(self.state)  # сохраняем начальное состояние
+
+        # 6. Уведомляем
+        self.state.notify("game_started", {"seed": seed})
+
+    def _create_shuffled_deck(self, seed: Optional[int]) -> List[Card]:
+        """Создать перемешанную колоду."""
+        rng = random.Random(seed)  # Фиксированное зерно для воспроизводимости
+
+        cards = [
+            Card(suit, rank, face_up=False)
+            for suit in Suit
+            for rank in Rank
+        ]
+
+        rng.shuffle(cards)
+        return cards
 
     def move(self, from_pile: str, to_pile: str, count: int = 1) -> bool:
         # ... валидация и выполнение

@@ -1,16 +1,15 @@
 """
 Solitaire Model — чистая логика игры (данные и правила).
-Независимая от способа отображения.
 """
 
 from .card import Card, Suit, Rank
 from .pile import Pile
 from .state import GameState, Move
-from .history import HistoryManager
+from .history import HistoryManager, HistoryEntry  # ← добавлено
 from .engine import SolitaireEngine
 from .rules.base import RuleSet
 from .rules.klondike import KlondikeRules
-from .rules.factory import GameFactory
+from .rules.factory import GameFactory, GameVariant
 
 __all__ = [
     # Карты и стопки
@@ -22,7 +21,8 @@ __all__ = [
     # Состояние и история
     "GameState",
     "Move",
-    "HistoryManager",
+    "HistoryManager",   # ← добавлено
+    "HistoryEntry",     # ← добавлено
 
     # Движок
     "SolitaireEngine",
@@ -31,6 +31,7 @@ __all__ = [
     "RuleSet",
     "KlondikeRules",
     "GameFactory",
+    "GameVariant",
 ]
 
 __version__ = "0.1.0"
