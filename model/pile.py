@@ -106,10 +106,17 @@ class Pile(List[Card]):
         return False
 
     def flip_all(self, face_up: bool = True) -> None:
-        """Перевернуть все карты."""
-        for i, card in enumerate(self):
-            if card.face_up != face_up:
-                self[i] = card.flip()
+        """Оптимизированное массовое переворачивание"""
+        if face_up:
+            # Все карты лицом вверх
+            for i in range(len(self)):
+                if not self[i].face_up:
+                    self[i] = self[i].make_face_up()
+        else:
+            # Все карты лицом вниз
+            for i in range(len(self)):
+                if self[i].face_up:
+                    self[i] = self[i].make_face_down()
 
     # === Итераторы ===
 
