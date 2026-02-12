@@ -26,13 +26,17 @@ class GameMenu:
         """Приветственный экран."""
         self.view.clear()
         print(r"""
-   _____      _        _ _     _            
-  / ____|    | |      | (_)   | |           
- | (___   ___| |_ __ _| |_ ___| |_ ___ _ __ 
-  \___ \ / _ \ __/ _` | | / __| __/ _ \ '__|
-  ____) |  __/ || (_| | | \__ \ ||  __/ |   
- |_____/ \___|\__\__,_|_|_|___/\__\___|_|   
-
+      ___           ___           ___                       ___           ___     
+     /\  \         /\  \         /\  \          ___        /\__\         /\__\    
+    /::\  \       /::\  \       /::\  \        /\  \      /::|  |       /:/  /    
+   /:/\:\  \     /:/\:\  \     /:/\ \  \       \:\  \    /:|:|  |      /:/__/     
+  /:/  \:\  \   /:/  \:\  \   _\:\~\ \  \      /::\__\  /:/|:|  |__   /::\__\____ 
+ /:/__/ \:\__\ /:/__/ \:\__\ /\ \:\ \ \__\  __/:/\/__/ /:/ |:| /\__\ /:/\:::::\__\
+ \:\  \  \/__/ \:\  \ /:/  / \:\ \:\ \/__/ /\/:/  /    \/__|:|/:/  / \/_|:|~~|~   
+  \:\  \        \:\  /:/  /   \:\ \:\__\   \::/__/         |:/:/  /     |:|  |    
+   \:\  \        \:\/:/  /     \:\/:/  /    \:\__\         |::/  /      |:|  |    
+    \:\__\        \::/  /       \::/  /      \/__/         /:/  /       |:|  |    
+     \/__/         \/__/         \/__/                     \/__/         \|__|    
         """)
         print("=" * 50)
         print("Welcome to Console Solitaire!")
@@ -41,7 +45,11 @@ class GameMenu:
     def select_player(self) -> Player:
         """Выбор или создание игрока."""
         # Показываем существующих
-        existing = list(self.players.players.values())
+        existing = sorted(
+            self.players.players.values(),
+            key=lambda p: (p.games_played, p.win_rate),
+            reverse=True
+        )
 
         if existing:
             print("Existing players:")
@@ -159,23 +167,27 @@ class GameMenu:
 
     def run(self) -> Optional[MenuChoice]:
         """Полный цикл меню."""
-        self.show_welcome()
+        try:
+            self.show_welcome()
 
-        # Выбор игрока
-        player = self.select_player()
+            # Выбор игрока
+            player = self.select_player()
 
-        # Показать статистику
-        self.show_player_stats(player)
+            # Показать статистику
+            self.show_player_stats(player)
 
-        # Выбор игры
-        game_type = self.select_game(player)
+            # Выбор игры
+            game_type = self.select_game(player)
 
-        # Настройки
-        seed = self.select_seed()
+            # Настройки
+            seed = self.select_seed()
 
-        # Подтверждение
-        if not self.confirm_start():
-            print("Cancelled.")
+            # Подтверждение
+            if not self.confirm_start():
+                print("Cancelled.")
+                return None
+        except (EOFError, KeyboardInterrupt):
+            self.view.show_message("Game cancelled", "warning")
             return None
 
         return MenuChoice(player, game_type, seed)
@@ -183,10 +195,14 @@ class GameMenu:
     # === Вспомогательные методы ===
 
     def _ask_input(self, prompt: str) -> str:
-        """Запросить ввод."""
-        return input(f"\n{prompt} ").strip()
+        """Запросить ввод с защитой от Ctrl+C."""
+        try:
+            return self.view.get_input(prompt)  # делегируем View
+        except (EOFError, KeyboardInterrupt):
+            self.view.show_message("Game cancelled", "warning")
+            raise  # пробрасываем для обработки в run()
 
     def _ask_confirm(self, question: str) -> bool:
-        """Запросить подтверждение."""
-        answer = input(f"\n{question} [y/N]: ").strip().lower()
-        return answer in ('y', 'yes', 'да', 'д', '1', 'true')
+        """Запросить подтверждение через View."""
+        return self.view.ask_confirm(question)
+

@@ -74,30 +74,37 @@ class ConsoleView(GameView):
 
         return f"{self._color(color)}{rank_str}{suit_symbol}{self._reset()}"
 
-    def display_state(self, state: "GameState") -> None:
+    def display_state(self, state: "GameState", **kwargs) -> None:
         """Отобразить текущее состояние игры."""
         self._last_state = state
         self.clear()
 
         # Заголовок
+        print(f"{self._color('bold')}=== SOLITAIRE ==={self._reset()}")
         print(f"{self._color('bold')}Score: {state.score} | Moves: {state.moves_count}{self._reset()}")
         print("=" * 50)
 
         # Stock и Waste
-        stock_str = f"[{self.SYMBOLS['BACK']}]" if state.stock else f"[{self.SYMBOLS['EMPTY']}]"
+        if state.stock:
+            count = len(state.stock)
+            stock_str = f"[{self.SYMBOLS['BACK']}×{count}]" if count > 1 else f"[{self.SYMBOLS['BACK']}]"
+        else:
+            stock_str = f"[ ]"
+
         waste_card = state.waste.top()
-        waste_str = self.card_to_str(waste_card) if waste_card else f"[{self.SYMBOLS['EMPTY']}]"
+        waste_str = self.card_to_str(waste_card) if waste_card else f"[ ]"
 
         print(f"Stock: {stock_str}  Waste: {waste_str}")
         print()
 
-        # Foundations (4 базовые стопки)
+        # Foundations
         print("Foundations:")
-        for suit_name in ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES']:
-            pile = state.piles.get(f"foundation_{suit_name}")
+        from model import Suit
+        for suit in Suit:
+            pile = state.piles.get(f"foundation_{suit.name}")
             top_card = pile.top() if pile else None
-            pile_str = self.card_to_str(top_card) if top_card else "[  ]"
-            suit_symbol = self.SYMBOLS[suit_name]
+            pile_str = self.card_to_str(top_card) if top_card else "[ ]"
+            suit_symbol = self.SYMBOLS[suit.name]
             print(f"  {suit_symbol}: {pile_str}", end="  ")
         print("\n")
 
@@ -128,8 +135,9 @@ class ConsoleView(GameView):
             print(line)
 
         # Выделение выбранной стопки
-        if state.selected_pile:
-            print(f"\n{self._color('yellow')}Selected: {state.selected_pile}{self._reset()}")
+        selected_pile = kwargs.get("selected_pile")
+        if selected_pile:
+            print(f"\n{self._color('yellow')}Selected: {selected_pile}{self._reset()}")
 
         # Подсказка команд
         print(f"\n{self._color('blue')}Commands:{self._reset()}")
