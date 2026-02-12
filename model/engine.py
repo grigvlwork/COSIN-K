@@ -125,10 +125,6 @@ class SolitaireEngine:
         return True
 
     def move(self, from_pile: str, to_pile: str, count: int = 1) -> bool:
-        """
-        Переместить карты из одной стопки в другую.
-        Возвращает True если ход успешен.
-        """
         if not self._state:
             return False
         print(f"\n🔍 ENGINE MOVE DEBUG:")
@@ -136,34 +132,50 @@ class SolitaireEngine:
         print(f"  to: {to_pile}")
         print(f"  count: {count}")
 
+        # 1. Получаем стопки для проверки
+        source = self._state.get_pile(from_pile)
+        if not source:
+            print(f"  ❌ Source pile not found")
+            return False
 
-        # 1. Проверяем валидность через правила
-        # Создаём move без cards
+        # 2. Проверяем достаточно ли карт
+        if len(source) < count:
+            print(f"  ❌ Not enough cards")
+            return False
+
+        # 3. Берем КАРТЫ ДЛЯ ПРОВЕРКИ (не удаляя!)
+        preview_cards = source.peek(count)
+        print(f"  🃏 Preview cards: {[str(c) for c in preview_cards]}")
+
+        # 4. Создаём Move с картами для проверки
         move = Move(
             from_pile=from_pile,
             to_pile=to_pile,
-            cards=[],  # будут заполнены при выполнении
-            from_index=-1
+            cards=preview_cards,
+            from_index=len(source) - count
         )
 
-        if not self.rules.can_move(self._state, move):  # ← только state и move
+        # 5. Проверяем валидность через правила
+        if not self.rules.can_move(self._state, move):
+            print(f"  ❌ Invalid move according to rules")
             return False
 
-        # 2. Выполняем ход
+        # 6. Выполняем ход
         try:
             new_state, executed_move = self._execute_move(from_pile, to_pile, count)
-        except ValueError:
+        except ValueError as e:
+            print(f"  ❌ Execute failed: {e}")
             return False
 
-        # 3. Сохраняем новое состояние
+        # 7. Сохраняем новое состояние (ВЕРНУТЬ ЭТО!)
         self._state = new_state
         self.history.push(self._state.copy(), executed_move)
 
-        # 4. Проверяем победу
+        # 8. Проверяем победу
         if self.rules.check_win(self._state):
             self._notify("game_won", {"score": self._state.score})
 
-        # 5. Уведомляем
+        # 9. Уведомляем
         self._notify("move_made", {
             "from": from_pile,
             "to": to_pile,
@@ -188,12 +200,25 @@ class SolitaireEngine:
         if not source or not target:
             raise ValueError(f"Invalid piles: {from_pile} or {to_pile}")
 
+        # Запоминаем состояние ДО хода для определения перевернутых карт
+        previous_state = self._state
+
         # Берём карты
         from_index = len(source) - count  # индекс первой карты
         cards = source.take(count)
 
         # Добавляем в целевую стопку
         target.add(cards)
+
+        # ПОЛУЧАЕМ ПЕРЕВЕРНУТЫЕ КАРТЫ (ПОСЛЕ ИЗМЕНЕНИЙ)
+        flipped_cards = self.rules.get_flipped_cards(previous_state,
+                                                     Move(from_pile, to_pile, cards, from_index))
+
+        # Применяем переворачивание
+        for pile_name, card_index in flipped_cards:
+            pile = new_state.get_pile(pile_name)
+            if pile and card_index < len(pile):
+                pile[card_index] = pile[card_index].make_face_up()
 
         # Обновляем счётчики
         move_for_score = Move(
@@ -212,7 +237,7 @@ class SolitaireEngine:
             to_pile=to_pile,
             cards=cards,
             from_index=from_index,
-            flipped_cards=[],  # правила могут добавить перевёрнутые карты
+            flipped_cards=flipped_cards,  # ← ТЕПЕРЬ НЕ ПУСТО!
             score_delta=score_delta
         )
 

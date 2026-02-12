@@ -124,7 +124,6 @@ class RuleSet(ABC):
 
         if rule is None:
             return False
-
         try:
             return rule(target_pile, cards, state)
         except TypeError:

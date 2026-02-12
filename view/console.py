@@ -120,28 +120,26 @@ class ConsoleView(GameView):
             for i in range(7)
         ]
         max_height = max((len(p) for p in tableau_piles), default=0)
+        # ФИКСИРОВАННАЯ ШИРИНА КОЛОНКИ = 5 СИМВОЛОВ
+        COL_WIDTH = 5
 
-        # Заголовки столбцов
-        headers = " ".join(f"{i:>4}" for i in range(7))
+        # Заголовки
+        headers = " ".join(f"{i:>{COL_WIDTH - 1}}" for i in range(7))  # 4 символа + пробел
         print(f"  {headers}")
-        print("    " + "-" * 35)
 
-        # Строки карт
+        # Разделитель
+        print("    " + "-" * (COL_WIDTH * 7))
+
+        # Строки
         for row in range(max_height):
             line = f"{row:>2} |"
             for pile in tableau_piles:
                 if row < len(pile):
                     card_str = self.card_to_str(pile[row])
-                    line += f" {card_str:>4}"
+                    line += f"{card_str:>{COL_WIDTH}}"  # 5 символов
                 else:
-                    line += f" {'':>4}"
+                    line += " " * COL_WIDTH  # 5 пробелов
             print(line)
-
-        # Выделение выбранной стопки
-        # selected_pile = kwargs.get("selected_pile")
-        if selected_pile:
-            print(f"\n{self._color('yellow')}Selected: {selected_pile} ({selected_count} card(s)){self._reset()}")
-
         # Подсказка команд
         print(f"\n{self._color('blue')}Commands:{self._reset()}")
         print("  (s)elect <pile> [count]  — выбрать стопку")
