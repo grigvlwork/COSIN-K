@@ -2,12 +2,12 @@
 KlondikeRules — классическая косынка (Solitaire/Patience).
 """
 
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING, List, Dict, Optional
 
 if TYPE_CHECKING:
     from model import Card, Pile, GameState, Move
 
-from .base import RuleSet
+from .base import RuleSet, PileType
 from model import Pile, Card, Rank, Suit
 
 
@@ -26,8 +26,8 @@ class KlondikeRules(RuleSet):
 
         # Настраиваем правила построения
         self.build_rules = {
-            "tableau": self._can_build_tableau,
-            "foundation": self._can_build_foundation,
+            PileType.TABLEAU: self._can_build_tableau,
+            PileType.FOUNDATION: self._can_build_foundation,
         }
 
         # Валидаторы ходов
@@ -38,15 +38,17 @@ class KlondikeRules(RuleSet):
         # Условие победы — все базы полны
         self._win_condition = self._check_all_foundations_full
 
-    def _get_pile_type(self, pile_name: str) -> str:
+    def get_pile_type(self, pile_name: str) -> PileType:
         """Определить тип стопки."""
         if pile_name.startswith("tableau_"):
-            return "tableau"
+            return PileType.TABLEAU
         if pile_name.startswith("foundation_"):
-            return "foundation"
-        if pile_name in ("waste", "stock"):
-            return pile_name
-        return "unknown"
+            return PileType.FOUNDATION
+        if pile_name == "stock":
+            return PileType.STOCK
+        if pile_name == "waste":
+            return PileType.WASTE
+        return PileType.RESERVE  # или raise ValueError
 
     # === Правила построения ===
 
@@ -71,11 +73,19 @@ class KlondikeRules(RuleSet):
                 top.rank.value == first.rank.value + 1
         )
 
+    def get_available_moves(self, state: "GameState") -> List["Move"]:
+        """Все возможные ходы в текущем состоянии."""
+        # TODO: реализовать для подсказок и AI
+        return []
+
     def _can_build_foundation(self, pile: "Pile", cards: List["Card"]) -> bool:
         """
         База: одна масть, возрастание от туза.
         Только по 1 карте за раз.
         """
+        if len(pile) >= 13:
+            return False
+
         if len(cards) != 1:
             return False
 
@@ -94,6 +104,33 @@ class KlondikeRules(RuleSet):
         )
 
     # === Валидация ходов ===
+
+    def can_take(self, state: "GameState", pile_name: str, count: int = 1) -> bool:
+        """
+        Для Клондайка:
+        - Из tableau: только открытые карты с конца
+        - Из waste: только 1 карта
+        - Из stock: нельзя брать (перебор через recycle)
+        """
+        pile = state.get_pile(pile_name)
+        if not pile:
+            return False
+
+        pile_type = self.get_pile_type(pile_name)
+
+        if pile_type == PileType.TABLEAU:
+            return pile.face_up_count() >= count
+
+        if pile_type == PileType.WASTE:
+            return not pile.is_empty() and count == 1
+
+        if pile_type == PileType.STOCK:
+            return False  # stock не даёт брать карты, только перебор
+
+        if pile_type == PileType.FOUNDATION:
+            return False  # нельзя брать из foundation
+
+        return False
 
     def _validate_tableau_sequence(self, state: "GameState", move: "Move") -> bool:
         """
@@ -168,36 +205,24 @@ class KlondikeRules(RuleSet):
 
     # === Счёт ===
 
-    def score_move(self, state: "GameState", move: "Move") -> int:
-        """
-        Стандартная система очков косынки:
-        - waste → foundation: +10
-        - tableau → foundation: +10
-        - foundation → tableau: -15
-        - открыть карту: +5
-        """
+    def score_move(self, state: "GameState", move: "Move",
+                   previous_state: Optional["GameState"] = None) -> int:
+        """Подсчёт очков с учётом открытых карт."""
         score = 0
-
-        # Открыли карту в источнике
-        source = state.get_pile(move.from_pile)
-        if source and not source.is_empty():
-            # Проверяем было ли открытие (это сложно без истории, упрощаем)
-            pass
-
+        if previous_state:
+            flipped = self.get_flipped_cards(previous_state, move)
+            score += 5 * len(flipped)
         # На foundation
-        if move.to_pile.startswith("foundation_"):
+        if self.get_pile_type(move.to_pile) == PileType.FOUNDATION:
             score += 10
 
-            # С waste — бонус
-            if move.from_pile == "waste":
-                score += 0  # уже +10
-
             # С foundation — штраф
-            if move.from_pile.startswith("foundation_"):
-                score = -15
+            if self.get_pile_type(move.from_pile) == PileType.FOUNDATION:
+                score = -15  # замена, не добавление!
 
         # С foundation на tableau
-        elif move.from_pile.startswith("foundation_") and move.to_pile.startswith("tableau_"):
+        elif (self.get_pile_type(move.from_pile) == PileType.FOUNDATION and
+              self.get_pile_type(move.to_pile) == PileType.TABLEAU):
             score = -15
 
         return score
@@ -205,6 +230,48 @@ class KlondikeRules(RuleSet):
     def score_recycle(self, state: "GameState") -> int:
         """Штраф за перебор колоды."""
         return -20 if self.draw_three else -10
+
+    def get_draw_count(self) -> int:
+        """Сколько карт вытягивать из колоды за раз."""
+        return 3 if self.draw_three else 1
+
+    def get_flipped_cards(self, previous_state: "GameState", move: "Move") -> List[Tuple[str, int]]:
+        """Определить карты для переворота на основе состояния ДО хода."""
+        flipped = []
+
+        source_type = self.get_pile_type(move.from_pile)
+        if source_type == PileType.TABLEAU:
+            source = previous_state.get_pile(move.from_pile)
+            # Берём стопку ДО хода
+            if source and len(source) > len(move.cards):
+                # Индекс карты, которая станет верхней после взятия
+                remaining = len(source) - len(move.cards)
+                if remaining > 0:
+                    top_card = source[remaining - 1]
+                    if not top_card.face_up:
+                        flipped.append((move.from_pile, remaining - 1))
+
+        return flipped
+
+    def recycle_stock(self, state: "GameState") -> Optional["Move"]:
+        """
+        Создать Move для перебора колоды, НЕ изменяя состояние.
+        """
+        if state.waste.is_empty():
+            return None
+
+        cards = state.waste.cards[:]  # копия списка карт
+        cards = [card.make_face_down() for card in cards]
+
+        from ..move import Move
+        return Move(
+            from_pile="waste",
+            to_pile="stock",
+            cards=cards,
+            from_index=0,
+            flipped_cards=[("waste", i) for i in range(len(cards))],
+            score_delta=self.score_recycle(state)
+        )
 
     # === Строковое представление ===
 

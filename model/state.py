@@ -1,37 +1,19 @@
 """
-GameState — снимок состояния игры.
-Move — описание хода для истории и отмены.
+GameState — чистое состояние игры.
+Только данные, никакой логики перемещений!
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Dict, List, Callable, Optional, Any
+from typing import Dict, Optional
 from .pile import Pile
-
-
-@dataclass
-class Move:
-    """
-    Описание хода для истории и возможной отмены.
-    Хранит достаточно информации чтобы восстановить состояние.
-    """
-    from_pile: str
-    to_pile: str
-    cards: List  # Карты которые переместились
-    flipped: List[tuple] = field(default_factory=list)  # (pile_name, card_index) перевернутые карты
-    score_delta: int = 0
-    timestamp: datetime = field(default_factory=datetime.now)
-
-    def __repr__(self) -> str:
-        cards_str = " ".join(str(c) for c in self.cards)
-        return f"Move({self.from_pile} -> {self.to_pile}, [{cards_str}])"
 
 
 @dataclass
 class GameState:
     """
     Полное состояние игры в один момент времени.
-    Можно копировать для сохранения истории.
+    IMMUTABLE по соглашению — никогда не изменяйте существующий GameState,
+    всегда создавайте новый через copy() и модификаторы.
     """
 
     # Стопки игры
@@ -44,30 +26,7 @@ class GameState:
     moves_count: int = 0
     time_elapsed: int = 0  # секунды
 
-    # Состояние UI (не влияет на логику, но удобно хранить здесь)
-    selected_pile: Optional[str] = None
-
-    # Приватное поле для событий (не копируется)
-    _listeners: List[Callable[[str, Dict[str, Any]], None]] = field(
-        default_factory=list,
-        repr=False,
-        compare=False
-    )
-
-    def add_listener(self, callback: Callable[[str, Dict[str, Any]], None]) -> None:
-        """Подписаться на события состояния."""
-        self._listeners.append(callback)
-
-    def remove_listener(self, callback: Callable[[str, Dict[str, Any]], None]) -> None:
-        """Отписаться от событий."""
-        if callback in self._listeners:
-            self._listeners.remove(callback)
-
-    def notify(self, event: str, data: Optional[Dict[str, Any]] = None) -> None:
-        """Уведомить всех подписчиков о событии."""
-        data = data or {}
-        for listener in self._listeners:
-            listener(event, data)
+    # === Доступ к стопкам ===
 
     def get_pile(self, name: str) -> Optional[Pile]:
         """Получить стопку по имени."""
@@ -93,74 +52,47 @@ class GameState:
         result.update(self.piles)
         return result
 
+    # === Копирование (единственный способ "изменения") ===
+
     def copy(self) -> "GameState":
         """
         Создать глубокую копию состояния.
-        Используется для сохранения истории.
+        Используется для сохранения истории и модификации.
         """
-        new_state = GameState(
+        return GameState(
+            piles={name: pile.copy() for name, pile in self.piles.items()},
+            stock=self.stock.copy(),
+            waste=self.waste.copy(),
             score=self.score,
             moves_count=self.moves_count,
-            time_elapsed=self.time_elapsed,
-            selected_pile=self.selected_pile,
+            time_elapsed=self.time_elapsed
         )
 
-        # Копируем все стопки
-        new_state.stock = self.stock.copy()
-        new_state.waste = self.waste.copy()
-        new_state.piles = {name: pile.copy() for name, pile in self.piles.items()}
+    # === Вспомогательные методы для Engine ===
 
-        # Слушатели не копируются — новое состояние "чистое"
-
+    def with_score(self, delta: int) -> "GameState":
+        """Создать новое состояние с изменённым счётом."""
+        new_state = self.copy()
+        new_state.score += delta
         return new_state
 
-    def apply_move(self, move: Move) -> None:
-        """
-        Применить ход к состояниие.
-        Не проверяет валидность — только исполняет.
-        """
-        source = self.get_pile(move.from_pile)
-        target = self.get_pile(move.to_pile)
+    def with_move_count(self, delta: int = 1) -> "GameState":
+        """Создать новое состояние с изменённым счётчиком ходов."""
+        new_state = self.copy()
+        new_state.moves_count += delta
+        return new_state
 
-        if source is None or target is None:
-            raise ValueError(f"Invalid piles: {move.from_pile} -> {move.to_pile}")
+    def with_pile_updated(self, name: str, new_pile: Pile) -> "GameState":
+        """Создать новое состояние с обновлённой стопкой."""
+        new_state = self.copy()
+        new_state.set_pile(name, new_pile)
+        return new_state
 
-        # Перемещаем карты
-        cards = source.take(len(move.cards))
-        target.add(cards)
-
-        # Обновляем счётчики
-        self.score += move.score_delta
-        self.moves_count += 1
-
-    def revert_move(self, move: Move) -> None:
-        """
-        Отменить ход (обратное действие).
-        """
-        source = self.get_pile(move.from_pile)
-        target = self.get_pile(move.to_pile)
-
-        if source is None or target is None:
-            raise ValueError(f"Invalid piles: {move.from_pile} -> {move.to_pile}")
-
-        # Возвращаем карты обратно
-        cards = target.take(len(move.cards))
-        source.add(cards)
-
-        # Переворачиваем карты обратно если нужно
-        for pile_name, card_index in move.flipped:
-            pile = self.get_pile(pile_name)
-            if pile and card_index < len(pile):
-                pile[card_index] = pile[card_index].flip()
-
-        # Обновляем счётчики
-        self.score -= move.score_delta
-        self.moves_count -= 1
+    # === Представление ===
 
     def __repr__(self) -> str:
-        pile_count = len(self.piles)
         return (
-            f"GameState(piles={pile_count}, "
+            f"GameState(piles={len(self.piles)}, "
             f"stock={len(self.stock)}, "
             f"waste={len(self.waste)}, "
             f"score={self.score}, "
