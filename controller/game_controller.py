@@ -87,6 +87,34 @@ class GameController:
         self.update_view()
 
     # === Публичные методы для View ===
+    def _parse_pile_name(self, name: str) -> str:
+        """0 → tableau_0, h → foundation_HEARTS, w → waste, t3 → tableau_3"""
+        name = name.lower().strip()
+
+        # Цифры → tableau
+        if name.isdigit():
+            return f"tableau_{name}"
+
+        # t0, t1 → tableau
+        if name.startswith('t') and name[1:].isdigit():
+            return f"tableau_{name[1:]}"
+
+        # Масти → foundation
+        suit_map = {
+            'h': 'HEARTS', 'd': 'DIAMONDS',
+            'c': 'CLUBS', 's': 'SPADES'
+        }
+        if name in suit_map:
+            return f"foundation_{suit_map[name]}"
+
+        # Специальные стопки
+        if name in ('w', 'waste'):
+            return 'waste'
+        if name in ('st', 'stock'):
+            return 'stock'
+
+        # Полное имя — НЕ ИЗМЕНЯЕМ!
+        return name  # ← уже полное имя, не трогаем
 
     def update_view(self) -> None:
         """Попросить View отобразить текущее состояние."""
@@ -106,6 +134,14 @@ class GameController:
         parts = command.split()
         cmd = parts[0].lower()  # нормализуем регистр
         args = parts[1:]
+
+        # 🔥 НОВОЕ: Супер-короткие команды типа "0h", "5d", "wh"
+        if len(cmd) == 2 and cmd[0].isdigit() and cmd[1] in 'hdcs':
+            # Передаём сырые "0" и "h" — _cmd_move сам преобразует
+            return self._cmd_move([cmd[0], cmd[1], "1"])
+
+        if len(cmd) == 2 and cmd[0] in 'wst' and cmd[1] in 'hdcs':
+            return self._cmd_move([cmd[0], cmd[1], "1"])
 
         # Нормализация алиасов
         cmd_map = {
@@ -142,7 +178,8 @@ class GameController:
             self.view.show_message("Usage: select <pile_name> [count]", "error")
             return
 
-        pile_name = args[0]
+        # 🔥 ПРЕОБРАЗУЕМ КОРОТКОЕ ИМЯ
+        pile_name = self._parse_pile_name(args[0])
 
         try:
             count = int(args[1]) if len(args) > 1 else 1
@@ -193,9 +230,14 @@ class GameController:
         if len(args) < 2:
             self.view.show_message("Usage: move <from_pile> <to_pile> [count]", "error")
             return
-
-        from_pile, to_pile = args[0], args[1]
-
+        # 🔍 ОТЛАДКА
+        # print(f"DEBUG: raw args = {args}")
+        #
+        # # 🔥 ПРЕОБРАЗУЕМ КОРОТКИЕ ИМЕНА В ПОЛНЫЕ
+        from_pile = self._parse_pile_name(args[0])
+        to_pile = self._parse_pile_name(args[1])
+        # 🔍 ОТЛАДКА
+        print(f"DEBUG: from={from_pile}, to={to_pile}")
         try:
             count = int(args[2]) if len(args) > 2 else 1
         except ValueError:

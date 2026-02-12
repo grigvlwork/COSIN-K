@@ -1,37 +1,33 @@
 """
-Solitaire Model — чистая логика игры (данные и правила).
+Model — игровая модель пасьянса.
 """
 
 from .card import Card, Suit, Rank
 from .pile import Pile
-from .state import GameState, Move
-from .history import HistoryManager, HistoryEntry  # ← добавлено
+from .state import GameState
+from .move import Move
+from .history import HistoryManager
 from .engine import SolitaireEngine
-from .rules.base import RuleSet
-from .rules.klondike import KlondikeRules
-from .rules.factory import GameFactory, GameVariant
+from .player import Player, GameStats, PlayerManager
+
+# Импортируем правила
+from .rules import RuleSet, KlondikeRules, GameFactory, GameVariant
 
 __all__ = [
-    # Карты и стопки
-    "Card",
-    "Suit",
-    "Rank",
+    # Карты
+    "Card", "Suit", "Rank",
+    # Стопки
     "Pile",
-
-    # Состояние и история
-    "GameState",
-    "Move",
-    "HistoryManager",   # ← добавлено
-    "HistoryEntry",     # ← добавлено
-
+    # Состояние
+    "GameState", "Move",
+    # История
+    "HistoryManager",
     # Движок
     "SolitaireEngine",
-
+    # Игроки
+    "Player", "GameStats", "PlayerManager",
     # Правила
-    "RuleSet",
-    "KlondikeRules",
-    "GameFactory",
-    "GameVariant",
+    "RuleSet", "KlondikeRules", "GameFactory", "GameVariant",
 ]
 
 __version__ = "0.1.0"

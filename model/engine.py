@@ -131,6 +131,11 @@ class SolitaireEngine:
         """
         if not self._state:
             return False
+        print(f"\n🔍 ENGINE MOVE DEBUG:")
+        print(f"  from: {from_pile}")
+        print(f"  to: {to_pile}")
+        print(f"  count: {count}")
+
 
         # 1. Проверяем валидность через правила
         # Создаём move без cards

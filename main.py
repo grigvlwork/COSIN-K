@@ -100,6 +100,7 @@ def main():
     args = parse_args()
 
     # Инициализация
+
     players = PlayerManager("players.json")
     view = ConsoleView()
 

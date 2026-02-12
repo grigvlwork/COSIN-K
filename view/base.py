@@ -32,10 +32,17 @@ class GameView(ABC):
     # === Отображение состояния ===
 
     @abstractmethod
-    def display_state(self, state: "GameState") -> None:
+    def display_state(self,
+                      state: "GameState",
+                      selected_pile: Optional[str] = None,
+                      selected_count: int = 1) -> None:
         """
         Отобразить текущее состояние игры.
-        Вызывается при каждом обновлении экрана.
+
+        Args:
+            state: Состояние игры
+            selected_pile: Имя выбранной стопки (для подсветки)
+            selected_count: Количество выбранных карт
         """
         pass
 
@@ -47,11 +54,8 @@ class GameView(ABC):
     # === Взаимодействие с пользователем ===
 
     @abstractmethod
-    def get_input(self) -> str:
-        """
-        Получить команду от пользователя.
-        Блокирующий вызов до ввода.
-        """
+    def get_input(self, prompt: str = "") -> str:
+        """Получить команду от пользователя."""
         pass
 
     @abstractmethod

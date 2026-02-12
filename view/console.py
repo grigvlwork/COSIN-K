@@ -4,7 +4,7 @@ ConsoleView — консольная реализация отображения
 
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from model import GameState, Card
@@ -74,7 +74,10 @@ class ConsoleView(GameView):
 
         return f"{self._color(color)}{rank_str}{suit_symbol}{self._reset()}"
 
-    def display_state(self, state: "GameState", **kwargs) -> None:
+    def display_state(self,
+                      state: "GameState",
+                      selected_pile: Optional[str] = None,
+                      selected_count: int = 1) -> None:
         """Отобразить текущее состояние игры."""
         self._last_state = state
         self.clear()
@@ -119,8 +122,8 @@ class ConsoleView(GameView):
         max_height = max((len(p) for p in tableau_piles), default=0)
 
         # Заголовки столбцов
-        headers = "  ".join(f"{i:>4}" for i in range(7))
-        print(f"     {headers}")
+        headers = " ".join(f"{i:>4}" for i in range(7))
+        print(f"  {headers}")
         print("    " + "-" * 35)
 
         # Строки карт
@@ -135,9 +138,9 @@ class ConsoleView(GameView):
             print(line)
 
         # Выделение выбранной стопки
-        selected_pile = kwargs.get("selected_pile")
+        # selected_pile = kwargs.get("selected_pile")
         if selected_pile:
-            print(f"\n{self._color('yellow')}Selected: {selected_pile}{self._reset()}")
+            print(f"\n{self._color('yellow')}Selected: {selected_pile} ({selected_count} card(s)){self._reset()}")
 
         # Подсказка команд
         print(f"\n{self._color('blue')}Commands:{self._reset()}")
@@ -148,13 +151,26 @@ class ConsoleView(GameView):
         print("  (n)ew                    — новая игра")
         print("  (q)uit                   — выход")
 
+        print(f"\n{self._color('blue')}Move shortcuts:{self._reset()}")
+        print("  m 0 h        — move tableau_0 → hearts")
+        print("  m 5 d        — move tableau_5 → diamonds")
+        print("  m w c        — move waste → clubs")
+        print("  m 3 4        — move tableau_3 → tableau_4")
+        print(f"\n{self._color('blue')}Quick moves (no 'm'):{self._reset()}")
+        print("  0h           — tableau_0 → hearts")
+        print("  5d           — tableau_5 → diamonds")
+        print("  wh           — waste → hearts")
+        print("  t3s          — tableau_3 → spades")
+
     def clear(self) -> None:
         """Очистить консоль."""
         os.system('cls' if os.name == 'nt' else 'clear')
 
-    def get_input(self) -> str:
+    def get_input(self, prompt: str = "") -> str:
         """Получить команду от пользователя."""
         try:
+            if prompt:
+                print(f"\n{prompt}", end="")
             return input(f"\n{self._color('bold')}>{self._reset()} ").strip().lower()
         except (EOFError, KeyboardInterrupt):
             return 'q'
@@ -212,3 +228,10 @@ class ConsoleView(GameView):
         """Остановить цикл."""
         self.running = False
         print(f"\n{self._color('green')}Thanks for playing!{self._reset()}")
+
+
+if __name__ == "__main__":
+    print("\n❌ ОШИБКА: Нельзя запускать console.py напрямую!")
+    print("✅ Запустите main.py из корня проекта:\n")
+    print("   python main.py\n")
+    sys.exit(1)

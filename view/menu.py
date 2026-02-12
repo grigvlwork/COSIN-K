@@ -4,7 +4,15 @@ Menu — интерфейс начала игры (выбор пасьянса, 
 
 from typing import Optional, Callable
 from dataclasses import dataclass
-from model import Player, PlayerManager, GameFactory, GameVariant
+import sys
+from pathlib import Path
+from model import Player, PlayerManager, GameFactory
+from view.base import GameView
+
+# Добавляем корень проекта в путь
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 
 @dataclass
@@ -166,31 +174,26 @@ class GameMenu:
         return self._ask_confirm("Start game?")
 
     def run(self) -> Optional[MenuChoice]:
-        """Полный цикл меню."""
+        """
+        ПОКАЗАТЬ меню и ВЕРНУТЬ выбор.
+        НЕ запускает игру! Запуск делает main.py.
+        """
         try:
             self.show_welcome()
-
-            # Выбор игрока
             player = self.select_player()
-
-            # Показать статистику
             self.show_player_stats(player)
-
-            # Выбор игры
             game_type = self.select_game(player)
-
-            # Настройки
             seed = self.select_seed()
 
-            # Подтверждение
             if not self.confirm_start():
                 print("Cancelled.")
                 return None
+
+            return MenuChoice(player, game_type, seed)
+
         except (EOFError, KeyboardInterrupt):
             self.view.show_message("Game cancelled", "warning")
             return None
-
-        return MenuChoice(player, game_type, seed)
 
     # === Вспомогательные методы ===
 
@@ -206,3 +209,8 @@ class GameMenu:
         """Запросить подтверждение через View."""
         return self.view.ask_confirm(question)
 
+if __name__ == "__main__":
+    print("\n❌ ОШИБКА: Нельзя запускать menu.py напрямую!")
+    print("✅ Запустите main.py из корня проекта:\n")
+    print("   python main.py\n")
+    sys.exit(1)

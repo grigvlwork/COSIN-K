@@ -22,6 +22,7 @@ class Move:
 
     # Какие карты и откуда именно
     cards: List[Card] = field(default_factory=list)
+    count: int = 1  # ← ЯВНОЕ поле для количества!
     from_index: int = -1  # -1 = с конца стопки
 
     # Побочные эффекты
