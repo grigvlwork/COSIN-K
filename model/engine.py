@@ -127,10 +127,6 @@ class SolitaireEngine:
     def move(self, from_pile: str, to_pile: str, count: int = 1) -> bool:
         if not self._state:
             return False
-        print(f"\n🔍 ENGINE MOVE DEBUG:")
-        print(f"  from: {from_pile}")
-        print(f"  to: {to_pile}")
-        print(f"  count: {count}")
 
         # 1. Получаем стопки для проверки
         source = self._state.get_pile(from_pile)

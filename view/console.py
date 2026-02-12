@@ -4,6 +4,8 @@ ConsoleView — консольная реализация отображения
 
 import os
 import sys
+import re
+from wcwidth import wcswidth
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
@@ -12,6 +14,11 @@ if TYPE_CHECKING:
 
 from .base import GameView
 
+ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
+
+def visible_length(text: str) -> int:
+    clean = ANSI_RE.sub('', text)
+    return wcswidth(clean)
 
 class ConsoleView(GameView):
     """Консольный интерфейс для пасьянса."""
@@ -125,7 +132,7 @@ class ConsoleView(GameView):
 
         # Заголовки
         headers = " ".join(f"{i:>{COL_WIDTH - 1}}" for i in range(7))  # 4 символа + пробел
-        print(f"  {headers}")
+        print(f"     {headers}")
 
         # Разделитель
         print("    " + "-" * (COL_WIDTH * 7))
@@ -136,10 +143,13 @@ class ConsoleView(GameView):
             for pile in tableau_piles:
                 if row < len(pile):
                     card_str = self.card_to_str(pile[row])
-                    line += f"{card_str:>{COL_WIDTH}}"  # 5 символов
+                    visible_len = visible_length(card_str)
+                    padding = COL_WIDTH - visible_len
+                    line += " " * max(padding, 0) + card_str
                 else:
-                    line += " " * COL_WIDTH  # 5 пробелов
+                    line += " " * COL_WIDTH
             print(line)
+
         # Подсказка команд
         print(f"\n{self._color('blue')}Commands:{self._reset()}")
         print("  (s)elect <pile> [count]  — выбрать стопку")
@@ -214,8 +224,8 @@ class ConsoleView(GameView):
         self.running = True
 
         while self.running:
-            if self._controller:
-                self._controller.update_view()
+            # if self._controller:
+            #     self._controller.update_view()
 
             command = self.get_input()
 

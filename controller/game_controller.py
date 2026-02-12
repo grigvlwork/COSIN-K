@@ -230,14 +230,8 @@ class GameController:
         if len(args) < 2:
             self.view.show_message("Usage: move <from_pile> <to_pile> [count]", "error")
             return
-        # 🔍 ОТЛАДКА
-        # print(f"DEBUG: raw args = {args}")
-        #
-        # # 🔥 ПРЕОБРАЗУЕМ КОРОТКИЕ ИМЕНА В ПОЛНЫЕ
         from_pile = self._parse_pile_name(args[0])
         to_pile = self._parse_pile_name(args[1])
-        # 🔍 ОТЛАДКА
-        print(f"DEBUG: from={from_pile}, to={to_pile}")
         try:
             count = int(args[2]) if len(args) > 2 else 1
         except ValueError:
@@ -347,4 +341,4 @@ Examples:
         """Сбросить выбор стопки."""
         self._selected_pile = None
         self._selected_count = 1
-        self.update_view()  # показываем снятие выделения
+        # self.update_view()  # показываем снятие выделения
