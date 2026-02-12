@@ -117,7 +117,15 @@ class GameFactory:
         if variant.base_game not in cls._base_games:
             raise ValueError(f"Base game {variant.base_game} not found")
 
+        if variant.name in cls._variants:
+            raise ValueError(f"Variant {variant.name} already exists")
+
         cls._variants[variant.name] = variant
+
+    @classmethod
+    def create_default(cls, variant_name: str) -> RuleSet:
+        """Создать вариант с параметрами по умолчанию."""
+        return cls.create(variant_name)
 
     @classmethod
     def list_variants(cls, base_game: str = None) -> List[GameVariant]:

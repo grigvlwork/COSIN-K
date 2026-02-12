@@ -81,6 +81,49 @@ class SolitaireEngine:
 
     # === Ходы ===
 
+    def draw(self) -> bool:
+        """Взять карту(ы) из колоды."""
+        if not self._state:
+            return False
+
+        if not self.rules.can_draw(self._state):
+            return False
+
+        new_state = self._state.copy()
+        draw_count = self.rules.get_draw_count()
+
+        # Recycle если колода пуста
+        if new_state.stock.is_empty():
+            if not self._recycle_stock(new_state):
+                return False
+            # После recycle обновляем состояние и берём карты
+            self._state = new_state
+            return self.draw()
+
+        # Нормальное взятие карт
+        actual_count = min(draw_count, len(new_state.stock))
+        cards = new_state.stock.take(actual_count)
+        cards = [card.make_face_up() for card in cards]
+        new_state.waste.add(cards)
+        new_state.moves_count += 1
+
+        # Создаём Move
+        move = Move(
+            from_pile="stock",
+            to_pile="waste",
+            cards=cards,
+            from_index=len(new_state.stock),
+            flipped_cards=[],
+            score_delta=self.rules.score_draw(self._state, cards)
+        )
+
+        # Применяем
+        self._state = new_state
+        self.history.push(self._state.copy(), move)
+        self._notify("draw", {"count": actual_count})
+
+        return True
+
     def move(self, from_pile: str, to_pile: str, count: int = 1) -> bool:
         """
         Переместить карты из одной стопки в другую.
@@ -90,14 +133,15 @@ class SolitaireEngine:
             return False
 
         # 1. Проверяем валидность через правила
+        # Создаём move без cards
         move = Move(
             from_pile=from_pile,
             to_pile=to_pile,
             cards=[],  # будут заполнены при выполнении
-            from_index=-1  # по умолчанию с конца
+            from_index=-1
         )
 
-        if not self.rules.can_move(self._state, move, count):
+        if not self.rules.can_move(self._state, move):  # ← только state и move
             return False
 
         # 2. Выполняем ход
@@ -147,7 +191,13 @@ class SolitaireEngine:
         target.add(cards)
 
         # Обновляем счётчики
-        score_delta = self.rules.calculate_score(self._state, from_pile, to_pile, cards)
+        move_for_score = Move(
+            from_pile=from_pile,
+            to_pile=to_pile,
+            cards=cards,
+            from_index=from_index
+        )
+        score_delta = self.rules.calculate_score(self._state, move_for_score)
         new_state.score += score_delta
         new_state.moves_count += 1
 
@@ -208,6 +258,30 @@ class SolitaireEngine:
         if not self._state:
             return None
         return self.rules.get_hint(self._state)
+
+    def _recycle_stock(self, new_state: GameState) -> bool:
+        """Перебор колоды: waste → stock."""
+        if new_state.waste.is_empty():
+            return False
+
+        cards = new_state.waste.take(len(new_state.waste))
+        cards = [card.make_face_down() for card in cards]
+        new_state.stock.add(cards)
+
+        move = Move(
+            from_pile="waste",
+            to_pile="stock",
+            cards=cards,
+            from_index=0,
+            flipped_cards=[("waste", i) for i in range(len(cards))],
+            score_delta=self.rules.score_recycle(self._state)
+        )
+
+        # НЕ обновляем self._state здесь — это сделает draw()
+        self.history.push(new_state.copy(), move)  # сохраняем recycle в историю
+        self._notify("recycle", {"count": len(cards)})
+
+        return True
 
     # === События ===
 
