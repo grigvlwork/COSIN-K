@@ -101,8 +101,15 @@ class ConsoleView(GameView):
         else:
             stock_str = f"[ ]"
 
-        waste_card = state.waste.top()
-        waste_str = self.card_to_str(waste_card) if waste_card else f"[ ]"
+        # waste_card = state.waste.top()
+        # waste_str = self.card_to_str(waste_card) if waste_card else f"[ ]"
+
+        # print(f"Stock: {stock_str}  Waste: {waste_str}")
+        if state.waste and len(state.waste) > 0:
+            waste_cards = state.waste[-3:]  # берём последние 3
+            waste_str = " ".join(self.card_to_str(card) for card in waste_cards)
+        else:
+            waste_str = "[ ]"
 
         print(f"Stock: {stock_str}  Waste: {waste_str}")
         print()
