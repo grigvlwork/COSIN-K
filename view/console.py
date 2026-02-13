@@ -5,7 +5,7 @@ ConsoleView — консольная реализация отображения
 import os
 import sys
 import re
-from wcwidth import wcswidth
+# from wcwidth import wcswidth
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
@@ -81,6 +81,11 @@ class ConsoleView(GameView):
 
         return f"{self._color(color)}{rank_str}{suit_symbol}{self._reset()}"
 
+    def _show_mini_help(self) -> None:
+        """Показать минимальную справку (1-2 строки)."""
+        print(f"\n{self._color('blue')}Commands:{self._reset()} (m)ove, (d)raw, (u)ndo, (n)ew, (q)uit, (h)elp")
+        print(f"{self._color('blue')}Quick:{self._reset()} 0-6(auto), w(waste), 0h/5d/wh/t3s")
+
     def display_state(self,
                       state: "GameState",
                       selected_pile: Optional[str] = None,
@@ -101,12 +106,8 @@ class ConsoleView(GameView):
         else:
             stock_str = f"[ ]"
 
-        # waste_card = state.waste.top()
-        # waste_str = self.card_to_str(waste_card) if waste_card else f"[ ]"
-
-        # print(f"Stock: {stock_str}  Waste: {waste_str}")
         if state.waste and len(state.waste) > 0:
-            waste_cards = state.waste[-3:]  # берём последние 3
+            waste_cards = state.waste[-3:]
             waste_str = " ".join(self.card_to_str(card) for card in waste_cards)
         else:
             waste_str = "[ ]"
@@ -134,11 +135,10 @@ class ConsoleView(GameView):
             for i in range(7)
         ]
         max_height = max((len(p) for p in tableau_piles), default=0)
-        # ФИКСИРОВАННАЯ ШИРИНА КОЛОНКИ = 5 СИМВОЛОВ
         COL_WIDTH = 5
 
         # Заголовки
-        headers = " ".join(f"{i:>{COL_WIDTH - 1}}" for i in range(7))  # 4 символа + пробел
+        headers = " ".join(f"{i:>{COL_WIDTH - 1}}" for i in range(7))
         print(f"     {headers}")
 
         # Разделитель
@@ -157,25 +157,8 @@ class ConsoleView(GameView):
                     line += " " * COL_WIDTH
             print(line)
 
-        # Подсказка команд
-        print(f"\n{self._color('blue')}Commands:{self._reset()}")
-        print("  (s)elect <pile> [count]  — выбрать стопку")
-        print("  (m)ove <from> <to> [n]   — переместить")
-        print("  (d)raw                   — взять из колоды")
-        print("  (u)ndo                   — отменить ход")
-        print("  (n)ew                    — новая игра")
-        print("  (q)uit                   — выход")
-
-        print(f"\n{self._color('blue')}Move shortcuts:{self._reset()}")
-        print("  m 0 h        — move tableau_0 → hearts")
-        print("  m 5 d        — move tableau_5 → diamonds")
-        print("  m w c        — move waste → clubs")
-        print("  m 3 4        — move tableau_3 → tableau_4")
-        print(f"\n{self._color('blue')}Quick moves (no 'm'):{self._reset()}")
-        print("  0h           — tableau_0 → hearts")
-        print("  5d           — tableau_5 → diamonds")
-        print("  wh           — waste → hearts")
-        print("  t3s          — tableau_3 → spades")
+        # 🔥 МИНИМАЛЬНАЯ СПРАВКА (ВСЕГДА)
+        self._show_mini_help()
 
     def clear(self) -> None:
         """Очистить консоль."""

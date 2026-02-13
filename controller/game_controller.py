@@ -132,16 +132,30 @@ class GameController:
             return
 
         parts = command.split()
-        cmd = parts[0].lower()  # нормализуем регистр
+        cmd = parts[0].lower()
         args = parts[1:]
 
-        # 🔥 НОВОЕ: Супер-короткие команды типа "0h", "5d", "wh"
-        if len(cmd) == 2 and cmd[0].isdigit() and cmd[1] in 'hdcs':
-            # Передаём сырые "0" и "h" — _cmd_move сам преобразует
-            return self._cmd_move([cmd[0], cmd[1], "1"])
+        # 🔥 Проверяем шорткаты через правила игры
+        if self.engine and self.engine.rules:
+            if hasattr(self.engine.rules, 'validate_shortcut'):
+                shortcut = self.engine.rules.validate_shortcut(command)
+                if shortcut:
+                    from_pile, to_pile, count = shortcut
+                    return self._cmd_move([from_pile, to_pile, str(count)])
 
-        if len(cmd) == 2 and cmd[0] in 'wst' and cmd[1] in 'hdcs':
-            return self._cmd_move([cmd[0], cmd[1], "1"])
+        # 🔥 Команда из одной цифры - авто-ход из tableau
+        if len(cmd) == 1 and cmd.isdigit():
+            if not args:
+                return self._cmd_quick_move(cmd)
+
+        # 🔥 Команда 'w' - авто-ход из waste
+        if len(cmd) == 1 and cmd == 'w':
+            if not args:
+                return self._cmd_quick_waste()
+
+        # 🔥 Команда '?' - справка
+        if cmd == '?':
+            return self._cmd_help([])
 
         # Нормализация алиасов
         cmd_map = {
@@ -153,6 +167,7 @@ class GameController:
             'n': 'new', 'new': 'new',
             'q': 'quit', 'quit': 'quit',
             'h': 'help', 'help': 'help',
+            '?': 'help',  # добавляем '?'
         }
 
         normalized_cmd = cmd_map.get(cmd, cmd)
@@ -302,33 +317,167 @@ class GameController:
 
         self.view.stop()
 
+    def _cmd_quick_move(self, pile_num: str) -> None:
+        """Авто-ход из tableau_n в лучшее доступное место."""
+        if not self.engine or not self.engine.state:
+            return
+
+        from_pile = f"tableau_{pile_num}"
+        source = self.engine.state.get_pile(from_pile)
+
+        if not source or source.is_empty():
+            self.view.show_message(f"Pile {from_pile} is empty", "error")
+            return
+
+        if not hasattr(self.engine.rules, 'get_available_moves'):
+            self.view.show_message("Hint system not available", "error")
+            return
+
+        # Получаем все возможные ходы
+        available_moves = self.engine.rules.get_available_moves(self.engine.state)
+
+        # Фильтруем ходы из указанной стопки
+        moves_from_pile = [
+            move for move in available_moves
+            if move.from_pile == from_pile
+        ]
+
+        if not moves_from_pile:
+            self.view.show_message(f"No available moves from {from_pile}", "error")
+            return
+
+        # Приоритет: foundation > tableau (более правые колонки)
+        foundation_moves = []
+        tableau_moves = []
+
+        for move in moves_from_pile:
+            if move.to_pile.startswith("foundation_"):
+                foundation_moves.append(move)
+            elif move.to_pile.startswith("tableau_"):
+                tableau_moves.append(move)
+
+        selected_move = None
+
+        if foundation_moves:
+            selected_move = foundation_moves[0]
+            self.view.show_message(f"Auto-moving to foundation", "info")
+        elif tableau_moves:
+            # Сортируем tableau по номеру колонки (по убыванию - вправо)
+            tableau_moves.sort(key=lambda m: int(m.to_pile.split('_')[1]), reverse=True)
+            selected_move = tableau_moves[0]
+            self.view.show_message(f"Auto-moving to {selected_move.to_pile}", "info")
+
+        if selected_move:
+            success = self.engine.move(
+                selected_move.from_pile,
+                selected_move.to_pile,
+                len(selected_move.cards)
+            )
+
+            if not success:
+                self.view.show_message("Auto-move failed!", "error")
+        else:
+            self.view.show_message(f"No suitable move from {from_pile}", "error")
+
+    def _cmd_quick_waste(self) -> None:
+        """Авто-ход из waste в лучшее доступное место."""
+        if not self.engine or not self.engine.state:
+            return
+
+        from_pile = "waste"
+        source = self.engine.state.get_pile(from_pile)
+
+        if not source or source.is_empty():
+            self.view.show_message("Waste is empty", "error")
+            return
+
+        if not hasattr(self.engine.rules, 'get_available_moves'):
+            self.view.show_message("Hint system not available", "error")
+            return
+
+        # Получаем все возможные ходы
+        available_moves = self.engine.rules.get_available_moves(self.engine.state)
+
+        # Фильтруем ходы из waste
+        moves_from_waste = [
+            move for move in available_moves
+            if move.from_pile == from_pile
+        ]
+
+        if not moves_from_waste:
+            self.view.show_message("No available moves from waste", "error")
+            return
+
+        # Приоритет: foundation > tableau (более правые колонки)
+        foundation_moves = []
+        tableau_moves = []
+
+        for move in moves_from_waste:
+            if move.to_pile.startswith("foundation_"):
+                foundation_moves.append(move)
+            elif move.to_pile.startswith("tableau_"):
+                tableau_moves.append(move)
+
+        selected_move = None
+
+        if foundation_moves:
+            selected_move = foundation_moves[0]
+            self.view.show_message("Auto-moving waste to foundation", "info")
+        elif tableau_moves:
+            # Сортируем tableau по номеру колонки (по убыванию - вправо)
+            tableau_moves.sort(key=lambda m: int(m.to_pile.split('_')[1]), reverse=True)
+            selected_move = tableau_moves[0]
+            self.view.show_message(f"Auto-moving waste to {selected_move.to_pile}", "info")
+
+        if selected_move:
+            success = self.engine.move(
+                selected_move.from_pile,
+                selected_move.to_pile,
+                len(selected_move.cards)  # всегда 1 для waste
+            )
+
+            if not success:
+                self.view.show_message("Auto-move from waste failed!", "error")
+        else:
+            self.view.show_message("No suitable move from waste", "error")
+
     def _cmd_help(self, args: list) -> None:
-        """Показать справку."""
-        variants = ", ".join(GameFactory.available_games())
-        help_text = f"""
+        """Показать полную справку."""
+        if not self.engine or not self.engine.rules:
+            # Базовая справка, если игры нет
+            variants = ", ".join(GameFactory.available_games())
+            help_text = f"""
 === Solitaire Game Controller ===
 
-Commands:
-  select <pile> [n]  — select source pile (then click destination)
-  move <from> <to> [n] — move cards directly
-  draw              — draw card(s) from stock
-  undo              — undo last move
-  redo              — redo undone move
-  new [variant]     — start new game (variants: {variants})
-  quit              — exit game
-  help              — this help
+Available games:
+  {variants}
 
-Pile names:
-  stock, waste
-  tableau_0 ... tableau_6
-  foundation_HEARTS, foundation_DIAMONDS, etc.
-
-Examples:
-  select tableau_0 2  — select 2 cards from first column
-  move waste foundation_HEARTS  — move top waste card to hearts foundation
-  draw               — draw from stock
-  new klondike-3     — start Klondike with 3-card draw
+Start a game with: new [variant]
+Type 'help' or '?' for game-specific commands.
 """
+            self.view.show_message(help_text, "info")
+            return
+
+        # Получаем справку от правил текущей игры
+        rules = self.engine.rules
+        help_text = rules.get_help_text()
+
+        game_help = rules.get_game_help()
+        if game_help:
+            help_text += "\n" + game_help
+
+        shortcuts = rules.get_shortcuts_text()
+        if shortcuts:
+            help_text += "\n" + shortcuts
+
+        quick_moves = rules.get_quick_moves_text()
+        if quick_moves:
+            help_text += "\n" + quick_moves
+
+        variants = ", ".join(GameFactory.available_games())
+        help_text += f"\n\nAvailable variants: {variants}"
+        help_text += "\n\nTip: Type '?' for this help anytime."
+
         self.view.show_message(help_text, "info")
 
     def _cmd_unknown(self, args: list) -> None:

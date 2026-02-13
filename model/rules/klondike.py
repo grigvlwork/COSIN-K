@@ -89,8 +89,8 @@ class KlondikeRules(RuleSet):
         first = cards[0]
 
         return (
-            top.color != first.color and
-            top.rank.value == first.rank.value + 1
+                top.color != first.color and
+                top.rank.value == first.rank.value + 1
         )
 
     def _can_build_foundation(self, pile: "Pile", cards: List["Card"]) -> bool:
@@ -109,8 +109,8 @@ class KlondikeRules(RuleSet):
         top = pile.top()
 
         return (
-            top.suit == card.suit and
-            card.rank.value == top.rank.value + 1
+                top.suit == card.suit and
+                card.rank.value == top.rank.value + 1
         )
 
     # === ВАЛИДАЦИЯ ХОДОВ ===
@@ -232,8 +232,276 @@ class KlondikeRules(RuleSet):
 
     def get_available_moves(self, state: "GameState") -> List["Move"]:
         """Все возможные ходы в текущем состоянии."""
-        # TODO: реализовать для подсказок и AI
-        return []
+        from model import Move
+        moves = []
+
+        # 1. ХОДЫ ИЗ STOCK/WASTE
+        # Взять карты из колоды (если можно)
+        # Не добавляем в moves, т.к. draw - отдельная команда
+
+        # 2. ХОДЫ ИЗ TABLEAU
+        for col in range(7):
+            pile_name = f"tableau_{col}"
+            pile = state.piles.get(pile_name)
+            if not pile or pile.is_empty():
+                continue
+
+            # Сколько открытых карт можно взять
+            face_up_count = pile.face_up_count()
+            if face_up_count == 0:
+                continue
+
+            # Можно взять 1 карту или последовательность
+            for take_count in range(1, face_up_count + 1):
+                # Проверяем, что последовательность корректная
+                cards = pile.peek(take_count)
+                if not self._is_valid_sequence(cards):
+                    continue
+
+                # 2.1 ХОДЫ НА TABLEAU
+                for target_col in range(7):
+                    if target_col == col:
+                        continue
+
+                    target_name = f"tableau_{target_col}"
+                    target_pile = state.piles.get(target_name)
+
+                    # Создаем move для проверки
+                    move = Move(
+                        from_pile=pile_name,
+                        to_pile=target_name,
+                        cards=cards,
+                        from_index=len(pile) - take_count
+                    )
+
+                    # Проверяем валидность хода
+                    if self.can_move(state, move):
+                        moves.append(move)
+
+                # 2.2 ХОДЫ НА FOUNDATION
+                for suit in Suit:
+                    target_name = f"foundation_{suit.name}"
+                    target_pile = state.piles.get(target_name)
+
+                    # На foundation можно класть только 1 карту
+                    if take_count != 1:
+                        continue
+
+                    move = Move(
+                        from_pile=pile_name,
+                        to_pile=target_name,
+                        cards=cards,
+                        from_index=len(pile) - 1
+                    )
+
+                    if self.can_move(state, move):
+                        moves.append(move)
+
+        # 3. ХОДЫ ИЗ FOUNDATION
+        # (обратно на tableau - со штрафом, но разрешено в некоторых ситуациях)
+        for suit in Suit:
+            pile_name = f"foundation_{suit.name}"
+            pile = state.piles.get(pile_name)
+            if not pile or pile.is_empty():
+                continue
+
+            # Берем верхнюю карту
+            cards = [pile.top()]
+
+            # Ходы на tableau
+            for target_col in range(7):
+                target_name = f"tableau_{target_col}"
+
+                move = Move(
+                    from_pile=pile_name,
+                    to_pile=target_name,
+                    cards=cards,
+                    from_index=len(pile) - 1
+                )
+
+                if self.can_move(state, move):
+                    moves.append(move)
+
+        # 4. ХОДЫ ИЗ WASTE
+        if state.waste and not state.waste.is_empty():
+            pile_name = "waste"
+            cards = [state.waste.top()]
+
+            # 4.1 На foundation
+            for suit in Suit:
+                target_name = f"foundation_{suit.name}"
+                move = Move(
+                    from_pile=pile_name,
+                    to_pile=target_name,
+                    cards=cards,
+                    from_index=len(state.waste) - 1
+                )
+                if self.can_move(state, move):
+                    moves.append(move)
+
+            # 4.2 На tableau
+            for target_col in range(7):
+                target_name = f"tableau_{target_col}"
+                move = Move(
+                    from_pile=pile_name,
+                    to_pile=target_name,
+                    cards=cards,
+                    from_index=len(state.waste) - 1
+                )
+                if self.can_move(state, move):
+                    moves.append(move)
+
+        # Удаляем дубликаты (если есть)
+        unique_moves = []
+        move_keys = set()
+        for move in moves:
+            key = (move.from_pile, move.to_pile, len(move.cards))
+            if key not in move_keys:
+                move_keys.add(key)
+                unique_moves.append(move)
+
+        return unique_moves
+
+    def _is_valid_sequence(self, cards: List["Card"]) -> bool:
+        """Проверка, что карты образуют правильную последовательность для перемещения."""
+        if len(cards) <= 1:
+            return True
+
+        for i in range(len(cards) - 1):
+            curr = cards[i]
+            next_card = cards[i + 1]
+
+            # Чередование цветов
+            if curr.color == next_card.color:
+                return False
+            # Убывание ранга
+            if curr.rank.value != next_card.rank.value + 1:
+                return False
+
+        return True
+
+    def get_hint(self, state: "GameState") -> Optional["Move"]:
+        """Вернуть один возможный ход для подсказки."""
+        moves = self.get_available_moves(state)
+
+        if not moves:
+            return None
+
+        # Приоритет: foundation > tableau > waste
+        foundation_moves = []
+        tableau_moves = []
+        waste_moves = []
+
+        for move in moves:
+            if move.to_pile.startswith("foundation_"):
+                foundation_moves.append(move)
+            elif move.from_pile == "waste":
+                waste_moves.append(move)
+            else:
+                tableau_moves.append(move)
+
+        # Сначала ходы на foundation
+        if foundation_moves:
+            return foundation_moves[0]
+        # Потом из waste
+        if waste_moves:
+            return waste_moves[0]
+        # Потом остальные
+        if tableau_moves:
+            return tableau_moves[0]
+
+        return moves[0] if moves else None
+
+    def get_game_help(self) -> str:
+        """Справка по правилам Косынки."""
+        draw_mode = "3 cards" if self.draw_three else "1 card"
+        return f"""
+=== Klondike Solitaire ({draw_mode}) ===
+
+Game rules:
+  • Build tableau down in alternating colors
+  • Build foundations up in same suit from Ace
+  • Draw {self.get_draw_count()} card(s) from stock
+  • Kings can be placed on empty tableau piles
+
+Variants:
+  • new           — Klondike (1 card draw)
+  • new klondike-3 — Klondike (3 cards draw)
+"""
+
+    def get_shortcuts_text(self) -> str:
+        """Шорткаты для Косынки."""
+        return """
+Move shortcuts:
+  m 0 h        — move tableau_0 → hearts
+  m 5 d        — move tableau_5 → diamonds
+  m w c        — move waste → clubs
+  m 3 4        — move tableau_3 → tableau_4
+"""
+
+    def get_quick_moves_text(self) -> str:
+        """Быстрые команды для Косынки."""
+        return """
+Quick moves (no 'm'):
+  0h           — tableau_0 → hearts
+  5d           — tableau_5 → diamonds
+  wh           — waste → hearts
+  t3s          — tableau_3 → spades
+  <n>          — auto-move from tableau_n (0-6)
+                 (to foundation or rightmost tableau)
+  w            — auto-move from waste
+"""
+
+    def validate_shortcut(self, command: str) -> Optional[Tuple[str, str, int]]:
+        """
+        Проверить, является ли команда шорткатом для Косынки.
+        Возвращает (from_pile, to_pile, count) или None.
+        """
+        command = command.lower().strip()
+
+        # Шорткаты вида "0h", "5d", "wc", "t3s"
+        if len(command) == 2:
+            source = command[0]
+            dest = command[1]
+
+            suit_map = {
+                'h': 'HEARTS',
+                'd': 'DIAMONDS',
+                'c': 'CLUBS',
+                's': 'SPADES'
+            }
+
+            if dest in suit_map:
+                # Источник - цифра (tableau)
+                if source.isdigit():
+                    from_pile = f"tableau_{source}"
+                    to_pile = f"foundation_{suit_map[dest]}"
+                    return (from_pile, to_pile, 1)
+
+                # Источник - waste
+                elif source == 'w':
+                    return ("waste", f"foundation_{suit_map[dest]}", 1)
+
+        # Шорткаты вида "t3s" (tableau_3 → spades)
+        if len(command) == 3 and command[0] == 't' and command[1].isdigit() and command[2] in 'hdcs':
+            col = command[1]
+            dest = command[2]
+            suit_map = {'h': 'HEARTS', 'd': 'DIAMONDS', 'c': 'CLUBS', 's': 'SPADES'}
+            from_pile = f"tableau_{col}"
+            to_pile = f"foundation_{suit_map[dest]}"
+            return (from_pile, to_pile, 1)
+
+        # Авто-ход из tableau (одна цифра)
+        if len(command) == 1 and command.isdigit():
+            # Это обрабатывается отдельно в _cmd_quick_move
+            return None
+
+        # Авто-ход из waste (w)
+        if command == 'w':
+            # Это обрабатывается отдельно в _cmd_quick_waste
+            return None
+
+        return None
 
     # === СТРОКОВОЕ ПРЕДСТАВЛЕНИЕ ===
 

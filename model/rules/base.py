@@ -160,6 +160,39 @@ class RuleSet(ABC):
         """Вернуть возможный ход для подсказки."""
         return None
 
+    def get_help_text(self) -> str:
+        """Базовая справка, общая для всех пасьянсов."""
+        return """
+    === Help ===
+
+    Commands:
+      (s)elect <pile> [n]  — select source pile (then click destination)
+      (m)ove <from> <to> [n] — move cards directly
+      (d)raw               — draw card(s) from stock
+      (u)ndo               — undo last move
+      (r)edo               — redo undone move
+      (n)ew [variant]      — start new game
+      (q)uit               — exit game
+      (h)elp               — this help
+
+    Pile names:
+      stock, waste
+      tableau_0 ... tableau_6
+      foundation_HEARTS, foundation_DIAMONDS, foundation_CLUBS, foundation_SPADES
+    """
+
+    def get_game_help(self) -> str:
+        """Специфичная справка для конкретного пасьянса."""
+        return ""
+
+    def get_shortcuts_text(self) -> str:
+        """Текст с шорткатами для отображения в view."""
+        return ""
+
+    def get_quick_moves_text(self) -> str:
+        """Текст с быстрыми командами для отображения в view."""
+        return ""
+
     # === СТРОКОВОЕ ПРЕДСТАВЛЕНИЕ ===
 
     def __repr__(self) -> str:
