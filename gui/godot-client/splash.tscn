@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3 uid="uid://vbfqvdlvmx0g"]
+
+[ext_resource type="Script" uid="uid://dbiogk2c3ntyi" path="res://splash.gd" id="1_b04ml"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_a3dr8"]
+
+[node name="Splash" type="Node2D"]
+material = SubResource("CanvasItemMaterial_a3dr8")
+script = ExtResource("1_b04ml")
+
+[node name="TitleLabel" type="Label" parent="."]
+offset_left = 436.0
+offset_top = 183.0
+offset_right = 707.0
+offset_bottom = 271.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 64
+text = "Solitayre"
+
+[node name="SubtitleLabel" type="Label" parent="."]
+offset_left = 502.0
+offset_top = 308.0
+offset_right = 635.0
+offset_bottom = 353.0
+theme_override_font_sizes/font_size = 32
+text = "Patience"
+
+[node name="SplashTimer" type="Timer" parent="."]
+wait_time = 2.0
+one_shot = true
+
+[connection signal="timeout" from="SplashTimer" to="." method="_on_timer_timeout"]

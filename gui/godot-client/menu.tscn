@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=3 uid="uid://lm1rc8mr7au5"]
+
+[ext_resource type="Script" uid="uid://bd6mydithxl4g" path="res://menu.gd" id="1_lti8b"]
+
+[node name="Menu" type="Node2D"]
+script = ExtResource("1_lti8b")
+
+[node name="GameSelectButton" type="Button" parent="."]
+offset_left = 400.0
+offset_top = 280.0
+offset_right = 650.0
+offset_bottom = 330.0
+text = "📦 Клондайк"
+
+[node name="StartButton" type="Button" parent="."]
+offset_left = 400.0
+offset_top = 350.0
+offset_right = 650.0
+offset_bottom = 400.0
+text = "▶ Начать игру"
+
+[node name="QuitButton" type="Button" parent="."]
+offset_left = 400.0
+offset_top = 420.0
+offset_right = 650.0
+offset_bottom = 470.0
+text = "✕ Выход"
+
+[node name="TitleLabel" type="Label" parent="."]
+offset_left = 394.0
+offset_top = 82.0
+offset_right = 649.0
+offset_bottom = 170.0
+theme_override_font_sizes/font_size = 64
+text = "Solitaire"
+
+[node name="SubtitleLabel" type="Label" parent="."]
+offset_left = 455.0
+offset_top = 180.0
+offset_right = 588.0
+offset_bottom = 225.0
+theme_override_font_sizes/font_size = 32
+text = "patience"

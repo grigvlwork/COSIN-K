@@ -228,4 +228,106 @@
 
 ---
 
-Хотите, начнем с **Этапа 1** и выберем способ коммуникации?
+solitaire-godot/
+│
+├── 📂 python_server/                 # Python бэкенд (ваш существующий код + HTTP)
+│   ├── requirements.txt             # Зависимости (если нужны)
+│   ├── server.py                   # 🟢 ГЛАВНЫЙ ФАЙЛ - HTTP сервер
+│   ├── run.py                     # Запуск сервера
+│   │
+│   ├── 📂 model/                   # ПОЛНОСТЬЮ ВАШ СУЩЕСТВУЮЩИЙ КОД!
+│   │   ├── __init__.py
+│   │   ├── card.py
+│   │   ├── pile.py
+│   │   ├── state.py
+│   │   ├── move.py
+│   │   ├── history.py
+│   │   ├── engine.py
+│   │   │
+│   │   └── 📂 rules/
+│   │       ├── __init__.py
+│   │       ├── base.py
+│   │       ├── klondike.py
+│   │       └── factory.py
+│   │
+│   └── 📂 utils/                   # Вспомогательные утилиты для сервера
+│       ├── json_encoder.py        # Сериализация GameState в JSON
+│       └── cors.py               # CORS для Godot (если нужно)
+│
+├── 📂 godot_client/                # Godot проект
+│   ├── project.godot              # Файл проекта Godot
+│   ├── default_bus_layout.tres   # Настройки звука
+│   │
+│   ├── 📂 scenes/                 # Godot сцены
+│   │   ├── main.tscn             # 🟢 ГЛАВНАЯ СЦЕНА
+│   │   ├── game_table.tscn       # Игровой стол
+│   │   ├── card.tscn            # Карта (шаблон)
+│   │   ├── pile.tscn           # Стопка (колонка)
+│   │   └── ui/                  # Интерфейс
+│   │       ├── menu.tscn
+│   │       ├── score_panel.tscn
+│   │       └── button.tscn
+│   │
+│   ├── 📂 scripts/               # GDScript
+│   │   ├── main.gd              # Главный контроллер
+│   │   ├── game_client.gd       # 🟢 HTTP клиент для связи с Python
+│   │   ├── game_state.gd        # Модель состояния в Godot
+│   │   ├── card.gd             # Логика карты
+│   │   ├── pile.gd            # Логика стопки
+│   │   │
+│   │   └── 📂 ui/             # Скрипты интерфейса
+│   │       ├── menu.gd
+│   │       ├── score_panel.gd
+│   │       └── button.gd
+│   │
+│   ├── 📂 assets/               # Ресурсы
+│   │   ├── 📂 cards/           # Спрайты карт
+│   │   │   ├── back.png       # Рубашка
+│   │   │   ├── 2H.png        # 2♥
+│   │   │   ├── 3H.png        # 3♥
+│   │   │   └── ...           # 52 карты + рубашка
+│   │   │
+│   │   ├── 📂 fonts/          # Шрифты
+│   │   │   └── roboto.ttf
+│   │   │
+│   │   └── 📂 sounds/        # Звуки (опционально)
+│   │       ├── card_place.wav
+│   │       └── card_flip.wav
+│   │
+│   └── 📂 config/             # Конфигурация
+│       └── settings.gd       # Настройки подключения
+│
+├── 📂 launcher/               # Объединенный запуск (опционально)
+│   ├── launch.py            # Запускает Python сервер + Godot
+│   └── solitaire.bat       # Для Windows
+│   └── solitaire.sh        # Для Linux/Mac
+│
+├── README.md                # Инструкция
+└── .gitignore              # Игнорируемые файлы
+
+📂 ваш-существующий-проект/           <-- ЭТО УЖЕ ЕСТЬ!
+│
+├── 📂 model/                        <-- ВЕСЬ ВАШ КОД ОСТАЕТСЯ!
+│   ├── card.py
+│   ├── pile.py
+│   ├── engine.py
+│   └── ...
+│
+├── 📂 view/                        <-- КОНСОЛЬНАЯ ВЕРСИЯ (работает)
+│   ├── base.py
+│   └── console.py
+│
+├── 📂 controller/                  <-- КОНТРОЛЛЕР (работает)
+│   └── gamecontroller.py
+│
+├── 📂 gui/                         <-- 🔥 НОВАЯ ПАПКА (ДОБАВИТЬ)
+│   ├── __init__.py
+│   ├── godot_bridge.py            <-- HTTP сервер для Godot
+│   └── godot_client/              <-- Godot проект ВНУТРИ вашего проекта
+│       ├── project.godot
+│       ├── scenes/
+│       └── scripts/
+│
+├── main.py                         <-- СТАРЫЙ main (консоль)
+├── main_gui.py                     <-- 🔥 НОВЫЙ main (Godot + сервер)
+└── requirements.txt
