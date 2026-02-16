@@ -7,6 +7,7 @@ import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import sys
+import traceback
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -83,44 +84,54 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
         return self.games.get(session_id)
 
     def _create_engine(self, session_id, variant):
-        """Создать новый движок для сессии."""
+        print(f"🔧 _create_engine вызван для {session_id} с variant={variant}")
         try:
-            # ИСПОЛЬЗУЕМ ПРАВИЛЬНЫЙ МЕТОД create()
             from model.rules.factory import GameFactory
+            print(f"   GameFactory загружен")
 
             rules = GameFactory.create(variant)
-            print(f"📦 [{session_id}] Создана игра: {variant}")
+            print(f"   Правила созданы: {rules}")
 
             engine = SolitaireEngine(rules)
+            print(f"   Движок создан")
+
             engine.new_game()
+            print(f"   Новая игра инициализирована")
+
             self.games[session_id] = engine
+            print(f"✅ [{session_id}] Игра {variant} создана, карт в колоде: {len(engine.state.stock)}")
+
             return engine
 
         except Exception as e:
-            # print(f"❌ [{session_id}] Ошибка создания игры {variant}: {e}")
+            print(f"❌ ОШИБКА в _create_engine: {e}")
+            traceback.print_exc()
             return None
 
     def _send_response(self, data, status=200):
-        """Отправить JSON ответ."""
+        print(f"\n📤 ОТПРАВКА ОТВЕТА (статус: {status})")
+        print(f"   Данные: {str(data)[:200]}...")
+
         try:
             response = json.dumps(data, cls=GameStateEncoder)
             response_bytes = response.encode('utf-8')
 
+            print(f"   JSON размер: {len(response_bytes)} байт")
+
             self.send_response(status)
             self.send_header('Content-Type', 'application/json')
-            self.send_header('Content-Length', str(len(response_bytes)))  # ЯВНО УКАЗЫВАЕМ ДЛИНУ!
+            self.send_header('Content-Length', str(len(response_bytes)))
             self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
             self.end_headers()
 
             self.wfile.write(response_bytes)
             self.wfile.flush()
 
-            print(f"✅ Отправлено {len(response_bytes)} байт: {response[:100]}...")
+            print(f"✅ Ответ отправлен")
 
         except Exception as e:
             print(f"❌ Ошибка отправки: {e}")
+            traceback.print_exc()
 
     def do_OPTIONS(self):
         """CORS preflight."""
@@ -146,22 +157,44 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
 
 
+
         elif parsed.path == '/state':
-            # Получить состояние текущей игры
+
+            print(f"\n🟢 ПОЛУЧЕН ЗАПРОС /state от {session_id}")
+
             engine = self._get_engine(session_id)
+
             if engine and engine.state:
-                # 👇 ТЕПЕРЬ ОТПРАВЛЯЕМ РЕАЛЬНОЕ СОСТОЯНИЕ!
+
+                print(f"✅ Игра найдена!")
+
+                print(f"   Счет: {engine.state.score}, Ходов: {engine.state.moves_count}")
+
+                print(f"   Колода: {len(engine.state.stock)} карт")
+
+                print(f"   Сброс: {len(engine.state.waste)} карт")
+
+                print(f"   Столбцов: {len(engine.state.piles)}")
+
                 self._send_response({
+
                     'success': True,
+
                     'state': engine.state,
+
                     'score': engine.state.score,
+
                     'moves': engine.state.moves_count
+
                 })
+
             else:
-                self._send_response({
-                    'success': False,
-                    'error': 'No active game'
-                }, 404)
+
+                print(f"❌ Игра НЕ найдена для сессии {session_id}")
+
+                print(f"   Доступные сессии: {list(self.games.keys())}")
+
+                self._send_response({'success': False, 'error': 'No active game'}, 404)
 
     def do_POST(self):
         """POST запросы: действия и создание игры."""
@@ -180,29 +213,27 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         # ===== СОЗДАНИЕ НОВОЙ ИГРЫ =====
         if parsed.path == '/new':
-            """Godot выбирает и запускает новую игру."""
+            print(f"\n🔵 ПОЛУЧЕН ЗАПРОС /new от {session_id}")
+            print(f"   Команда: {command}")
+
             variant = command.get('variant', 'klondike')
+            print(f"   Вариант: {variant}")
 
-            print(f"📥 Получен запрос /new для {variant}")  # ОТЛАДКА
-
-            # Создаем новый движок для этой сессии
             engine = self._create_engine(session_id, variant)
 
             if engine:
+                print(f"✅ Движок создан, готовим ответ")
                 response_data = {
                     'success': True,
                     'variant': variant,
                     'score': 0,
                     'moves': 0
                 }
-                print(f"📤 Отправка ответа: {response_data}")  # ОТЛАДКА
+                print(f"📤 Ответ: {response_data}")
                 self._send_response(response_data)
             else:
-                self._send_response({
-                    'success': False,
-                    'error': f'Failed to create game: {variant}'
-                }, 400)
-
+                print(f"❌ Ошибка создания движка")
+                self._send_response({'success': False, 'error': f'Failed'}, 400)
             return
 
         # ===== ВСЕ ОСТАЛЬНЫЕ ДЕЙСТВИЯ =====
