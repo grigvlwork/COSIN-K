@@ -89,7 +89,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             from model.rules.factory import GameFactory
 
             rules = GameFactory.create(variant)
-            # print(f"📦 [{session_id}] Создана игра: {variant}")
+            print(f"📦 [{session_id}] Создана игра: {variant}")
 
             engine = SolitaireEngine(rules)
             engine.new_game()
