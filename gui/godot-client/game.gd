@@ -48,12 +48,20 @@ func _ready():
 	undo_button.pressed.connect(_on_undo_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
 	
-	# Делаем колоду кликабельной
-	if stock_holder:
-		stock_holder.input_pickable = true
-		stock_holder.connect("input_event", _on_stock_clicked)
-	else:
-		print("❌ stock_holder не найден! Путь: $Deck/StockHolder")
+	# СОЗДАЕМ КЛИКАБЕЛЬНУЮ ОБЛАСТЬ ДЛЯ КОЛОДЫ
+	var click_area = Area2D.new()
+	var collision = CollisionShape2D.new()
+	var rect = RectangleShape2D.new()
+	rect.size = Vector2(100, 145)  # размер карты
+	collision.shape = rect
+	
+	click_area.add_child(collision)
+	click_area.position = Vector2(0, 0)
+	click_area.input_pickable = true
+	click_area.connect("input_event", _on_stock_clicked)
+	
+	stock_holder.add_child(click_area)
+	print("✅ Кликабельная область добавлена на колоду")
 	
 	start_new_game()
 
