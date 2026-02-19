@@ -50,19 +50,19 @@ func _ready():
 	menu_button.pressed.connect(_on_menu_pressed)
 	
 	# СОЗДАЕМ КЛИКАБЕЛЬНУЮ ОБЛАСТЬ ДЛЯ КОЛОДЫ
-	var click_area = Area2D.new()
-	var collision = CollisionShape2D.new()
-	var rect = RectangleShape2D.new()
-	rect.size = Vector2(100, 145)  # размер карты
-	collision.shape = rect
-	
-	click_area.add_child(collision)
-	click_area.position = Vector2(0, 0)
-	click_area.input_pickable = true
-	click_area.connect("input_event", _on_stock_clicked)
-	
-	stock_holder.add_child(click_area)
-	print("✅ Кликабельная область добавлена на колоду")
+	#var click_area = Area2D.new()
+	#var collision = CollisionShape2D.new()
+	#var rect = RectangleShape2D.new()
+	#rect.size = Vector2(100, 145)  # размер карты
+	#collision.shape = rect
+	#
+	#click_area.add_child(collision)
+	#click_area.position = Vector2(0, 0)
+	#click_area.input_pickable = true
+	#click_area.connect("input_event", _on_stock_clicked)
+	#
+	#stock_holder.add_child(click_area)
+	#print("✅ Кликабельная область добавлена на колоду")
 	
 	start_new_game()
 
@@ -233,55 +233,68 @@ func draw_card(card_data, position, face_up, parent_node, pile_name):
 	var area = Area2D.new()
 	area.name = "Card_" + str(randi())
 	area.position = position
-	# Масштабируем всю область (Area2D) целиком
 	area.scale = Vector2(CARD_SCALE, CARD_SCALE)
 
-	# 1. Создаем Спрайт
+	# 1. Спрайт
 	var sprite = Sprite2D.new()
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
-
 	sprite.texture = DeckManager.get_card_texture(suit, rank, face_up)
 
 	if sprite.texture == null:
 		sprite.modulate = Color.RED
 
-	# Центрируем спрайт внутри Area2D (offset работает в локальных координатах до скалирования)
-	if sprite.texture:
-		sprite.offset = Vector2(sprite.texture.get_width() / 2.0, sprite.texture.get_height() / 2.0)
+	# Настраиваем спрайт: рисуем от левого верхнего угла (0,0)
+	sprite.centered = false 
 
 	area.add_child(sprite)
 
-	# 2. Создаем Коллизию (для обработки кликов)
+	# 2. Коллизия
 	var collision = CollisionShape2D.new()
 	var rect = RectangleShape2D.new()
 
-	# Размер коллизии берем из текстуры (оригинальный размер)
 	if sprite.texture:
-		rect.size = Vector2(sprite.texture.get_width(), sprite.texture.get_height())
+		var w = sprite.texture.get_width()
+		var h = sprite.texture.get_height()
+		rect.size = Vector2(w, h)
+		
+		# Так как спрайт начинается в (0,0) и идет до (w,h),
+		# центр коллизии должен быть в (w/2, h/2)
+		collision.position = Vector2(w / 2.0, h / 2.0)
 
 	collision.shape = rect
 	area.add_child(collision)
 
-	# 3. Подключаем сигнал клика
-	# Передаем pile_name и саму карту (card_data) в обработчик
+	# 3. Сигнал
 	area.input_event.connect(_on_card_clicked.bind(pile_name, card_data))
 
 	parent_node.add_child(area)
 
 func _on_card_clicked(viewport, event, shape_idx, pile_name, card_data):
-	# Проверяем, что это клик левой кнопкой мыши
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		print("🃏 Клик по карте: ", card_data["rank"], " ", 	card_data["suit"], " из стопки: ", pile_name)
+		# Защита от спама кликами
+		if is_busy:
+			return
+		# === 1. СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ КОЛОДЫ (STOCK) ===
+		# Клик по колоде всегда означает "взять карту", независимо от face_up
+		if pile_name == "stock":
+			print("🃏 Клик по колоде -> Взять карту")
+			var body = '{}'
+			var headers = ["Content-Type: application/json"]
+			http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+			return # Выходим, не проверяя face_up
 
-		# Если карта лежит рубашкой вверх, клик по ней (в игре Косынка) обычно ничего не делает,
-		# но если это "клик по стопке" (stock), то это отдельная логика.
-		# Для автохода нам нужна открытая карта.
+		# === 2. ПРОВЕРКА ЗАКРЫТОЙ КАРТЫ ===
+		# Для всех остальных стопок (tableau, waste) по закрытым картам ходить нельзя
 		if not card_data["face_up"]:
 			print("ℹ️ Карта закрыта. Автоход невозможен.")
 			return
 
-		# Отправляем запрос на сервер для автохода
+		# === 3. ОБЫЧНЫЙ АВТОХОД ===
+		print("🃏 Клик по карте: ", card_data["rank"], " ", card_data["suit"], " из стопки: ", pile_name)
+
 		var body = JSON.new().stringify({"from": pile_name})
 		var headers = ["Content-Type: application/json"]
 		http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
+
+		# Отправляем запрос на сервер для автохода

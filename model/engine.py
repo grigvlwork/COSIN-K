@@ -198,9 +198,9 @@ class SolitaireEngine:
 
         # print("FROM:", repr(from_pile))
         # print("TO:", repr(to_pile))
-        print(type(self._state.piles))
-        print(self._state.piles.keys())
-        print(self._state.__dict__)
+        # print(type(self._state.piles))
+        # print(self._state.piles.keys())
+        # print(self._state.__dict__)
 
         if source is None or target is None:
             print(f"❌ ERROR: Invalid piles! '{from_pile}' or '{to_pile}' not found.")

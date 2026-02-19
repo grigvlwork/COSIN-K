@@ -8,7 +8,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import sys
 import os
-import time
+# import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -133,8 +133,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """GET запросы."""
-        t0 = time.time()
-        print("GET start")
+        # t0 = time.time()
+        # print("GET start")
         parsed = urlparse(self.path)
         session_id = self._get_session_id()
 
@@ -163,12 +163,12 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     'success': False,
                     'error': 'No active game'
                 }, 404)
-        print("GET done:", time.time() - t0)
+        # print("GET done:", time.time() - t0)
 
     def do_POST(self):
         """POST запросы: действия и создание игры."""
-        t0 = time.time()
-        print("POST start")
+        # t0 = time.time()
+        # print("POST start")
         parsed = urlparse(self.path)
         session_id = self._get_session_id()
 
@@ -370,7 +370,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'success': False,
                 'error': f'Unknown path: {parsed.path}'
             }, 404)
-        print("POST done:", time.time() - t0)
+        # print("POST done:", time.time() - t0)
 
     def log_message(self, format, *args):
         """Минимальное логирование."""
