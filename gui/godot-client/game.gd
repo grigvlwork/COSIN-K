@@ -148,6 +148,14 @@ func _on_menu_pressed():
 # ===== ОТРИСОВКА =====
 
 func draw_game():
+	# Удаляем только карты из колоды
+	for child in $Deck.get_children():
+		if child.name.begins_with("Card_"):
+			child.queue_free()
+	
+	# Удаляем карты из табло (если они там есть)
+	# Примечание: если TableauPositions не контейнер, карты могут быть в корне или Deck
+	# Для надежности можно очистить и корень, если карты там остались от старого кода
 	for child in get_children():
 		if child.name.begins_with("Card_"):
 			child.queue_free()
@@ -161,7 +169,8 @@ func draw_stock():
 	var stock = game_state["stock"]
 	if stock["cards"].size() > 0:
 		var card = stock["cards"][0]
-		draw_card(card, stock_pos.position, false)
+# Передаем $Deck как родителя
+		draw_card(card, stock_pos.position, false, $Deck)
 
 func draw_waste():
 	var waste = game_state["waste"]
@@ -171,7 +180,7 @@ func draw_waste():
 		for i in range(start_idx, cards.size()):
 			var offset = (i - start_idx) * 10
 			var pos = waste_pos.position + Vector2(offset, -offset)
-			draw_card(cards[i], pos, cards[i]["face_up"])
+			draw_card(cards[i], pos, cards[i]["face_up"], $Deck)
 
 func draw_foundations():
 	var foundations = [
@@ -179,7 +188,7 @@ func draw_foundations():
 		{"node": foundation_diamonds, "suit": "DIAMONDS"},
 		{"node": foundation_clubs, "suit": "CLUBS"},
 		{"node": foundation_spades, "suit": "SPADES"}
-	]
+]
 	
 	for f in foundations:
 		var pile_name = "foundation_" + f["suit"]
@@ -187,36 +196,47 @@ func draw_foundations():
 			var pile = game_state["piles"][pile_name]
 			if pile["cards"].size() > 0:
 				var card = pile["cards"][-1]
-				draw_card(card, f["node"].position, true)
-
+# foundation_hearts и т.д. уже являются детьми Deck, так что их position локален
+				draw_card(card, f["node"].position, true, $Deck)
+	
 func draw_tableau():
 	for i in range(7):
 		var pile_name = "tableau_" + str(i)
 		var pile = game_state["piles"][pile_name]
 		var cards = pile["cards"]
 		
-		var x = tableau_positions.position.x + i * (CARD_WIDTH + 20)
+# TableauPositions - это отдельный узел. 
+# Если мы хотим, чтобы карты были внутри Deck, нам нужно считать позицию относительно Deck.
+# Но проще добавить их в $Deck, раз мы его двигаем.
+
+# Вычисляем позицию относительно Deck.
+# Формула: (Позиция TableauPositions - Позиция Deck) + смещение колонны
+		var base_x = ($TableauPositions.position.x - $Deck.position.x) + i * (CARD_WIDTH + 20)
+
 		for j in range(cards.size()):
 			var card = cards[j]
-			var y = tableau_positions.position.y + j * STACK_OFFSET
-			draw_card(card, Vector2(x, y), card["face_up"])
+			var y = ($TableauPositions.position.y - $Deck.position.y) + j * STACK_OFFSET
+			draw_card(card, Vector2(base_x, y), card["face_up"], $Deck)
 
-func draw_card(card_data, position, face_up):
+# Добавили аргумент parent_node
+func draw_card(card_data, position, face_up, parent_node):
 	var sprite = Sprite2D.new()
 	sprite.name = "Card_" + str(randi())
-	
-	# Получаем данные от Python
+
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
-	
-	# ЗАМЕНЯЕМ ВСЮ ЛОГИКУ ПУТЕЙ НА ОДНУ СТРОКУ:
+
 	sprite.texture = DeckManager.get_card_texture(suit, rank, face_up)
-	
-	# Если текстура не загрузилась (ошибка), можно поставить "заглушку", 
-	# чтобы игра не крашнулась, но это опционально.
+
 	if sprite.texture == null:
-		sprite.modulate = Color.RED # Красный цвет как индикатор ошибки
-	
+		sprite.modulate = Color.RED
+
+ # === ИСПРАВЛЕНИЕ ===
+	# Отключаем центрирование. Теперь точка позиции (position) 
+	# будет соответствовать левому верхнему углу картинки.
+	sprite.centered = false
+
 	sprite.position = position
 	sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
-	add_child(sprite)
+
+	parent_node.add_child(sprite)

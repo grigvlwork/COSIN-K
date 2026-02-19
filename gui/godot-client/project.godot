@@ -23,7 +23,7 @@ DeckManager="*res://deck_manager.gd"
 [display]
 
 window/size/viewport_width=1400
-window/size/viewport_height=950
+window/size/viewport_height=900
 
 [rendering]
 
