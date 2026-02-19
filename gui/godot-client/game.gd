@@ -132,8 +132,9 @@ func _on_request_completed(result, response_code, headers, body):
 
 func update_ui():
 	if game_state:
-		score_label.text = "Счет: " + str(game_state["score"])
-		moves_label.text = "Ходы: " + str(game_state["moves_count"])
+		# Используем %d для форматирования как целое число
+		score_label.text = "Счет: %d" % game_state["score"]
+		moves_label.text = "Ходы: %d" % game_state["moves_count"]
 
 func show_win():
 	game_over_panel.show()

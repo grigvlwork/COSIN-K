@@ -234,7 +234,10 @@ class SolitaireEngine:
             cards=cards,
             from_index=from_index
         )
-        score_delta = self.rules.calculate_score(self._state, move_for_score)
+
+        # ИСПРАВЛЕНИЕ: Вызываем score_move и передаем previous_state
+        # previous_state мы запомнили в начале функции (строка self._state до копирования)
+        score_delta = self.rules.score_move(new_state, move_for_score, previous_state)
         new_state.score += score_delta
         new_state.moves_count += 1
 
