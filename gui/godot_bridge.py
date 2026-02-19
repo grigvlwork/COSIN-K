@@ -97,7 +97,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             return engine
 
         except Exception as e:
-            # print(f"❌ [{session_id}] Ошибка создания игры {variant}: {e}")
+            print(f"❌ [{session_id}] Ошибка создания игры {variant}: {e}")
             return None
 
     def _send_response(self, data, status=200):
@@ -117,7 +117,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             self.wfile.write(response_bytes)
             self.wfile.flush()
 
-            print(f"✅ Отправлено {len(response_bytes)} байт: {response[:100]}...")
+            # print(f"✅ Отправлено {len(response_bytes)} байт: {response[:100]}...")
 
         except Exception as e:
             print(f"❌ Ошибка отправки: {e}")

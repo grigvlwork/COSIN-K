@@ -56,8 +56,8 @@ class SolitaireEngine:
         # 4. Создаём начальное состояние
         self._state = GameState(
             piles=dealt_piles,
-            stock=Pile("stock", stock_cards),
-            waste=Pile("waste"),
+            stock=Pile("stock", stock_cards),  # Явно передаем Pile
+            waste=Pile("waste"),  # Явно передаем Pile
             score=0,
             moves_count=0,
             time_elapsed=0
@@ -194,6 +194,8 @@ class SolitaireEngine:
         target = new_state.get_pile(to_pile)
 
         if not source or not target:
+            print(f"❌ ERROR: Invalid piles! '{from_pile}' or '{to_pile}' not found.")
+            print(f"🔍 Available piles: {list(new_state.piles.keys())}")
             raise ValueError(f"Invalid piles: {from_pile} or {to_pile}")
 
         # Запоминаем состояние ДО хода для определения перевернутых карт

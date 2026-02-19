@@ -12,8 +12,6 @@ from .pile import Pile
 class GameState:
     """
     Полное состояние игры в один момент времени.
-    IMMUTABLE по соглашению — никогда не изменяйте существующий GameState,
-    всегда создавайте новый через copy() и модификаторы.
     """
 
     # Стопки игры
@@ -24,7 +22,17 @@ class GameState:
     # Счётчики
     score: int = 0
     moves_count: int = 0
-    time_elapsed: int = 0  # секунды
+    time_elapsed: int = 0
+
+    def __post_init__(self):
+        """
+        Гарантирует, что stock и waste никогда не None.
+        Вызывается автоматически после __init__.
+        """
+        if self.stock is None:
+            self.stock = Pile("stock")
+        if self.waste is None:
+            self.waste = Pile("waste")
 
     # === Доступ к стопкам ===
 
@@ -52,43 +60,32 @@ class GameState:
         result.update(self.piles)
         return result
 
-    # === Копирование (единственный способ "изменения") ===
+    # === Копирование ===
 
     def copy(self) -> "GameState":
         """
-        Создать глубокую копию состояния.
-        Используется для сохранения истории и модификации.
+        Создать безопасную глубокую копию.
         """
+        # 1. Копируем словарь piles
+        new_piles = {}
+        if self.piles:
+            for name, pile in self.piles.items():
+                # Если pile вдруг None, создаем пустой
+                new_piles[name] = pile.copy() if pile else Pile(name)
+
+        # 2. Копируем stock и waste с защитой от None
+        new_stock = self.stock.copy() if self.stock else Pile("stock")
+        new_waste = self.waste.copy() if self.waste else Pile("waste")
+
+        # 3. Возвращаем новый объект
         return GameState(
-            piles={name: pile.copy() for name, pile in self.piles.items()},
-            stock=self.stock.copy(),
-            waste=self.waste.copy(),
+            piles=new_piles,
+            stock=new_stock,
+            waste=new_waste,
             score=self.score,
             moves_count=self.moves_count,
             time_elapsed=self.time_elapsed
         )
-
-    # === Вспомогательные методы для Engine ===
-
-    def with_score(self, delta: int) -> "GameState":
-        """Создать новое состояние с изменённым счётом."""
-        new_state = self.copy()
-        new_state.score += delta
-        return new_state
-
-    def with_move_count(self, delta: int = 1) -> "GameState":
-        """Создать новое состояние с изменённым счётчиком ходов."""
-        new_state = self.copy()
-        new_state.moves_count += delta
-        return new_state
-
-    def with_pile_updated(self, name: str, new_pile: Pile) -> "GameState":
-        """Создать новое состояние с обновлённой стопкой."""
-        new_state = self.copy()
-        new_state.set_pile(name, new_pile)
-        return new_state
-
-    # === Представление ===
 
     def __repr__(self) -> str:
         return (

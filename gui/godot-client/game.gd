@@ -4,6 +4,7 @@ var http = HTTPRequest.new()
 var game_state = null
 var timer = 0.0
 var game_time = 0
+var is_busy = false
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $UI/ScoreLabel
@@ -92,25 +93,36 @@ func get_game_state():
 	http.request(Global.server_url + "/state")
 
 func _on_request_completed(result, response_code, headers, body):
+	is_busy = false # Снимаем блокировку
+
 	var response_text = body.get_string_from_utf8()
 	var json = JSON.new()
 	var error = json.parse(response_text)
-	
+
 	if error == OK:
 		var data = json.data
+
+		# 1. Если это ответ на /new (создание игры)
+		if data.has("variant"):
+			print("✅ Игра создана, запрашиваем состояние...")
+			get_game_state() # Запрашиваем полное состояние отдельным запросом
+			return
+		
+		# 2. Если это ответ на /state или ход
 		if data.has("success"):
-			if data.has("variant"):  # /new
-				print("✅ Игра создана")
-				get_game_state()
-			elif data.has("state"):  # /state
-				print("✅ Состояние получено")
-				game_state = data["state"]
-				update_ui()
-				draw_game()
-				
-				# Проверяем победу
-				if data.has("game_won") and data["game_won"]:
-					show_win()
+			if data["success"] == true:
+				if data.has("state") and data["state"] != null:
+					game_state = data["state"]
+					update_ui()
+					draw_game()
+					
+					if data.has("game_won") and data["game_won"]:
+						show_win()
+			else:
+				# Если success: false, выводим ошибку, но не ломаем игру
+				printerr("⚠️ Ошибка сервера: ", data.get("error", "Unknown error"))
+	else:
+		printerr("❌ Ошибка парсинга JSON")
 
 func update_ui():
 	if game_state:
@@ -169,8 +181,9 @@ func draw_stock():
 	var stock = game_state["stock"]
 	if stock["cards"].size() > 0:
 		var card = stock["cards"][0]
-# Передаем $Deck как родителя
-		draw_card(card, stock_pos.position, false, $Deck)
+		# Для stock не обязательно делать автоход, так как там своя логика (взять карту)
+		# Но если нужно, можно передать "stock". Пока оставим без интерактивности или пустую строку.
+		draw_card(card, stock_pos.position, false, $Deck, "stock")
 
 func draw_waste():
 	var waste = game_state["waste"]
@@ -180,7 +193,8 @@ func draw_waste():
 		for i in range(start_idx, cards.size()):
 			var offset = (i - start_idx) * 10
 			var pos = waste_pos.position + Vector2(offset, -offset)
-			draw_card(cards[i], pos, cards[i]["face_up"], $Deck)
+			# Передаем "waste" как имя стопки
+			draw_card(cards[i], pos, cards[i]["face_up"], $Deck, "waste")
 
 func draw_foundations():
 	var foundations = [
@@ -188,7 +202,7 @@ func draw_foundations():
 		{"node": foundation_diamonds, "suit": "DIAMONDS"},
 		{"node": foundation_clubs, "suit": "CLUBS"},
 		{"node": foundation_spades, "suit": "SPADES"}
-]
+	]
 	
 	for f in foundations:
 		var pile_name = "foundation_" + f["suit"]
@@ -196,8 +210,8 @@ func draw_foundations():
 			var pile = game_state["piles"][pile_name]
 			if pile["cards"].size() > 0:
 				var card = pile["cards"][-1]
-# foundation_hearts и т.д. уже являются детьми Deck, так что их position локален
-				draw_card(card, f["node"].position, true, $Deck)
+				# Передаем pile_name
+				draw_card(card, f["node"].position, true, $Deck, pile_name)
 	
 func draw_tableau():
 	for i in range(7):
@@ -205,24 +219,25 @@ func draw_tableau():
 		var pile = game_state["piles"][pile_name]
 		var cards = pile["cards"]
 		
-# TableauPositions - это отдельный узел. 
-# Если мы хотим, чтобы карты были внутри Deck, нам нужно считать позицию относительно Deck.
-# Но проще добавить их в $Deck, раз мы его двигаем.
-
-# Вычисляем позицию относительно Deck.
-# Формула: (Позиция TableauPositions - Позиция Deck) + смещение колонны
 		var base_x = ($TableauPositions.position.x - $Deck.position.x) + i * (CARD_WIDTH + 20)
-
+		
 		for j in range(cards.size()):
 			var card = cards[j]
 			var y = ($TableauPositions.position.y - $Deck.position.y) + j * STACK_OFFSET
-			draw_card(card, Vector2(base_x, y), card["face_up"], $Deck)
+			# Передаем pile_name
+			draw_card(card, Vector2(base_x, y), card["face_up"], $Deck, pile_name)
 
 # Добавили аргумент parent_node
-func draw_card(card_data, position, face_up, parent_node):
-	var sprite = Sprite2D.new()
-	sprite.name = "Card_" + str(randi())
+# Добавил аргумент pile_name
+func draw_card(card_data, position, face_up, parent_node, pile_name):
+	var area = Area2D.new()
+	area.name = "Card_" + str(randi())
+	area.position = position
+	# Масштабируем всю область (Area2D) целиком
+	area.scale = Vector2(CARD_SCALE, CARD_SCALE)
 
+	# 1. Создаем Спрайт
+	var sprite = Sprite2D.new()
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
 
@@ -231,12 +246,42 @@ func draw_card(card_data, position, face_up, parent_node):
 	if sprite.texture == null:
 		sprite.modulate = Color.RED
 
- # === ИСПРАВЛЕНИЕ ===
-	# Отключаем центрирование. Теперь точка позиции (position) 
-	# будет соответствовать левому верхнему углу картинки.
-	sprite.centered = false
+	# Центрируем спрайт внутри Area2D (offset работает в локальных координатах до скалирования)
+	if sprite.texture:
+		sprite.offset = Vector2(sprite.texture.get_width() / 2.0, sprite.texture.get_height() / 2.0)
 
-	sprite.position = position
-	sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
+	area.add_child(sprite)
 
-	parent_node.add_child(sprite)
+	# 2. Создаем Коллизию (для обработки кликов)
+	var collision = CollisionShape2D.new()
+	var rect = RectangleShape2D.new()
+
+	# Размер коллизии берем из текстуры (оригинальный размер)
+	if sprite.texture:
+		rect.size = Vector2(sprite.texture.get_width(), sprite.texture.get_height())
+
+	collision.shape = rect
+	area.add_child(collision)
+
+	# 3. Подключаем сигнал клика
+	# Передаем pile_name и саму карту (card_data) в обработчик
+	area.input_event.connect(_on_card_clicked.bind(pile_name, card_data))
+
+	parent_node.add_child(area)
+
+func _on_card_clicked(viewport, event, shape_idx, pile_name, card_data):
+	# Проверяем, что это клик левой кнопкой мыши
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		print("🃏 Клик по карте: ", card_data["rank"], " ", 	card_data["suit"], " из стопки: ", pile_name)
+
+		# Если карта лежит рубашкой вверх, клик по ней (в игре Косынка) обычно ничего не делает,
+		# но если это "клик по стопке" (stock), то это отдельная логика.
+		# Для автохода нам нужна открытая карта.
+		if not card_data["face_up"]:
+			print("ℹ️ Карта закрыта. Автоход невозможен.")
+			return
+
+		# Отправляем запрос на сервер для автохода
+		var body = JSON.new().stringify({"from": pile_name})
+		var headers = ["Content-Type: application/json"]
+		http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
