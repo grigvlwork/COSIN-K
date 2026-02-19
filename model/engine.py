@@ -4,6 +4,7 @@ GameEngine — игровая логика и управление ходами.
 
 from typing import List, Callable, Optional, Dict, Any
 import random
+# import time
 from dataclasses import dataclass, field
 
 from .card import Card, Suit, Rank
@@ -65,7 +66,9 @@ class SolitaireEngine:
 
         # 5. Сохраняем в истории
         self.history.clear()
+        # t0 = time.time()
         self.history.push(self._state.copy(), move=None)
+        # print("History push took:", time.time() - t0)
 
         # 6. Уведомляем
         self._notify("game_started", {"seed": seed})
@@ -193,7 +196,13 @@ class SolitaireEngine:
         source = new_state.get_pile(from_pile)
         target = new_state.get_pile(to_pile)
 
-        if not source or not target:
+        # print("FROM:", repr(from_pile))
+        # print("TO:", repr(to_pile))
+        print(type(self._state.piles))
+        print(self._state.piles.keys())
+        print(self._state.__dict__)
+
+        if source is None or target is None:
             print(f"❌ ERROR: Invalid piles! '{from_pile}' or '{to_pile}' not found.")
             print(f"🔍 Available piles: {list(new_state.piles.keys())}")
             raise ValueError(f"Invalid piles: {from_pile} or {to_pile}")

@@ -1,7 +1,7 @@
 extends Node
 
 # Глобальные переменные
-var server_url = "http://localhost:8080"
+var server_url = "http://127.0.0.1:8080"
 var current_variant = "klondike"  # По умолчанию Клондайк
 var draw_three = false            # 1 карта
 

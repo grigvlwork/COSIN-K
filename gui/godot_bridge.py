@@ -4,10 +4,11 @@ Godot выбирает игру, сервер подстраивается.
 """
 
 import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import sys
 import os
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -132,6 +133,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """GET запросы."""
+        t0 = time.time()
+        print("GET start")
         parsed = urlparse(self.path)
         session_id = self._get_session_id()
 
@@ -143,8 +146,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'variants': variants,
                 'default': 'klondike'
             })
-
-
 
         elif parsed.path == '/state':
             # Получить состояние текущей игры
@@ -162,9 +163,12 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     'success': False,
                     'error': 'No active game'
                 }, 404)
+        print("GET done:", time.time() - t0)
 
     def do_POST(self):
         """POST запросы: действия и создание игры."""
+        t0 = time.time()
+        print("POST start")
         parsed = urlparse(self.path)
         session_id = self._get_session_id()
 
@@ -366,6 +370,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'success': False,
                 'error': f'Unknown path: {parsed.path}'
             }, 404)
+        print("POST done:", time.time() - t0)
 
     def log_message(self, format, *args):
         """Минимальное логирование."""
@@ -373,7 +378,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
         pass
 
 
-def start_server(host='localhost', port=8080):
+def start_server(host='127.0.0.1', port=8080):
     """Запуск HTTP сервера."""
     print("=" * 50)
     print("🎮 Solitaire Engine Server")
@@ -386,7 +391,8 @@ def start_server(host='localhost', port=8080):
     print("💡 Каждый клиент - отдельная сессия")
     print("=" * 50)
 
-    server = HTTPServer((host, port), GodotBridgeHandler)
+    server = ThreadingHTTPServer((host, port), GodotBridgeHandler)
+
 
     try:
         print("✅ Сервер готов к работе!")
