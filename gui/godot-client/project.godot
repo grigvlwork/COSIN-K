@@ -18,6 +18,12 @@ config/icon="res://icon.svg"
 [autoload]
 
 Global="*res://global.gd"
+DeckManager="*res://deck_manager.gd"
+
+[display]
+
+window/size/viewport_width=1400
+window/size/viewport_height=950
 
 [rendering]
 

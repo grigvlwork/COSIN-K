@@ -135,12 +135,6 @@ offset_right = 303.0
 offset_bottom = 73.0
 text = "СБРОС"
 
-[node name="TableauPositions" type="Node2D" parent="."]
-position = Vector2(100, 300)
-
-[node name="WastePosition" type="Node2D" parent="."]
-position = Vector2(250, 100)
-
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="ScoreLabel" type="Label" parent="UI"]
@@ -214,3 +208,9 @@ offset_right = 106.0
 offset_bottom = 103.0
 theme_override_font_sizes/font_size = 24
 text = "Счет: 0"
+
+[node name="TableauPositions" type="Node2D" parent="."]
+position = Vector2(100, 300)
+
+[node name="WastePosition" type="Node2D" parent="."]
+position = Vector2(250, 100)

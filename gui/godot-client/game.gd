@@ -205,20 +205,17 @@ func draw_card(card_data, position, face_up):
 	var sprite = Sprite2D.new()
 	sprite.name = "Card_" + str(randi())
 	
-	if face_up:
-		var suit = card_data["suit"]
-		var rank = int(card_data["rank"])
-		
-		var rank_names = {1: "ace", 11: "jack", 12: "queen", 13: "king"}
-		var suit_names = {
-			"HEARTS": "hearts", "DIAMONDS": "diamonds",
-			"CLUBS": "clubs", "SPADES": "spades"
-		}
-		
-		var filename = rank_names.get(rank, str(rank)) + "_of_" + suit_names[suit] + ".png"
-		sprite.texture = load("res://assets/cards/" + filename)
-	else:
-		sprite.texture = load("res://assets/cards/back.png")
+	# Получаем данные от Python
+	var suit = card_data["suit"]
+	var rank = int(card_data["rank"])
+	
+	# ЗАМЕНЯЕМ ВСЮ ЛОГИКУ ПУТЕЙ НА ОДНУ СТРОКУ:
+	sprite.texture = DeckManager.get_card_texture(suit, rank, face_up)
+	
+	# Если текстура не загрузилась (ошибка), можно поставить "заглушку", 
+	# чтобы игра не крашнулась, но это опционально.
+	if sprite.texture == null:
+		sprite.modulate = Color.RED # Красный цвет как индикатор ошибки
 	
 	sprite.position = position
 	sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
