@@ -81,3 +81,10 @@ func get_card_texture(suit: String, rank: int, face_up: bool) -> Texture2D:
 		# Если файла нет (например, мод кривой), возвращаем заглушку или null
 		printerr("⚠️ Файл текстуры не найден: ", file_path)
 		return null
+
+# В DeckManager.gd
+func get_back_texture() -> Texture2D:
+	var path = current_deck_path.path_join("back.png")
+	if ResourceLoader.exists(path):
+		return load(path)
+	return null

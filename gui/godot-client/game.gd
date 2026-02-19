@@ -43,27 +43,33 @@ const STACK_OFFSET = 30
 func _ready():
 	add_child(http)
 	http.request_completed.connect(_on_request_completed)
-	
+
 	# Подключаем кнопки
 	new_game_button.pressed.connect(_on_new_game_pressed)
 	undo_button.pressed.connect(_on_undo_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
-	
-	# СОЗДАЕМ КЛИКАБЕЛЬНУЮ ОБЛАСТЬ ДЛЯ КОЛОДЫ
-	#var click_area = Area2D.new()
-	#var collision = CollisionShape2D.new()
-	#var rect = RectangleShape2D.new()
-	#rect.size = Vector2(100, 145)  # размер карты
-	#collision.shape = rect
-	#
-	#click_area.add_child(collision)
-	#click_area.position = Vector2(0, 0)
-	#click_area.input_pickable = true
-	#click_area.connect("input_event", _on_stock_clicked)
-	#
-	#stock_holder.add_child(click_area)
-	#print("✅ Кликабельная область добавлена на колоду")
-	
+
+	# === ВОЗВРАЩАЕМ ПОСТОЯННУЮ ОБЛАСТЬ ДЛЯ КОЛОДЫ ===
+	# Она нужна, чтобы кликать по пустому месту (для переворота колоды)
+	var click_area = Area2D.new()
+	click_area.name = "StockClickArea" # Даем имя, чтобы не путать с картами
+	var collision = CollisionShape2D.new()
+	var rect = RectangleShape2D.new()
+
+	# Размер области (подбираем под размер карты)
+	rect.size = Vector2(100, 145) 
+	collision.shape = rect
+
+	click_area.add_child(collision)
+	# Важно: отключаем центрирование коллизии, чтобы она вставала ровно в (0,0)
+	collision.position = Vector2(rect.size.x / 2, rect.size.y / 2)
+
+	click_area.input_pickable = true
+	click_area.connect("input_event", _on_stock_clicked)
+
+	# Добавляем её ВНУТРЬ stock_holder
+	stock_holder.add_child(click_area)
+
 	start_new_game()
 
 func start_new_game():
@@ -179,11 +185,30 @@ func draw_game():
 
 func draw_stock():
 	var stock = game_state["stock"]
+	var waste = game_state["waste"]
+
+	# 1. Очищаем старые карты из StockHolder (кроме нашей постоянной области)
+	for child in stock_holder.get_children():
+		if child.name.begins_with("Card_"):
+			child.queue_free()
+			
+	# 2. Если в колоде есть карты - рисуем верхнюю
 	if stock["cards"].size() > 0:
 		var card = stock["cards"][0]
-		# Для stock не обязательно делать автоход, так как там своя логика (взять карту)
-		# Но если нужно, можно передать "stock". Пока оставим без интерактивности или пустую строку.
-		draw_card(card, stock_pos.position, false, $Deck, "stock")
+		draw_card(card, Vector2(0, 0), false, stock_holder, "stock")
+	
+	# 3. Если колода ПУСТА, но в сбросе ЕСТЬ карты - рисуем "пустую" заглушку
+	# (Клик по ней сработает через нашу постоянную область из _ready)
+	elif waste["cards"].size() > 0:
+		# Можно нарисовать специальную карту-заглушку, обозначающую переворот
+		# Используем карту с рубашкой, но полупрозрачную, или специальный спрайт
+		var sprite = Sprite2D.new()
+		sprite.name = "Card_EmptyStock"
+		sprite.texture = DeckManager.get_back_texture() # Или load("res://assets/refresh_icon.png")
+		sprite.modulate = Color(1, 1, 1, 0.3) # Полупрозрачная, чтобы понять, что карт нет
+		sprite.centered = false
+		sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
+		stock_holder.add_child(sprite)
 
 func draw_waste():
 	var waste = game_state["waste"]
