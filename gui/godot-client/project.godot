@@ -11,13 +11,19 @@ config_version=5
 [application]
 
 config/name="project.godot"
-run/main_scene="uid://vbfqvdlvmx0g"
+run/main_scene="uid://lm1rc8mr7au5"
 config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
 
-Global="*res://global.gd"
+Global="*res://scenes/global.gd"
+DeckManager="*res://scenes/deck_manager.gd"
+
+[display]
+
+window/size/viewport_width=1400
+window/size/viewport_height=900
 
 [display]
 

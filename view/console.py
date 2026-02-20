@@ -5,7 +5,7 @@ ConsoleView — консольная реализация отображения
 import os
 import sys
 import re
-# from wcwidth import wcswidth
+from wcwidth import wcswidth
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
