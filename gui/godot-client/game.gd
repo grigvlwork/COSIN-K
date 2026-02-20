@@ -5,11 +5,14 @@ var game_state = null
 var timer = 0.0
 var game_time = 0
 var is_busy = false
+var first_move_made = false  # Был ли сделан первый ход
+var timer_active = false     # Активен ли таймер сейчас
+var last_request_type = ""
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
-@onready var score_label = $UI/ScoreLabel
-@onready var moves_label = $UI/MovesLabel
-@onready var time_label = $UI/TimeLabel
+@onready var score_label = $UI/CountersContainer/ScoreLabel
+@onready var moves_label = $UI/CountersContainer/MovesLabel
+@onready var time_label = $UI/CountersContainer/TimeLabel
 @onready var game_over_panel = $UI/GameOverPanel
 @onready var win_label = $UI/GameOverPanel/WinLabel
 @onready var final_score = $UI/GameOverPanel/FinalScoreLabel
@@ -76,13 +79,16 @@ func start_new_game():
 	print("🎮 Новая игра")
 	game_time = 0
 	timer = 0
+	first_move_made = false
+	timer_active = false
+	update_time_display()  # Сбросить отображение на 00:00
 	game_over_panel.hide()
 	var body = '{"variant":"klondike"}'
 	var headers = ["Content-Type: application/json"]
 	http.request(Global.server_url + "/new", headers, HTTPClient.METHOD_POST, body)
 
 func _process(delta):
-	if game_state and not game_over_panel.visible:
+	if game_state and not game_over_panel.visible and timer_active:
 		timer += delta
 		if timer >= 1.0:
 			timer = 0
@@ -121,6 +127,10 @@ func _on_request_completed(result, response_code, headers, body):
 					game_state = data["state"]
 					update_ui()
 					draw_game()
+					if not first_move_made and (last_request_type == "move" or last_request_type == "draw"):
+						first_move_made = true
+						timer_active = true
+						print("⏱️ Первый ход сделан (" + last_request_type + "), таймер запущен")
 					
 					if data.has("game_won") and data["game_won"]:
 						show_win()
@@ -149,15 +159,18 @@ func _on_stock_clicked(viewport, event, shape_idx):
 			print("🃏 Взять карту из колоды")
 			var body = '{}'
 			var headers = ["Content-Type: application/json"]
+			last_request_type = "draw"
 			http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
 
 func _on_new_game_pressed():
 	start_new_game()
+	last_request_type = ""
 
 func _on_undo_pressed():
 	print("↩ Отмена хода")
 	var body = '{}'
 	var headers = ["Content-Type: application/json"]
+	last_request_type = "undo"
 	http.request(Global.server_url + "/undo", headers, HTTPClient.METHOD_POST, body)
 
 func _on_menu_pressed():
@@ -318,7 +331,7 @@ func _on_card_clicked(viewport, event, shape_idx, pile_name, card_data):
 
 		# === 3. ОБЫЧНЫЙ АВТОХОД ===
 		print("🃏 Клик по карте: ", card_data["rank"], " ", card_data["suit"], " из стопки: ", pile_name)
-
+		last_request_type = "move"
 		var body = JSON.new().stringify({"from": pile_name})
 		var headers = ["Content-Type: application/json"]
 		http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)

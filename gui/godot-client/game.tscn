@@ -126,30 +126,6 @@ position = Vector2(250, 100)
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="ScoreLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 76.0
-offset_bottom = 43.0
-theme_override_font_sizes/font_size = 20
-text = "Счет: 0"
-
-[node name="MovesLabel" type="Label" parent="UI"]
-offset_left = 200.0
-offset_top = 20.0
-offset_right = 276.0
-offset_bottom = 48.0
-theme_override_font_sizes/font_size = 20
-text = "Ходы: 0"
-
-[node name="TimeLabel" type="Label" parent="UI"]
-offset_left = 380.0
-offset_top = 20.0
-offset_right = 507.0
-offset_bottom = 48.0
-theme_override_font_sizes/font_size = 20
-text = "Время: 00:00"
-
 [node name="Buttons" type="HBoxContainer" parent="UI"]
 anchors_preset = 7
 anchor_left = 0.5
@@ -203,6 +179,30 @@ offset_right = 106.0
 offset_bottom = 103.0
 theme_override_font_sizes/font_size = 24
 text = "Счет: 0"
+
+[node name="CountersContainer" type="HBoxContainer" parent="UI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -140.5
+offset_right = 140.5
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="ScoreLabel" type="Label" parent="UI/CountersContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Счет: 0"
+
+[node name="MovesLabel" type="Label" parent="UI/CountersContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Ходы: 0"
+
+[node name="TimeLabel" type="Label" parent="UI/CountersContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Время: 00:00"
 
 [node name="TableauPositions" type="Node2D" parent="."]
 position = Vector2(100, 270)

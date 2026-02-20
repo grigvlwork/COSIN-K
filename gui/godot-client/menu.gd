@@ -1,8 +1,8 @@
-extends Node2D
+extends Control
 
-@onready var game_select = $GameSelectButton
-@onready var start_button = $StartButton
-@onready var quit_button = $QuitButton
+@onready var game_select = $MainContainer/GameSelectButton
+@onready var start_button = $MainContainer/StartButton
+@onready var quit_button = $MainContainer/QuitButton
 
 # Список доступных игр (пока только одна)
 var games = ["Клондайк"]
