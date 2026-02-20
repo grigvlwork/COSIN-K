@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0afbfplxkbca"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eow3j"]
+bg_color = Color(0, 0, 0, 0.8)
+
+[node name="GameOverPanel" type="Panel"]
+visible = false
+offset_left = 400.0
+offset_top = 250.0
+offset_right = 700.0
+offset_bottom = 400.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_eow3j")
+
+[node name="WinLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 30.0
+offset_right = 230.0
+offset_bottom = 72.0
+theme_override_font_sizes/font_size = 30
+text = "🎉 ПОБЕДА!"
+
+[node name="FinalScoreLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 80.0
+offset_right = 106.0
+offset_bottom = 103.0
+theme_override_font_sizes/font_size = 24
+text = "Счет: 0"

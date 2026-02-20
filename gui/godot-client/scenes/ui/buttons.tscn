@@ -1,0 +1,51 @@
+[gd_scene load_steps=7 format=3 uid="uid://djsfhu74iej22"]
+
+[sub_resource type="InputEventKey" id="InputEventKey_80nbo"]
+device = -1
+keycode = 4194333
+
+[sub_resource type="Shortcut" id="Shortcut_e2o6t"]
+events = [SubResource("InputEventKey_80nbo")]
+
+[sub_resource type="InputEventKey" id="InputEventKey_feb5d"]
+device = -1
+ctrl_pressed = true
+keycode = 90
+
+[sub_resource type="Shortcut" id="Shortcut_fc0e3"]
+events = [SubResource("InputEventKey_feb5d")]
+
+[sub_resource type="InputEventKey" id="InputEventKey_7jktm"]
+device = -1
+keycode = 4194305
+
+[sub_resource type="Shortcut" id="Shortcut_ryrav"]
+events = [SubResource("InputEventKey_7jktm")]
+
+[node name="Buttons" type="HBoxContainer"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -223.0
+offset_top = -40.0
+offset_right = 223.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 10
+
+[node name="NewGameButton" type="Button" parent="."]
+layout_mode = 2
+shortcut = SubResource("Shortcut_e2o6t")
+text = "🔄 Новая игра (F2)"
+
+[node name="UndoButton" type="Button" parent="."]
+layout_mode = 2
+shortcut = SubResource("Shortcut_fc0e3")
+text = "↩ Отмена (Ctrl+Z)"
+
+[node name="MenuButton" type="Button" parent="."]
+layout_mode = 2
+shortcut = SubResource("Shortcut_ryrav")
+text = "🏠 Меню (Esc)"

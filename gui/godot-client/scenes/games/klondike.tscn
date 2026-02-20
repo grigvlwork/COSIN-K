@@ -1,0 +1,91 @@
+[gd_scene load_steps=4 format=3 uid="uid://cgy7udkbdl6vx"]
+
+[ext_resource type="Script" uid="uid://cljbwv2355o4v" path="res://scenes/games/klondike.gd" id="1_ae4ji"]
+[ext_resource type="PackedScene" uid="uid://1hhgj4vbjqcn" path="res://scenes/ui/counters_container.tscn" id="2_u1vkt"]
+[ext_resource type="PackedScene" uid="uid://djsfhu74iej22" path="res://scenes/ui/buttons.tscn" id="3_cnung"]
+
+[node name="Klondike" type="Node2D"]
+script = ExtResource("1_ae4ji")
+
+[node name="Display" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainLayout" type="VBoxContainer" parent="Display"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="CountersContainer" parent="Display/MainLayout" instance=ExtResource("2_u1vkt")]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="UpperRow" type="HBoxContainer" parent="Display/MainLayout"]
+custom_minimum_size = Vector2(400, 150)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="StoskSlot" type="Control" parent="Display/MainLayout/UpperRow"]
+layout_mode = 2
+
+[node name="WasteSlot" type="Control" parent="Display/MainLayout/UpperRow"]
+layout_mode = 2
+
+[node name="HSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
+layout_mode = 2
+
+[node name="FoundationsGroup" type="HBoxContainer" parent="Display/MainLayout/UpperRow"]
+layout_mode = 2
+
+[node name="Hearts" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+layout_mode = 2
+
+[node name="Diamonds" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+layout_mode = 2
+
+[node name="Clubs" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+layout_mode = 2
+
+[node name="Spades" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+layout_mode = 2
+
+[node name="LowerRow" type="HBoxContainer" parent="Display/MainLayout"]
+custom_minimum_size = Vector2(700, 150)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Tableau_0" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+
+[node name="Tableau_1" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+
+[node name="Tableau_2" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+
+[node name="Tableau_3" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+
+[node name="Tableau_4" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+
+[node name="Tableau_5" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+
+[node name="Tableau_6" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+
+[node name="Buttons" parent="Display/MainLayout" instance=ExtResource("3_cnung")]
+layout_mode = 2
+alignment = 1

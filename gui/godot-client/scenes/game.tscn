@@ -1,31 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://dvw0p4r8emskb"]
+[gd_scene load_steps=5 format=3 uid="uid://dvw0p4r8emskb"]
 
 [ext_resource type="Script" uid="uid://b2pvvyyx6ystb" path="res://scenes/game.gd" id="1_80nbo"]
-
-[sub_resource type="InputEventKey" id="InputEventKey_80nbo"]
-device = -1
-keycode = 4194333
-
-[sub_resource type="Shortcut" id="Shortcut_e2o6t"]
-events = [SubResource("InputEventKey_80nbo")]
-
-[sub_resource type="InputEventKey" id="InputEventKey_feb5d"]
-device = -1
-ctrl_pressed = true
-keycode = 90
-
-[sub_resource type="Shortcut" id="Shortcut_fc0e3"]
-events = [SubResource("InputEventKey_feb5d")]
-
-[sub_resource type="InputEventKey" id="InputEventKey_7jktm"]
-device = -1
-keycode = 4194305
-
-[sub_resource type="Shortcut" id="Shortcut_ryrav"]
-events = [SubResource("InputEventKey_7jktm")]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eow3j"]
-bg_color = Color(0, 0, 0, 0.8)
+[ext_resource type="PackedScene" uid="uid://djsfhu74iej22" path="res://scenes/ui/buttons.tscn" id="2_lbhrr"]
+[ext_resource type="PackedScene" uid="uid://d0afbfplxkbca" path="res://scenes/ui/game_over_panel.tscn" id="3_iywne"]
+[ext_resource type="PackedScene" uid="uid://1hhgj4vbjqcn" path="res://scenes/ui/counters_container.tscn" id="4_p57ef"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_80nbo")
@@ -126,83 +104,11 @@ position = Vector2(250, 100)
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Buttons" type="HBoxContainer" parent="UI"]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -223.0
-offset_top = -40.0
-offset_right = 223.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 10
+[node name="Buttons" parent="UI" instance=ExtResource("2_lbhrr")]
 
-[node name="NewGameButton" type="Button" parent="UI/Buttons"]
-layout_mode = 2
-shortcut = SubResource("Shortcut_e2o6t")
-text = "🔄 Новая игра (F2)"
+[node name="GameOverPanel" parent="UI" instance=ExtResource("3_iywne")]
 
-[node name="UndoButton" type="Button" parent="UI/Buttons"]
-layout_mode = 2
-shortcut = SubResource("Shortcut_fc0e3")
-text = "↩ Отмена (Ctrl+Z)"
-
-[node name="MenuButton" type="Button" parent="UI/Buttons"]
-layout_mode = 2
-shortcut = SubResource("Shortcut_ryrav")
-text = "🏠 Меню (Esc)"
-
-[node name="GameOverPanel" type="Panel" parent="UI"]
-visible = false
-offset_left = 400.0
-offset_top = 250.0
-offset_right = 700.0
-offset_bottom = 400.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_eow3j")
-
-[node name="WinLabel" type="Label" parent="UI/GameOverPanel"]
-layout_mode = 0
-offset_left = 50.0
-offset_top = 30.0
-offset_right = 230.0
-offset_bottom = 72.0
-theme_override_font_sizes/font_size = 30
-text = "🎉 ПОБЕДА!"
-
-[node name="FinalScoreLabel" type="Label" parent="UI/GameOverPanel"]
-layout_mode = 0
-offset_left = 50.0
-offset_top = 80.0
-offset_right = 106.0
-offset_bottom = 103.0
-theme_override_font_sizes/font_size = 24
-text = "Счет: 0"
-
-[node name="CountersContainer" type="HBoxContainer" parent="UI"]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -140.5
-offset_right = 140.5
-offset_bottom = 40.0
-grow_horizontal = 2
-
-[node name="ScoreLabel" type="Label" parent="UI/CountersContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Счет: 0"
-
-[node name="MovesLabel" type="Label" parent="UI/CountersContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Ходы: 0"
-
-[node name="TimeLabel" type="Label" parent="UI/CountersContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Время: 00:00"
+[node name="CountersContainer" parent="UI" instance=ExtResource("4_p57ef")]
 
 [node name="TableauPositions" type="Node2D" parent="."]
 position = Vector2(100, 270)
