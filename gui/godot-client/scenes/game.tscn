@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3 uid="uid://dvw0p4r8emskb"]
 
-[ext_resource type="Script" uid="uid://b2pvvyyx6ystb" path="res://game.gd" id="1_80nbo"]
+[ext_resource type="Script" uid="uid://b2pvvyyx6ystb" path="res://scenes/game.gd" id="1_80nbo"]
 
 [sub_resource type="InputEventKey" id="InputEventKey_80nbo"]
 device = -1

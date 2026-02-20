@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://vbfqvdlvmx0g"]
 
-[ext_resource type="Script" uid="uid://dbiogk2c3ntyi" path="res://splash.gd" id="1_b04ml"]
+[ext_resource type="Script" uid="uid://dbiogk2c3ntyi" path="res://scenes/splash.gd" id="1_b04ml"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_a3dr8"]
 

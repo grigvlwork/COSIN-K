@@ -17,8 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Global="*res://global.gd"
-DeckManager="*res://deck_manager.gd"
+Global="*res://scenes/global.gd"
+DeckManager="*res://scenes/deck_manager.gd"
 
 [display]
 
