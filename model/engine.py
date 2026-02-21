@@ -305,6 +305,7 @@ class SolitaireEngine:
             return False
 
         cards = new_state.waste.take(len(new_state.waste))
+        cards.reverse()
         cards = [card.make_face_down() for card in cards]
         new_state.stock.add(cards)
 
