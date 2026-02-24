@@ -54,24 +54,23 @@ class KlondikeRules(RuleSet):
         return PileType.RESERVE
 
     def deal(self, deck: List["Card"]) -> Dict[str, "Pile"]:
-        """Раздать 7 столбцов: 1, 2, 3... 7 карт."""
+        """Раздать 7 столбцов и 4 пустые базы (по индексам)."""
         piles = {}
         idx = 0
 
+        # Раздаём tableau
         for col in range(7):
             pile = Pile(f"tableau_{col}")
-
             for row in range(col + 1):
                 card = deck[idx]
                 is_last = (row == col)
                 pile.put(Card(card.suit, card.rank, face_up=is_last))
                 idx += 1
-
             piles[f"tableau_{col}"] = pile
 
-        # Создаём пустые базы
-        for suit in Suit:
-            piles[f"foundation_{suit.name}"] = Pile(f"foundation_{suit.name}")
+        # Создаём 4 пустые базы (индексы 0-3, без привязки к масти!)
+        for i in range(4):
+            piles[f"foundation_{i}"] = Pile(f"foundation_{i}")
 
         return piles
 
@@ -94,20 +93,20 @@ class KlondikeRules(RuleSet):
         )
 
     def _can_build_foundation(self, pile: "Pile", cards: List["Card"]) -> bool:
-        """База: одна масть, возрастание от туза."""
+        """База: пустая принимает Туза, занятая — карту той же масти +1 ранг."""
         if len(pile) >= 13:
             return False
-
         if len(cards) != 1:
             return False
 
         card = cards[0]
 
         if pile.is_empty():
+            # Пустая база принимает ТОЛЬКО Туза (любой масти)
             return card.rank == Rank.ACE
 
+        # Занятая база: проверяем масть и ранг относительно ВЕРХНЕЙ карты
         top = pile.top()
-
         return (
                 top.suit == card.suit and
                 card.rank.value == top.rank.value + 1
@@ -221,9 +220,9 @@ class KlondikeRules(RuleSet):
     # === ПОБЕДА ===
 
     def _check_all_foundations_full(self, state: "GameState") -> bool:
-        """Проверить, что все базы заполнены."""
-        for suit in Suit:
-            pile = state.piles.get(f"foundation_{suit.name}")
+        """Проверить, что все 4 базы заполнены (по 13 карт)."""
+        for i in range(4):
+            pile = state.piles.get(f"foundation_{i}")
             if pile is None or len(pile) != 13:
                 return False
         return True
@@ -279,8 +278,8 @@ class KlondikeRules(RuleSet):
                         moves.append(move)
 
                 # 2.2 ХОДЫ НА FOUNDATION
-                for suit in Suit:
-                    target_name = f"foundation_{suit.name}"
+                for i in range(4):
+                    target_name = f"foundation_{i}"
                     target_pile = state.piles.get(target_name)
 
                     # На foundation можно класть только 1 карту
@@ -299,8 +298,8 @@ class KlondikeRules(RuleSet):
 
         # 3. ХОДЫ ИЗ FOUNDATION
         # (обратно на tableau - со штрафом, но разрешено в некоторых ситуациях)
-        for suit in Suit:
-            pile_name = f"foundation_{suit.name}"
+        for i in range(4):
+            pile_name = f"foundation_{i}"
             pile = state.piles.get(pile_name)
             if not pile or pile.is_empty():
                 continue
@@ -311,7 +310,6 @@ class KlondikeRules(RuleSet):
             # Ходы на tableau
             for target_col in range(7):
                 target_name = f"tableau_{target_col}"
-
                 move = Move(
                     from_pile=pile_name,
                     to_pile=target_name,
@@ -328,8 +326,9 @@ class KlondikeRules(RuleSet):
             cards = [state.waste.top()]
 
             # 4.1 На foundation
-            for suit in Suit:
-                target_name = f"foundation_{suit.name}"
+            for i in range(4):
+                target_name = f"foundation_{i}"
+                # target_pile = state.piles.get(target_name)
                 move = Move(
                     from_pile=pile_name,
                     to_pile=target_name,

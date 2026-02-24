@@ -39,8 +39,18 @@ func _on_start_pressed():
 		if games[current_game_index] == "Клондайк":
 			Global.current_variant = "klondike"
 
+	# ✅ ИСПРАВЛЕННЫЙ ПУТЬ к новой сцене
+	# Убедись, что путь точно совпадает с расположением твоего файла!
+	var scene_path = "res://scenes/games/klondike.tscn"
+	
+	# Проверка: если файла нет, выведем ошибку в консоль, но не будем крашить игру
+	if not ResourceLoader.exists(scene_path):
+		printerr("❌ Файл сцены не найден: ", scene_path)
+		print("💡 Текущий путь: ", ProjectSettings.globalize_path(scene_path))
+		return
+
 	# Переходим на экран игры
-	get_tree().change_scene_to_file("res://game.tscn")
+	get_tree().change_scene_to_file(scene_path)
 
 func _on_quit_pressed():
 	"""Выход из игры"""
