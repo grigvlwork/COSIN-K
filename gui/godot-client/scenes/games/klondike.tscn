@@ -49,12 +49,13 @@ layout_mode = 2
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/StockSlot"]
 
 [node name="WasteSlot" type="Control" parent="Display/MainLayout/UpperRow"]
-custom_minimum_size = Vector2(100, 150)
+custom_minimum_size = Vector2(100, 200)
 layout_mode = 2
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/WasteSlot"]
 
 [node name="HSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
+custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 
 [node name="FoundationsGroup" type="HBoxContainer" parent="Display/MainLayout/UpperRow"]
@@ -86,7 +87,7 @@ layout_mode = 2
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation3"]
 
 [node name="LowerRow" type="HBoxContainer" parent="Display/MainLayout"]
-custom_minimum_size = Vector2(700, 150)
+custom_minimum_size = Vector2(800, 350)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
@@ -133,7 +134,11 @@ layout_mode = 2
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_6"]
 
+[node name="VSpacer" type="Control" parent="Display/MainLayout"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+
 [node name="Buttons" parent="Display/MainLayout" instance=ExtResource("3_cnung")]
-custom_minimum_size = Vector2(50, 300)
+custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 alignment = 1

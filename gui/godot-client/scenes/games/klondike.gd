@@ -54,23 +54,28 @@ func _ready():
 	undo_button.pressed.connect(_on_undo_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
 
-	# === ОБЛАСТЬ ДЛЯ КЛИКА ПО КОЛОДЕ ===
-	var click_area = Area2D.new()
-	click_area.name = "StockClickArea"
-	var collision = CollisionShape2D.new()
-	var rect = RectangleShape2D.new()
-	rect.size = Vector2(100, 145)
-	collision.shape = rect
-	click_area.add_child(collision)
-	collision.position = Vector2(rect.size.x / 2, rect.size.y / 2)
-	click_area.input_pickable = true
-	click_area.connect("input_event", _on_stock_clicked)
-	stock_slot.add_child(click_area)
-# === ОТЛАДКА ПОЗИЦИЙ ===
-	print("📍 Глобальные позиции слотов:")
-	print("  StockSlot: ", stock_slot.global_position)
-	print("  Foundation0: ", foundation_0.global_position)
-	print("  Tableau_0: ", tableau_slots[0].global_position)
+	# === ОБЛАСТЬ ДЛЯ КЛИКА ПО КОЛОДЕ (ИСПРАВЛЕНО) ===
+# Используем Control вместо Area2D для совместимости с Control-иерархией
+	var stock_click_area = Control.new()
+	stock_click_area.name = "StockClickArea"
+
+# Задаём размер области (под размер карты)
+	stock_click_area.custom_minimum_size = Vector2(100, 145)
+
+# Останавливаем события здесь
+	stock_click_area.mouse_filter = Control.MOUSE_FILTER_STOP
+
+# ✅ Подключаем gui_input (вместо input_event!)
+	stock_click_area.gui_input.connect(_on_stock_clicked)
+
+	stock_slot.add_child(stock_click_area)
+	# Для каждого слота (можно добавить в _ready после инициализации):
+	stock_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	waste_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for slot in foundation_slots():
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for slot in tableau_slots:
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	start_new_game()
 
 func start_new_game():
@@ -147,14 +152,23 @@ func show_win():
 
 # ===== КЛИКИ И КНОПКИ =====
 
-func _on_stock_clicked(viewport, event, shape_idx):
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			print("🃏 Взять карту из колоды")
-			var body = '{}'
-			var headers = ["Content-Type: application/json"]
-			last_request_type = "draw"
-			http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+#func _on_stock_clicked(viewport, event, shape_idx):
+	#if event is InputEventMouseButton and event.pressed:
+		#if event.button_index == MOUSE_BUTTON_LEFT:
+			#print("🃏 Взять карту из колоды")
+			#var body = '{}'
+			#var headers = ["Content-Type: application/json"]
+			#last_request_type = "draw"
+			#http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+
+# ✅ Подпись для gui_input (1 параметр)
+func _on_stock_clicked(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		print("🃏 Взять карту из колоды")
+		var body = '{}'
+		var headers = ["Content-Type: application/json"]
+		last_request_type = "draw"
+		http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
 
 func _on_new_game_pressed():
 	start_new_game()
@@ -190,6 +204,14 @@ func draw_game():
 	draw_tableau()
 
 func _clear_cards_from_slot(slot: Control):
+	# 1. Ищем CardLayer внутри слота
+	var card_layer = slot.get_node_or_null("CardLayer")
+	if card_layer:
+		# 2. Очищаем карты внутри CardLayer
+		for child in card_layer.get_children():
+			if child.name.begins_with("Card_"):
+				child.queue_free()
+	# 3. На всякий случай чистим и прямых детей (защита от старого кода)
 	for child in slot.get_children():
 		if child.name.begins_with("Card_"):
 			child.queue_free()
@@ -259,19 +281,19 @@ func draw_tableau():
 func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vector2 = Vector2(0, 0)):
 	# === НАЙДИ CardLayer ВНУТРИ СЛОТА ===
 	var card_layer = parent_slot.get_node_or_null("CardLayer")
-	
-	# Если CardLayer нет — создаём его на лету (защита от ошибок)
 	if card_layer == null:
 		card_layer = Node2D.new()
 		card_layer.name = "CardLayer"
 		parent_slot.add_child(card_layer)
 	
-	# === СОЗДАЁМ КАРТУ ===
-	var area = Area2D.new()
-	area.name = "Card_" + str(randi())
-	area.position = offset  # Позиция относительно CardLayer
-	area.scale = Vector2(CARD_SCALE, CARD_SCALE)
-
+	# === СОЗДАЁМ КАРТУ КАК Control (не Area2D!) ===
+	var card_control = Control.new()
+	card_control.name = "Card_" + str(randi())
+	card_control.position = offset
+	card_control.mouse_filter = Control.MOUSE_FILTER_STOP  # Останавливаем события здесь
+	card_control.z_index = 100  # Поверх других
+	
+	# === СПРАЙТ ===
 	var sprite = Sprite2D.new()
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
@@ -279,28 +301,31 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 
 	if sprite.texture == null:
 		sprite.modulate = Color.RED
-
+	
 	sprite.centered = false
-	area.add_child(sprite)
-
-	var collision = CollisionShape2D.new()
-	var rect = RectangleShape2D.new()
-
+	sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
+	# Размер контрола = размеру спрайта
 	if sprite.texture:
-		var w = sprite.texture.get_width()
-		var h = sprite.texture.get_height()
-		rect.size = Vector2(w, h)
-		collision.position = Vector2(w / 2.0, h / 2.0)
+		card_control.custom_minimum_size = Vector2(
+			sprite.texture.get_width() * CARD_SCALE,
+			sprite.texture.get_height() * CARD_SCALE
+		)
+	
+	card_control.add_child(sprite)
+	
+	# === КОЛЛИЗИЯ (для Area2D не нужна, но оставим для совместимости) ===
+	# Можно убрать, если используешь только gui_input
+	
+	# === ПОДКЛЮЧАЕМ gui_input (вместо input_event!) ===
+	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data))
+	
+	# === ДОБАВЛЯЕМ В CardLayer ===
+	card_layer.add_child(card_control)
 
-	collision.shape = rect
-	area.add_child(collision)
+# ✅ Подпись для gui_input: 1 параметр (event) + 2 bound = 3 всего
+func _on_card_clicked(event, pile_name, card_data):
+	print("🖱️ Клик зарегистрирован! pile_name=", pile_name)
 
-	area.input_event.connect(_on_card_clicked.bind(pile_name, card_data))
-
-	# === ДОБАВЛЯЕМ В CardLayer, А НЕ В СЛОТ НАПРЯМУЮ ===
-	card_layer.add_child(area)
-
-func _on_card_clicked(viewport, event, shape_idx, pile_name, card_data):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if is_busy:
 			return
@@ -321,3 +346,28 @@ func _on_card_clicked(viewport, event, shape_idx, pile_name, card_data):
 		var body = JSON.new().stringify({"from": pile_name})
 		var headers = ["Content-Type: application/json"]
 		http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
+
+# ✅ Правильная подпись для Godot 4.x
+#func _on_card_clicked(viewport, event, shape_idx, pile_name, card_data):
+	## Проверяем, что это клик левой кнопкой мыши
+	#print("🖱️ Клик зарегистрирован! pile_name=", pile_name)
+	#if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		#if is_busy:
+			#return
+		#
+		#if pile_name == "stock":
+			#print("🃏 Клик по колоде -> Взять карту")
+			#var body = '{}'
+			#var headers = ["Content-Type: application/json"]
+			#http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+			#return
+#
+		#if not card_data["face_up"]:
+			#print("ℹ️ Карта закрыта. Автоход невозможен.")
+			#return
+#
+		#print("🃏 Клик по карте: ", card_data["rank"], " ", card_data["suit"], " из стопки: ", pile_name)
+		#last_request_type = "move"
+		#var body = JSON.new().stringify({"from": pile_name})
+		#var headers = ["Content-Type: application/json"]
+		#http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
