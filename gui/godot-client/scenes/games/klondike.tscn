@@ -4,11 +4,17 @@
 [ext_resource type="PackedScene" uid="uid://1hhgj4vbjqcn" path="res://scenes/ui/counters_container.tscn" id="2_u1vkt"]
 [ext_resource type="PackedScene" uid="uid://djsfhu74iej22" path="res://scenes/ui/buttons.tscn" id="3_cnung"]
 
-[node name="Klondike" type="Node2D"]
+[node name="Klondike" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_ae4ji")
 
 [node name="Display" type="Control" parent="."]
-layout_mode = 3
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -25,67 +31,114 @@ grow_vertical = 2
 theme_override_constants/separation = 10
 
 [node name="CountersContainer" parent="Display/MainLayout" instance=ExtResource("2_u1vkt")]
+custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
 [node name="UpperRow" type="HBoxContainer" parent="Display/MainLayout"]
-custom_minimum_size = Vector2(400, 150)
+custom_minimum_size = Vector2(900, 150)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="StoskSlot" type="Control" parent="Display/MainLayout/UpperRow"]
+[node name="StockSlot" type="Control" parent="Display/MainLayout/UpperRow"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/StockSlot"]
 
 [node name="WasteSlot" type="Control" parent="Display/MainLayout/UpperRow"]
+custom_minimum_size = Vector2(100, 200)
 layout_mode = 2
 
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/WasteSlot"]
+
 [node name="HSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
+custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 
 [node name="FoundationsGroup" type="HBoxContainer" parent="Display/MainLayout/UpperRow"]
+custom_minimum_size = Vector2(400, 150)
 layout_mode = 2
 
-[node name="Hearts" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="Foundation0" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
 
-[node name="Diamonds" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation0"]
+
+[node name="Foundation1" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
 
-[node name="Clubs" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation1"]
+
+[node name="Foundation2" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
 
-[node name="Spades" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation2"]
+
+[node name="Foundation3" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation3"]
 
 [node name="LowerRow" type="HBoxContainer" parent="Display/MainLayout"]
-custom_minimum_size = Vector2(700, 150)
+custom_minimum_size = Vector2(800, 350)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
 [node name="Tableau_0" type="Control" parent="Display/MainLayout/LowerRow"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_0"]
 
 [node name="Tableau_1" type="Control" parent="Display/MainLayout/LowerRow"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_1"]
 
 [node name="Tableau_2" type="Control" parent="Display/MainLayout/LowerRow"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_2"]
 
 [node name="Tableau_3" type="Control" parent="Display/MainLayout/LowerRow"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_3"]
 
 [node name="Tableau_4" type="Control" parent="Display/MainLayout/LowerRow"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_4"]
 
 [node name="Tableau_5" type="Control" parent="Display/MainLayout/LowerRow"]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
 
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_5"]
+
 [node name="Tableau_6" type="Control" parent="Display/MainLayout/LowerRow"]
+custom_minimum_size = Vector2(100, 150)
+layout_mode = 2
+
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_6"]
+
+[node name="VSpacer" type="Control" parent="Display/MainLayout"]
+custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 
 [node name="Buttons" parent="Display/MainLayout" instance=ExtResource("3_cnung")]
+custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 alignment = 1
