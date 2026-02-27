@@ -1,0 +1,96 @@
+[gd_scene load_steps=2 format=3 uid="uid://c10rm88rne71i"]
+
+[ext_resource type="Script" uid="uid://dwjogtafuborq" path="res://scenes/player_stats.gd" id="1_d0gwb"]
+
+[node name="PlayerStats" type="Window"]
+oversampling_override = 1.0
+script = ExtResource("1_d0gwb")
+
+[node name="MainContainer" type="VBoxContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MainContainer"]
+layout_mode = 2
+
+[node name="PlayerNameLabel" type="Label" parent="MainContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="EditNameButton" type="Button" parent="MainContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="StatsTabs" type="TabContainer" parent="MainContainer"]
+layout_mode = 2
+current_tab = 0
+
+[node name="OverviewTab" type="VBoxContainer" parent="MainContainer/StatsTabs"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="GridContainer" type="GridContainer" parent="MainContainer/StatsTabs/OverviewTab"]
+layout_mode = 2
+columns = 2
+
+[node name="GamesPlayedLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "Игр сыграно:"
+
+[node name="GamesPlayedValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="GamesWonLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "Побед:"
+
+[node name="GamesWonValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="WinRateLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "Процент побед:"
+
+[node name="WinRateValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "0%"
+
+[node name="TotalScoreLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "Всего очков:"
+
+[node name="TotalScoreValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="HighestScoreLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "Рекорд:"
+
+[node name="HighestScoreValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="TotalHoursLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "Время в игре:"
+
+[node name="TotalHoursValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+layout_mode = 2
+text = "0.0"
+
+[node name="StreaksPanel" type="Panel" parent="MainContainer/StatsTabs/OverviewTab"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="CurrentWinlabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "Серия побед:0"
+
+[node name="MaxWinLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "Рекорд серии побед:0"
