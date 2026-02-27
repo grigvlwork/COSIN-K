@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?taskcoach release="1.4.6" tskversion="37"?>
+
+<tasks>
+<task actualstartdate="2026-02-27 08:55:16.924000" creationDateTime="2026-02-27 08:48:00.260000" expandedContexts="('taskviewer',)" id="58d8b440-137e-11f1-aefa-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:34.443000" status="1" subject="Разработка пасьянса">
+<task creationDateTime="2026-02-27 09:04:08.363000" id="99e17fae-1380-11f1-a519-ce7a14ba6107" modificationDateTime="2026-02-27 09:04:50.521000" status="1" subject="Дальнее планирование">
+<task creationDateTime="2026-02-27 08:53:37.906000" id="2219651e-137f-11f1-829e-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:13.896000" status="1" subject="Базовая верстка">
+<task actualstartdate="2026-02-27 08:55:10.964000" creationDateTime="2026-02-27 08:54:08.627000" id="34690c30-137f-11f1-9d8c-ce7a14ba6107" modificationDateTime="2026-02-27 08:55:10.964000" status="1" subject="Масштабирование под разные экраны" />
+<task actualstartdate="2026-02-27 08:55:06.787000" creationDateTime="2026-02-27 08:54:37.099000" id="456187b0-137f-11f1-8f80-ce7a14ba6107" modificationDateTime="2026-02-27 08:55:06.787000" status="1" subject="Цвета и стили" />
+</task>
+<task creationDateTime="2026-02-27 08:55:48.054000" id="6fac675e-137f-11f1-aaed-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:16.980000" status="1" subject="Перемещение карт">
+<task actualstartdate="2026-02-27 08:56:26.784000" creationDateTime="2026-02-27 08:56:10.766000" id="7d35fae1-137f-11f1-b810-ce7a14ba6107" modificationDateTime="2026-02-27 08:56:26.783000" status="1" subject="Drag &amp; Drop карт" />
+<task actualstartdate="2026-02-27 08:56:46.351000" creationDateTime="2026-02-27 08:56:30.341000" id="88e0e351-137f-11f1-b008-ce7a14ba6107" modificationDateTime="2026-02-27 08:56:46.351000" status="1" subject="Визуальный &quot;полет&quot; карты" />
+<task actualstartdate="2026-02-27 08:57:02.039000" creationDateTime="2026-02-27 08:56:49.037000" id="9405abcf-137f-11f1-95f6-ce7a14ba6107" modificationDateTime="2026-02-27 08:57:02.039000" status="1" subject="Сброс при невозможности хода" />
+</task>
+<task creationDateTime="2026-02-27 08:57:21.534000" expandedContexts="('taskviewer',)" id="a76451de-137f-11f1-9471-ce7a14ba6107" modificationDateTime="2026-02-27 08:58:14.535000" prerequisites="99e17fae-1380-11f1-a519-ce7a14ba6107" status="1" subject="Контекстные действия">
+<task creationDateTime="2026-02-27 08:57:45.454000" id="b5a638de-137f-11f1-87f0-ce7a14ba6107" modificationDateTime="2026-02-27 08:57:50.343000" status="1" subject="Правый клик → авто-ход" />
+<task creationDateTime="2026-02-27 08:58:01.487000" id="bf34a9f0-137f-11f1-b7b5-ce7a14ba6107" modificationDateTime="2026-02-27 08:58:05.359000" status="1" subject="Двойной клик → на foundation" />
+<task creationDateTime="2026-02-27 08:58:14.534000" id="c6fb7a5e-137f-11f1-91bb-ce7a14ba6107" modificationDateTime="2026-02-27 08:58:18.312000" status="1" subject="Клик по stock → взять карту" />
+</task>
+<task creationDateTime="2026-02-27 08:58:31.286000" expandedContexts="('taskviewer',)" id="d0f7a161-137f-11f1-a1c4-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:19.417000" status="1" subject="Визуальные подсказки">
+<task actualstartdate="2026-02-27 08:58:56.392000" creationDateTime="2026-02-27 08:58:52.430000" id="dd91f2e1-137f-11f1-b49e-ce7a14ba6107" modificationDateTime="2026-02-27 08:58:56.392000" status="1" subject="Подсветка возможных ходов" />
+<task actualstartdate="2026-02-27 08:59:07.647000" creationDateTime="2026-02-27 08:59:05.053000" id="e51810cf-137f-11f1-9792-ce7a14ba6107" modificationDateTime="2026-02-27 08:59:07.647000" status="1" subject="Анимация переворота карт" />
+</task>
+<task creationDateTime="2026-02-27 08:59:43.061000" id="fbbfa051-137f-11f1-9ba9-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:09.406000" status="1" subject="Настройки">
+<task actualstartdate="2026-02-27 08:59:56.929000" creationDateTime="2026-02-27 08:59:53.180000" id="01c7a9c0-1380-11f1-ac21-ce7a14ba6107" modificationDateTime="2026-02-27 08:59:56.928000" status="1" subject="Смена рубашки карт" />
+<task actualstartdate="2026-02-27 09:00:13.071000" creationDateTime="2026-02-27 09:00:07.653000" id="0a681151-1380-11f1-98b7-ce7a14ba6107" modificationDateTime="2026-02-27 09:00:13.071000" status="1" subject="Включение/выключение анимаций" />
+<task actualstartdate="2026-02-27 09:00:34.913000" creationDateTime="2026-02-27 09:00:30.184000" id="17d60680-1380-11f1-88e0-ce7a14ba6107" modificationDateTime="2026-02-27 09:00:34.912000" status="1" subject="Сброс прогресса" />
+</task>
+</task>
+<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:50.198000" status="1" subject="Ближнее планирование">
+<task actualstartdate="2026-02-27 09:07:05.663000" creationDateTime="2026-02-27 09:05:50.197000" expandedContexts="('taskviewer',)" id="d694495e-1380-11f1-b168-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:05.662000" status="1" subject="Сохранение статистики">
+<task actualstartdate="2026-02-27 09:07:02.068000" creationDateTime="2026-02-27 09:06:20.789000" id="e8d01a4f-1380-11f1-bdb5-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:02.067000" status="1" subject="База данных" />
+<task actualstartdate="2026-02-27 09:07:03.881000" creationDateTime="2026-02-27 09:06:33.221000" id="f039134f-1380-11f1-949b-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:03.880000" status="1" subject="Учет статистики" />
+<task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:04.591000" status="1" subject="Учет достижений" />
+</task>
+</task>
+</task>
+<syncmlconfig>
+<TaskCoach-0000019c9cc552c512d55b0600c000a8000400be>
+<spds>
+<sources>
+<TaskCoach-0000019c9cc552c512d55b0600c000a8000400be.Tasks />
+<TaskCoach-0000019c9cc552c512d55b0600c000a8000400be.Notes />
+</sources>
+<syncml>
+<Auth />
+<Conn />
+</syncml>
+</spds>
+</TaskCoach-0000019c9cc552c512d55b0600c000a8000400be>
+</syncmlconfig>
+<guid>
+0000019c9cc552c512d55b0600c000a8000400be
+</guid>
+</tasks>
