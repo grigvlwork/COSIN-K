@@ -25,11 +25,6 @@ DeckManager="*res://scenes/deck_manager.gd"
 window/size/viewport_width=1400
 window/size/viewport_height=900
 
-[display]
-
-window/size/viewport_width=1400
-window/size/viewport_height=900
-
 [rendering]
 
 renderer/rendering_method="mobile"

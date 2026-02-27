@@ -5,10 +5,15 @@ COSIN-K/
 │   ├── __init__.py
 │   └── game_controller.py
 ├── doc
-│   └── planning.txt
+│   ├── DB.txt
+│   ├── planning.tsk
+│   ├── planning.tsk.delta
+│   ├── planning.txt
+│   └── tree.txt
 ├── gui
 │   ├── godot-client
 │   │   ├── assets
+│   │   │   ├── cards
 │   │   │   └── decks
 │   │   │       └── classic
 │   │   │           ├── 10_of_clubs.png
@@ -123,7 +128,6 @@ COSIN-K/
 │   │   │           └── red_joker.png.import
 │   │   ├── debug_tree.gd
 │   │   ├── debug_tree.gd.uid
-│   │   ├── export
 │   │   ├── export_presets.cfg
 │   │   ├── icon.svg
 │   │   ├── icon.svg.import
@@ -173,6 +177,28 @@ COSIN-K/
 ├── players.json
 ├── requirements.txt
 ├── show_tree.py
+├── stats
+│   ├── __init__.py
+│   ├── api
+│   │   ├── __init__.py
+│   │   └── stats_api.py
+│   ├── data
+│   │   ├── __init__.py
+│   │   ├── patience.db
+│   │   └── schema.py
+│   ├── database.py
+│   ├── events
+│   │   ├── __init__.py
+│   │   └── event_bus.py
+│   ├── models.py
+│   ├── repositories
+│   │   ├── __init__.py
+│   │   ├── game_repository.py
+│   │   └── player_repository.py
+│   └── services
+│       ├── __init__.py
+│       ├── player_identity.py
+│       └── stats_service.py
 └── view
     ├── __init__.py
     ├── base.py

@@ -50,11 +50,12 @@ def create_tables(conn: sqlite3.Connection) -> None:
         )
     """)
 
-    # Таблица игр
+    # Таблица игр (завершённых)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS games (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             player_id TEXT NOT NULL REFERENCES players(id),
+            game_type TEXT DEFAULT 'klondike',  -- Какой пасьянс играли
 
             -- Время
             started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -82,7 +83,40 @@ def create_tables(conn: sqlite3.Connection) -> None:
         )
     """)
 
-    # Индексы для производительности
+    # Новая таблица: сохранённые игры (незавершённые)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS saved_games (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+            game_type TEXT NOT NULL,
+            game_state TEXT NOT NULL,  -- JSON с полным состоянием игры
+
+            -- Временные метки
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Когда впервые сохранили
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Последнее обновление
+            last_played TIMESTAMP,  -- Когда последний раз играли (загружали)
+
+            -- Тип сохранения
+            save_type TEXT DEFAULT 'autosave' 
+                CHECK(save_type IN ('autosave', 'manual', 'checkpoint')),
+
+            -- Метаданные для отображения в меню загрузки
+            preview_data TEXT,  -- JSON с данными для превью (например, видимые карты)
+            moves_count INTEGER DEFAULT 0,
+            time_played_seconds INTEGER DEFAULT 0,
+            score INTEGER DEFAULT 0,
+
+            -- Для сортировки и фильтрации
+            is_favorite BOOLEAN DEFAULT 0,
+            description TEXT,  -- Пользовательское описание (для ручных сохранений)
+
+            -- Ограничение: только одно автосохранение на игрока и тип игры
+            UNIQUE(player_id, game_type, save_type) 
+                ON CONFLICT REPLACE
+        )
+    """)
+
+    # Индексы для таблицы games
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_games_player 
         ON games(player_id)
@@ -91,6 +125,37 @@ def create_tables(conn: sqlite3.Connection) -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_games_player_date 
         ON games(player_id, started_at)
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_games_type 
+        ON games(game_type)
+    """)
+
+    # Индексы для таблицы saved_games
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_saved_games_player 
+        ON saved_games(player_id)
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_saved_games_updated 
+        ON saved_games(player_id, updated_at DESC)
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_saved_games_type 
+        ON saved_games(player_id, game_type)
+    """)
+
+    # Триггер для автоматического обновления updated_at
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS update_saved_games_timestamp 
+        AFTER UPDATE ON saved_games
+        BEGIN
+            UPDATE saved_games SET updated_at = CURRENT_TIMESTAMP 
+            WHERE id = NEW.id;
+        END;
     """)
 
     conn.commit()
@@ -107,6 +172,13 @@ def init_database() -> None:
     try:
         create_tables(conn)
         print(f"Database initialized: {db_path}")
+
+        # Для отладки: показать структуру
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = cursor.fetchall()
+        print("Tables created:", [table[0] for table in tables])
+
     finally:
         conn.close()
 
