@@ -4,20 +4,29 @@
 
 [node name="PlayerStats" type="Window"]
 oversampling_override = 1.0
+title = "Статистика"
+size = Vector2i(750, 350)
 script = ExtResource("1_d0gwb")
 
 [node name="MainContainer" type="VBoxContainer" parent="."]
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MainContainer"]
 layout_mode = 2
 
 [node name="PlayerNameLabel" type="Label" parent="MainContainer/HBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Загрузка..."
 
 [node name="EditNameButton" type="Button" parent="MainContainer/HBoxContainer"]
+custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
+text = "✏️"
 
 [node name="StatsTabs" type="TabContainer" parent="MainContainer"]
 layout_mode = 2
@@ -86,11 +95,65 @@ layout_mode = 2
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
+theme_override_constants/separation = 10
 
-[node name="CurrentWinlabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="CurrentWinStreaklabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
 layout_mode = 2
-text = "Серия побед:0"
+text = "Серия побед:"
 
-[node name="MaxWinLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="CurrentWinStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
 layout_mode = 2
-text = "Рекорд серии побед:0"
+text = "0"
+
+[node name="MaxWinStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "Макс.побед:"
+
+[node name="MaxWinStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="CurrentLooseStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "Серия неудач:"
+
+[node name="CurrentLooseStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="MaxLooseStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "Максимум неудач:"
+
+[node name="MaxLooseStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="HistoryTab" type="VBoxContainer" parent="MainContainer/StatsTabs"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="HistoryList" type="ItemList" parent="MainContainer/StatsTabs/HistoryTab"]
+layout_mode = 2
+
+[node name="AchievementsTab" type="VBoxContainer" parent="MainContainer/StatsTabs"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="AchievementsList" type="ItemList" parent="MainContainer/StatsTabs/AchievementsTab"]
+layout_mode = 2
+
+[node name="FooterPanel" type="HBoxContainer" parent="MainContainer"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="MainContainer/FooterPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button" type="Button" parent="MainContainer/FooterPanel"]
+layout_mode = 2
+text = "Закрыть"
+
+[connection signal="close_requested" from="." to="." method="_on_close_requested"]

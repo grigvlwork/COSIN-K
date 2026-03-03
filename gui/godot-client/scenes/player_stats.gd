@@ -4,24 +4,25 @@ extends Window
 signal stats_updated
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
-@onready var player_name_label = $MainContainer/HeaderPanel/PlayerNameLabel
-@onready var edit_name_button = $MainContainer/HeaderPanel/EditNameButton
+@onready var player_name_label = $MainContainer/HBoxContainer/PlayerNameLabel
+@onready var edit_name_button = $MainContainer/HBoxContainer/EditNameButton
 
 # Вкладки
 @onready var stats_tabs = $MainContainer/StatsTabs
-@onready var overview_tab = $MainContainer/StatsTabs/OverviewTab
-@onready var history_tab = $MainContainer/StatsTabs/HistoryTab
-@onready var achievements_tab = $MainContainer/StatsTabs/AchievementsTab
 
 # Элементы вкладки "Обзор"
-@onready var games_played_value = $MainContainer/StatsTabs/OverviewTab/StatsGrid/GamesPlayedValue
-@onready var games_won_value = $MainContainer/StatsTabs/OverviewTab/StatsGrid/GamesWonValue
-@onready var win_rate_value = $MainContainer/StatsTabs/OverviewTab/StatsGrid/WinRateValue
-@onready var total_score_value = $MainContainer/StatsTabs/OverviewTab/StatsGrid/TotalScoreValue
-@onready var highest_score_value = $MainContainer/StatsTabs/OverviewTab/StatsGrid/HighestScoreValue
-@onready var total_hours_value = $MainContainer/StatsTabs/OverviewTab/StatsGrid/TotalHoursValue
-@onready var current_streak_value = $MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer/CurrentStreakValue
-@onready var best_streak_value = $MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer/BestStreakValue
+@onready var games_played_value = $MainContainer/StatsTabs/OverviewTab/GridContainer/GamesPlayedValue
+@onready var games_won_value = $MainContainer/StatsTabs/OverviewTab/GridContainer/GamesWonValue
+@onready var win_rate_value = $MainContainer/StatsTabs/OverviewTab/GridContainer/WinRateValue
+@onready var total_score_value = $MainContainer/StatsTabs/OverviewTab/GridContainer/TotalScoreValue
+@onready var highest_score_value = $MainContainer/StatsTabs/OverviewTab/GridContainer/HighestScoreValue
+@onready var total_hours_value = $MainContainer/StatsTabs/OverviewTab/GridContainer/TotalHoursValue
+
+# Серии (теперь их 4 значения)
+@onready var current_win_streak_value = $MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer/CurrentWinStreakValue
+@onready var max_win_streak_value = $MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer/MaxWinStreakValue
+@onready var current_loose_streak_value = $MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer/CurrentLooseStreakValue
+@onready var max_loose_streak_value = $MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer/MaxLooseStreakValue
 
 # Элементы вкладки "История"
 @onready var history_list = $MainContainer/StatsTabs/HistoryTab/HistoryList
@@ -30,13 +31,13 @@ signal stats_updated
 @onready var achievements_list = $MainContainer/StatsTabs/AchievementsTab/AchievementsList
 
 # Кнопка закрытия
-@onready var close_button = $MainContainer/FooterPanel/CloseButton
+@onready var close_button = $MainContainer/FooterPanel/Button
 
 # HTTP запросы
 var http: HTTPRequest
 
 func _ready():
-	# ===== УСТАНАВЛИВАЕМ НАЗВАНИЯ ВКЛАДОК ЧЕРЕЗ КОД =====
+	# ===== УСТАНАВЛИВАЕМ НАЗВАНИЯ ВКЛАДОК =====
 	stats_tabs.set_tab_title(0, "Обзор")
 	stats_tabs.set_tab_title(1, "История")
 	stats_tabs.set_tab_title(2, "Достижения")
@@ -49,7 +50,7 @@ func _ready():
 	# Подключаем кнопки
 	edit_name_button.pressed.connect(_on_edit_name_pressed)
 	close_button.pressed.connect(_on_close_pressed)
-	
+	close_requested.connect(_on_close_pressed)
 	# Загружаем статистику
 	load_stats()
 
@@ -73,14 +74,19 @@ func load_stats():
 func show_offline_message():
 	"""Показать сообщение для офлайн режима"""
 	player_name_label.text = "Офлайн режим"
+	
+	# Очищаем все значения
 	games_played_value.text = "-"
 	games_won_value.text = "-"
 	win_rate_value.text = "-"
 	total_score_value.text = "-"
 	highest_score_value.text = "-"
 	total_hours_value.text = "-"
-	current_streak_value.text = "-"
-	best_streak_value.text = "-"
+	
+	current_win_streak_value.text = "-"
+	max_win_streak_value.text = "-"
+	current_loose_streak_value.text = "-"
+	max_loose_streak_value.text = "-"
 	
 	history_list.add_item("Нет подключения к серверу")
 	history_list.add_item("Статистика недоступна")
@@ -105,6 +111,7 @@ func _on_stats_completed(result, response_code, headers, body):
 
 func update_stats_display(data: Dictionary):
 	"""Обновить отображение статистики"""
+	
 	# Основная статистика
 	games_played_value.text = str(data.get("games_played", 0))
 	games_won_value.text = str(data.get("games_won", 0))
@@ -113,20 +120,38 @@ func update_stats_display(data: Dictionary):
 	highest_score_value.text = str(data.get("highest_score", 0))
 	total_hours_value.text = str(data.get("total_hours", "0"))
 	
-	# Серии
-	current_streak_value.text = str(data.get("current_streak", 0))
-	best_streak_value.text = str(data.get("best_streak", 0))
+	# Серии побед и поражений
+	current_win_streak_value.text = str(data.get("current_win_streak", 0))
+	max_win_streak_value.text = str(data.get("best_win_streak", 0))
+	current_loose_streak_value.text = str(data.get("current_loose_streak", 0))
+	max_loose_streak_value.text = str(data.get("best_loose_streak", 0))
 	
-	# История игр (если есть)
+	# История игр
 	if data.has("recent_games"):
 		history_list.clear()
-		for game in data["recent_games"]:
-			var game_text = "%s - %s (%d очков)" % [
-				game.get("date", "???"),
-				"Победа" if game.get("result") == "won" else "Поражение",
-				game.get("score", 0)
-			]
-			history_list.add_item(game_text)
+		var games = data["recent_games"]
+		
+		if games.size() == 0:
+			history_list.add_item("Нет завершённых игр")
+		else:
+			for game in games:
+				var game_text = "%s - %s (%d очков)" % [
+					game.get("date", "???"),
+					"Победа" if game.get("result") == "won" else "Поражение",
+					game.get("score", 0)
+				]
+				history_list.add_item(game_text)
+	
+	# Достижения (пока заглушка)
+	if data.has("achievements"):
+		achievements_list.clear()
+		var achievements = data["achievements"]
+		if achievements.size() == 0:
+			achievements_list.add_item("Пока нет достижений")
+			achievements_list.add_item("Играйте и побеждайте!")
+		else:
+			for ach in achievements:
+				achievements_list.add_item(ach)
 
 func _on_edit_name_pressed():
 	"""Редактирование имени игрока"""
@@ -177,3 +202,7 @@ func change_player_name(new_name: String):
 func _on_close_pressed():
 	"""Закрыть окно статистики"""
 	queue_free()
+
+
+func _on_close_requested() -> void:
+	pass # Replace with function body.

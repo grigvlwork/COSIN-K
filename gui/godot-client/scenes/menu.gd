@@ -14,7 +14,7 @@ extends Control
 var http: HTTPRequest
 var games = ["Клондайк"]
 var current_game_index = 0
-const STATS_SCENE = "res://scenes/ui/player_stats.tscn"
+const STATS_SCENE = "res://scenes/PlayerStats.tscn"
 
 func _ready():
 	# Создаём HTTP для запросов к серверу

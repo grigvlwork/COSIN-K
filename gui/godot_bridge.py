@@ -398,7 +398,31 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 })
 
             return
+        # ===== СМЕНА ИМЕНИ ИГРОКА =====
+        if parsed.path == '/player/rename':
+            """Изменить имя игрока."""
+            player_id = command.get('player_id')
+            new_name = command.get('new_name')
 
+            if not player_id or not new_name:
+                self._send_response({
+                    'success': False,
+                    'error': 'Missing player_id or new_name'
+                }, 400)
+                return
+
+            # Валидация имени
+            new_name = new_name.strip()
+            if len(new_name) < 1 or len(new_name) > 50:
+                self._send_response({
+                    'success': False,
+                    'error': 'Name must be between 1 and 50 characters'
+                }, 400)
+                return
+
+            result = self.stats_api.rename_player(player_id, new_name)
+            self._send_response(result)
+            return
         # ===== ВСЕ ОСТАЛЬНЫЕ ДЕЙСТВИЯ =====
         # Требуют существующей игры!
         engine = self._get_engine(session_id)
