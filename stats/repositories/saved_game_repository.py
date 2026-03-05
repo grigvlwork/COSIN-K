@@ -164,6 +164,28 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             print(f"Error deleting saved game: {e}")
             return False
 
+    def update_last_played(self, saved_id: int) -> bool:
+        """
+        Обновить время последнего доступа к сохранению.
+
+        Args:
+            saved_id: ID сохранения
+
+        Returns:
+            True если успешно
+        """
+        query = f"""
+            UPDATE {self.table_name} 
+            SET last_played = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """
+
+        try:
+            self._execute(query, (saved_id,))
+            return True
+        except Exception as e:
+            print(f"Error updating last_played: {e}")
+            return False
     # ===== МЕТОДЫ ДЛЯ РАБОТЫ С АВТОСОХРАНЕНИЯМИ =====
 
     def get_autosave(self, player_id: str, game_type: str) -> Optional[SavedGame]:

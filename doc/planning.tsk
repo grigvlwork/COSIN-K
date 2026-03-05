@@ -2,8 +2,8 @@
 <?taskcoach release="1.4.6" tskversion="37"?>
 
 <tasks>
-<task actualstartdate="2026-02-27 08:55:16.924000" creationDateTime="2026-02-27 08:48:00.260000" expandedContexts="('taskviewer',)" id="58d8b440-137e-11f1-aefa-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:34.443000" status="1" subject="Разработка пасьянса">
-<task creationDateTime="2026-02-27 09:04:08.363000" expandedContexts="('taskviewer',)" id="99e17fae-1380-11f1-a519-ce7a14ba6107" modificationDateTime="2026-02-27 09:04:50.521000" status="1" subject="Дальнее планирование">
+<task actualstartdate="2026-02-27 08:55:16.924000" creationDateTime="2026-02-27 08:48:00.260000" expandedContexts="('taskviewer',)" id="58d8b440-137e-11f1-aefa-ce7a14ba6107" modificationDateTime="2026-03-05 13:16:51.958000" status="1" subject="Разработка пасьянса">
+<task creationDateTime="2026-02-27 09:04:08.363000" id="99e17fae-1380-11f1-a519-ce7a14ba6107" modificationDateTime="2026-02-27 09:04:50.521000" status="1" subject="Дальнее планирование">
 <task creationDateTime="2026-02-27 08:53:37.906000" id="2219651e-137f-11f1-829e-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:13.896000" status="1" subject="Базовая верстка">
 <task actualstartdate="2026-02-27 08:55:10.964000" creationDateTime="2026-02-27 08:54:08.627000" id="34690c30-137f-11f1-9d8c-ce7a14ba6107" modificationDateTime="2026-02-27 08:55:10.964000" status="1" subject="Масштабирование под разные экраны" />
 <task actualstartdate="2026-02-27 08:55:06.787000" creationDateTime="2026-02-27 08:54:37.099000" id="456187b0-137f-11f1-8f80-ce7a14ba6107" modificationDateTime="2026-02-27 08:55:06.787000" status="1" subject="Цвета и стили" />
@@ -28,8 +28,15 @@
 <task actualstartdate="2026-02-27 09:00:34.913000" creationDateTime="2026-02-27 09:00:30.184000" id="17d60680-1380-11f1-88e0-ce7a14ba6107" modificationDateTime="2026-02-27 09:00:34.912000" status="1" subject="Сброс прогресса" />
 </task>
 </task>
-<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:50.198000" status="1" subject="Ближнее планирование">
-<task actualstartdate="2026-02-27 09:07:05.663000" creationDateTime="2026-02-27 09:05:50.197000" expandedContexts="('taskviewer',)" id="d694495e-1380-11f1-b168-ce7a14ba6107" modificationDateTime="2026-03-05 10:31:43.057000" status="1" subject="Сохранение статистики">
+<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-05 13:17:39.223000" status="1" subject="Ближнее планирование">
+<task actualstartdate="2026-02-27 09:07:05.663000" creationDateTime="2026-02-27 09:05:50.197000" expandedContexts="('taskviewer',)" id="d694495e-1380-11f1-b168-ce7a14ba6107" modificationDateTime="2026-03-05 13:17:39.223000" status="1" subject="Сохранение статистики">
+<task actualstartdate="2026-02-27 09:07:03.881000" creationDateTime="2026-02-27 09:06:33.221000" expandedContexts="('taskviewer',)" id="f039134f-1380-11f1-949b-ce7a14ba6107" modificationDateTime="2026-03-05 08:44:26.477000" status="1" subject="Учет статистики">
+<task actualstartdate="2026-03-05 08:35:41.511000" creationDateTime="2026-03-05 08:35:29.611000" id="97e741b0-1833-11f1-b797-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:41.510000" status="1" subject="Тестирование" />
+</task>
+</task>
+<task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:04.591000" status="1" subject="Учет достижений" />
+</task>
+<task creationDateTime="2026-03-05 13:16:51.956000" id="e690f95e-185a-11f1-8df2-ce7a14ba6107" modificationDateTime="2026-03-05 13:17:16.661000" status="1" subject="Готово">
 <task actualstartdate="2026-03-05 10:30:04.214000" completiondate="2026-03-05 10:53:00.276000" creationDateTime="2026-03-05 10:29:43.526000" id="8d27b061-1843-11f1-863f-ce7a14ba6107" modificationDateTime="2026-03-05 10:53:00.275000" percentageComplete="100" status="1" subject="Модель данных (Сериализация)">
 <description>
 card.py: Добавить методы to_dict / from_dict.
@@ -38,7 +45,7 @@ state.py: Добавить методы to_dict / from_dict.
 history.py: Реализовать to_dict / from_dict (или его отсутствие), чтобы Undo работало после загрузки.
 </description>
 </task>
-<task actualstartdate="2026-02-27 10:44:33.034000" creationDateTime="2026-02-27 10:44:26.477000" id="9cf4d1cf-138e-11f1-8781-ce7a14ba6107" modificationDateTime="2026-02-27 10:46:37.809000" status="1" subject="Автоматическая идентификация игрока">
+<task actualstartdate="2026-02-27 10:44:33.034000" completiondate="2026-03-05 12:34:15.232000" creationDateTime="2026-02-27 10:44:26.477000" id="9cf4d1cf-138e-11f1-8781-ce7a14ba6107" modificationDateTime="2026-03-05 12:34:15.229000" percentageComplete="100" status="1" subject="Автоматическая идентификация игрока">
 <task actualstartdate="2026-02-27 10:45:03.313000" completiondate="2026-03-05 08:35:12.647000" creationDateTime="2026-02-27 10:44:44.015000" id="a768e7f0-138e-11f1-84b4-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:12.646000" percentageComplete="100" status="1" subject="Подготовка данных (БД и модели)">
 <description>
 1.1. Дополнить схему БД (schema.py) - проверить, что все нужные поля есть
@@ -62,7 +69,7 @@ history.py: Реализовать to_dict / from_dict (или его отсут
 3.4. Создать пример кода для Godot (GDScript) для работы с этим файлом
 </description>
 </task>
-<task actualstartdate="2026-02-27 10:46:28.889000" creationDateTime="2026-02-27 10:46:07.277000" id="d909adcf-138e-11f1-9518-ce7a14ba6107" modificationDateTime="2026-02-27 10:46:28.888000" status="1" subject="API слой (мост между клиентом и сервером)">
+<task actualstartdate="2026-02-27 10:46:28.889000" completiondate="2026-03-05 12:34:04.871000" creationDateTime="2026-02-27 10:46:07.277000" id="d909adcf-138e-11f1-9518-ce7a14ba6107" modificationDateTime="2026-03-05 12:34:04.871000" percentageComplete="100" status="1" subject="API слой (мост между клиентом и сервером)">
 <description>
 4.1. Создать stats_api.py с методами:
 -connect(player_id: str = None) - подключение к серверу
@@ -71,7 +78,7 @@ history.py: Реализовать to_dict / from_dict (или его отсут
 4.2. Определить форматы запросов/ответов (JSON)
 </description>
 </task>
-<task actualstartdate="2026-02-27 10:47:07.149000" creationDateTime="2026-02-27 10:46:37.808000" id="eb3c5700-138e-11f1-bf49-ce7a14ba6107" modificationDateTime="2026-02-27 12:02:21.682000" status="1" subject="Интеграция с Godot клиентом">
+<task actualstartdate="2026-02-27 10:47:07.149000" completiondate="2026-03-05 12:34:12.111000" creationDateTime="2026-02-27 10:46:37.808000" expandedContexts="('taskviewer',)" id="eb3c5700-138e-11f1-bf49-ce7a14ba6107" modificationDateTime="2026-03-05 12:34:12.111000" percentageComplete="100" status="1" subject="Интеграция с Godot клиентом">
 <description>
 5.1. Написать скрипт player_auth.gd для Godot
 5.2. Реализовать логику при запуске игры:
@@ -94,7 +101,7 @@ stats_service.py / api: Реализовать логику "Suspended".
 godot_bridge.py: Добавить обработку "грязного" JSON от Godot. Godot пришлет словарь, нам нужно вызвать GameState.from_dict(data).
 </description>
 </task>
-<task actualstartdate="2026-03-05 08:44:03.332000" creationDateTime="2026-03-05 08:43:43.565000" id="be52a7cf-1834-11f1-9882-ce7a14ba6107" modificationDateTime="2026-03-05 08:44:31.534000" status="1" subject="API сохранений">
+<task actualstartdate="2026-03-05 08:44:03.332000" completiondate="2026-03-05 13:16:39.223000" creationDateTime="2026-03-05 08:43:43.565000" id="be52a7cf-1834-11f1-9882-ce7a14ba6107" modificationDateTime="2026-03-05 13:16:39.223000" percentageComplete="100" status="1" subject="API сохранений">
 <task actualstartdate="2026-03-05 08:44:43.139000" completiondate="2026-03-05 09:42:24.346000" creationDateTime="2026-03-05 08:44:31.534000" id="daea24de-1834-11f1-9cd8-ce7a14ba6107" modificationDateTime="2026-03-05 09:42:24.344000" percentageComplete="100" status="1" subject="Недостающие эндпойнты" />
 </task>
 <task actualstartdate="2026-03-05 10:31:38.882000" completiondate="2026-03-05 10:53:51.857000" creationDateTime="2026-03-05 10:31:16.436000" id="c488a140-1843-11f1-9cd9-ce7a14ba6107" modificationDateTime="2026-03-05 10:53:51.857000" percentageComplete="100" status="1" subject="Движок (Загрузка)">
@@ -102,7 +109,7 @@ godot_bridge.py: Добавить обработку "грязного" JSON о�
 engine.py: Добавить метод restore_state(state_dict). Он должен создать GameState из словаря и сбросить/восстановить историю.
 </description>
 </task>
-<task actualstartdate="2026-03-05 10:31:58.766000" creationDateTime="2026-03-05 10:31:43.056000" id="d4668500-1843-11f1-b8a5-ce7a14ba6107" modificationDateTime="2026-03-05 10:31:58.766000" status="1" subject="Клиент (Godot)">
+<task actualstartdate="2026-03-05 10:31:58.766000" completiondate="2026-03-05 13:16:28.993000" creationDateTime="2026-03-05 10:31:43.056000" id="d4668500-1843-11f1-b8a5-ce7a14ba6107" modificationDateTime="2026-03-05 13:16:28.993000" percentageComplete="100" status="1" subject="Клиент (Godot)">
 <description>
 Реализовать таймер автосохранения.
 Реализовать логику выхода в меню.
@@ -110,16 +117,11 @@ engine.py: Добавить метод restore_state(state_dict). Он долж�
 </description>
 </task>
 <task actualstartdate="2026-02-27 09:07:02.068000" completiondate="2026-03-05 08:35:22.299000" creationDateTime="2026-02-27 09:06:20.789000" id="e8d01a4f-1380-11f1-bdb5-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:22.299000" percentageComplete="100" status="1" subject="База данных" />
-<task actualstartdate="2026-03-05 08:45:21.369000" creationDateTime="2026-03-05 08:45:00.948000" id="ec725d40-1834-11f1-ab0a-ce7a14ba6107" modificationDateTime="2026-03-05 08:45:21.369000" status="1" subject="Доработка меню, проверка сохранений перед new" />
-<task actualstartdate="2026-02-27 09:07:03.881000" creationDateTime="2026-02-27 09:06:33.221000" id="f039134f-1380-11f1-949b-ce7a14ba6107" modificationDateTime="2026-03-05 08:44:26.477000" status="1" subject="Учет статистики">
-<task actualstartdate="2026-03-05 08:35:41.511000" creationDateTime="2026-03-05 08:35:29.611000" id="97e741b0-1833-11f1-b797-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:41.510000" status="1" subject="Тестирование" />
-</task>
-<task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:04.591000" status="1" subject="Учет достижений" />
-<task actualstartdate="2026-03-05 08:45:50.046000" creationDateTime="2026-03-05 08:45:26.008000" id="fb623780-1834-11f1-bfe5-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:43.264000" status="1" subject="Доработка klondike">
-<task actualstartdate="2026-03-05 08:46:11.799000" creationDateTime="2026-03-05 08:45:55.170000" id="0cc3fc21-1835-11f1-ba27-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:11.799000" status="1" subject="Автосохранение при выходе" />
-<task actualstartdate="2026-03-05 08:46:32.815000" creationDateTime="2026-03-05 08:46:16.525000" id="197e7fd1-1835-11f1-9f81-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:32.815000" status="1" subject="Загрузка сохраненной игры" />
-<task actualstartdate="2026-03-05 08:46:48.686000" creationDateTime="2026-03-05 08:46:43.263000" id="296e64f0-1835-11f1-acce-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:48.686000" status="1" subject="кнопка &quot;Новая игра&quot; с завершением текущей" />
-</task>
+<task actualstartdate="2026-03-05 08:45:21.369000" completiondate="2026-03-05 13:16:34.103000" creationDateTime="2026-03-05 08:45:00.948000" id="ec725d40-1834-11f1-ab0a-ce7a14ba6107" modificationDateTime="2026-03-05 13:16:34.084000" percentageComplete="100" status="1" subject="Доработка меню, проверка сохранений перед new" />
+<task actualstartdate="2026-03-05 08:45:50.046000" completiondate="2026-03-05 13:16:20.979000" creationDateTime="2026-03-05 08:45:26.008000" id="fb623780-1834-11f1-bfe5-ce7a14ba6107" modificationDateTime="2026-03-05 13:16:20.976000" percentageComplete="100" status="1" subject="Доработка klondike">
+<task actualstartdate="2026-03-05 08:46:11.799000" completiondate="2026-03-05 13:16:20.979000" creationDateTime="2026-03-05 08:45:55.170000" id="0cc3fc21-1835-11f1-ba27-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:11.799000" percentageComplete="100" status="1" subject="Автосохранение при выходе" />
+<task actualstartdate="2026-03-05 08:46:32.815000" completiondate="2026-03-05 13:16:20.979000" creationDateTime="2026-03-05 08:46:16.525000" id="197e7fd1-1835-11f1-9f81-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:32.815000" percentageComplete="100" status="1" subject="Загрузка сохраненной игры" />
+<task actualstartdate="2026-03-05 08:46:48.686000" completiondate="2026-03-05 13:16:20.979000" creationDateTime="2026-03-05 08:46:43.263000" id="296e64f0-1835-11f1-acce-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:48.686000" percentageComplete="100" status="1" subject="кнопка &quot;Новая игра&quot; с завершением текущей" />
 </task>
 </task>
 </task>

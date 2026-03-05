@@ -83,10 +83,17 @@ func connect_to_server():
 # ===== ОБРАБОТКА ОТВЕТОВ =====
 
 func _on_http_completed(result, response_code, headers, body):
+	# Если сервер вернул код ошибки (не 200)
 	if response_code != 200:
 		print("⚠️ Ошибка сервера: ", response_code)
-		# Если сервер недоступен, все равно даем играть (офлайн режим)
-		if pending_action == "check_save":
+		var response_text = body.get_string_from_utf8()
+		print("Тело ответа: ", response_text)
+		
+		# Если была попытка загрузить сохранение и произошла ошибка — запускаем новую игру
+		if pending_action == "load_save":
+			print("❌ Не удалось загрузить сохранение, начинаем новую игру")
+			_proceed_to_game_scene("new")
+		elif pending_action == "check_save":
 			_proceed_to_game_scene("new")
 		return
 	
@@ -96,15 +103,61 @@ func _on_http_completed(result, response_code, headers, body):
 	
 	if error == OK:
 		var data = json.data
-		if data.has("success") and data["success"]:
-			handle_success_response(data)
-		else:
-			print("⚠️ Ошибка: ", data.get("error", "Unknown"))
-			# Если ошибка логики, все равно идем в игру
-			if pending_action == "check_save":
+		
+		# 1. Обработка ответа от сервера (UUID / Connect)
+		if data.has("player_id"):
+			var new_id = data["player_id"]
+			var new_name = data.get("player_name", "Игрок")
+			Global.save_player_identity(new_id, new_name)
+			player_name_label.text = "👤 " + new_name
+			print("✅ Получен UUID: ", new_id)
+		
+		# 2. Проверка наличия сохранения (GET /load)
+		elif pending_action == "check_save":
+			if data.has("success") and data["success"]:
+				if data.has("has_save") and data["has_save"]:
+					print("💾 Найдено сохранение!")
+					_show_restore_dialog(data)
+				else:
+					print("🆕 Сохранений нет, начинаем новую игру")
+					_proceed_to_game_scene("new")
+			else:
+				print("⚠️ Ошибка при проверке сохранения: ", data.get("error", "Unknown"))
 				_proceed_to_game_scene("new")
+		
+		# 3. Загрузка сохранения (POST /load/save)
+		# 3. Загрузка сохранения (POST /load/save)
+		elif pending_action == "load_save":
+			if data.has("success") and data["success"]:
+				# ВАЖНО: Смотрим, что пришло внутри ответа
+				print("📦 Отладка данных загрузки:")
+				print("   Ключи data: ", data.keys())
+				
+				# Смотрим, что внутри 'state' (если он есть)
+				if data.has("state"):
+					print("   Ключи data['state']: ", data["state"].keys())
+				
+				if data.has("state"):
+					print("✅ Состояние загружено, передаем в игру")
+					# Передаем state, время и ID
+					Global.set_pending_save(data["state"], data.get("time", 0), data.get("game_id", 0))
+					_proceed_to_game_scene("load")
+				else:
+					printerr("❌ В ответе нет ключа 'state'!")
+					_proceed_to_game_scene("new")
+			else:
+				printerr("❌ Ошибка данных загрузки: ", data.get("error", "Unknown"))
+				_proceed_to_game_scene("new")
+		
+		# 4. Ответ смены имени (опционально)
+		elif data.has("message") and data.has("player_name"):
+			print("✅ Имя изменено")
+			
 	else:
-		print("❌ Ошибка парсинга JSON")
+		print("❌ Ошибка парсинга JSON: ", response_text)
+		# Если парсинг упал, просто идем в новую игру
+		if pending_action == "check_save" or pending_action == "load_save":
+			_proceed_to_game_scene("new")
 
 func handle_success_response(data: Dictionary):
 	"""Обработка успешных ответов от сервера"""
@@ -190,13 +243,23 @@ func _on_restore_confirmed():
 	
 	if save_id > 0:
 		pending_action = "load_save"
+		
+		# ВАЖНО: Правильный JSON и Headers
 		var body = JSON.new().stringify({
 			"player_id": Global.player_id,
 			"save_id": save_id
 		})
-		var url = Global.server_url + "/load/save"
-		http.request(url, Global.get_player_headers(), HTTPClient.METHOD_POST, body)
+		var headers = ["Content-Type: application/json"]
+		
+		# Используем наш http объект
+		var err = http.request(Global.server_url + "/load/save", headers, HTTPClient.METHOD_POST, body)
+		
+		if err != OK:
+			printerr("❌ Ошибка отправки запроса загрузки: ", err)
+			# Если ошибка запроса, просто идем в новую игру
+			_proceed_to_game_scene("new")
 	else:
+		printerr("❌ Неверный ID сохранения")
 		_proceed_to_game_scene("new")
 
 func _on_restore_declined():

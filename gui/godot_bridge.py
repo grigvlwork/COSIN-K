@@ -294,6 +294,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             game_type = command.get('game_type', 'klondike')
 
             # Время от клиента (важно!)
+            # Мы обновляем время в состоянии движка перед сохранением
             time_elapsed = command.get('time_elapsed', 0)
 
             engine = self._get_engine(session_id)
@@ -302,20 +303,20 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': False, 'error': 'No active game to save'}, 400)
                 return
 
-            # Синхронизируем время
+            # 1. Синхронизируем время (чтобы сохранилось актуальное)
             engine.update_play_time(time_elapsed)
 
-            # Сериализуем состояние через новый метод
+            # 2. Сериализуем состояние через новый метод
+            # Этот метод вернет словарь со всеми данными (score, moves, time)
             state_dict = engine.state.to_dict()
 
+            # 3. Сохраняем через API
+            # Передаем только то, что принимает метод
             result = self.stats_api.save_game(
                 player_id=player_id,
                 game_type=game_type,
-                game_state=state_dict,
-                save_type='autosave',
-                moves_count=engine.state.moves_count,
-                score=engine.state.score,
-                time_elapsed=engine.state.time_elapsed
+                game_state=state_dict,  # Внутри уже есть score, moves, time
+                save_type='autosave'
             )
             self._send_response(result)
             return
@@ -330,29 +331,41 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': False, 'error': 'Missing save_id'}, 400)
                 return
 
-            # Получаем данные из БД
+            # 1. Получаем данные из БД
             save_data = self.stats_api.load_saved_game(int(save_id))
 
             if not save_data or not save_data.get('success'):
-                self._send_response({'success': False, 'error': 'Save not found'}, 404)
+                self._send_response({'success': False, 'error': 'Save not found in DB'}, 404)
                 return
 
-            # Определяем вариант игры (пока хардкод klondike)
+            # 2. Определяем тип игры
             variant = "klondike"
             if save_data.get('game_type') == 'klondike-3':
                 variant = "klondike-3"
 
-            # Создаем движок
+            # 3. Создаем НОВЫЙ движок для этой сессии
+            # Важно: мы не ищем игру в self.games, мы создаем новую сессию
             engine = self._create_engine(session_id, variant)
             if not engine:
-                 self._send_response({'success': False, 'error': 'Failed to create engine'}, 500)
-                 return
+                self._send_response({'success': False, 'error': 'Failed to create engine'}, 500)
+                return
 
-            # Восстанавливаем состояние
+            # 4. Восстанавливаем состояние из БД
             state_dict = save_data['game_state']
+
+            # Преобразуем время, если оно пришло как строка (на всякий случай)
+            if 'time_elapsed' in save_data:
+                time_val = save_data['time_elapsed']
+                if isinstance(time_val, str):
+                    # Обработка если нужно, обычно int
+                    pass
+                engine.update_play_time(int(time_val))
+
             if engine.restore_state(state_dict):
-                # Регистрием игру в статистике как продолженную (опционально)
-                # Пока просто возвращаем состояние
+                # 5. Удаляем сохранение из БД, так как мы его загрузили
+                # (Опционально: можно оставить, чтобы можно было переиграть)
+                # Пока оставим.
+
                 self._send_response({
                     'success': True,
                     'state': engine.state,
