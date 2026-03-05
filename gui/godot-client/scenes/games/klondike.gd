@@ -95,17 +95,33 @@ func _load_from_global_state():
 	current_game_id = Global.pending_game_id
 
 	Global.clear_pending_save()
+	
+	# --- ДИАГНОСТИКА ---
+	print("📦 Загруженное состояние. Ключи: ", game_state.keys())
+	# -------------------
 
 	update_ui()
 	update_time_display()
 	draw_game()
 	
-	# Исправлено: скобки вместо точки
-	if game_state["moves_count"] > 0:
+	# ИСПРАВЛЕНО: Используем .get() для безопасности
+	# Если ключа нет, вернется 0
+	var moves = game_state.get("moves_count", 0)
+	
+	if moves > 0:
 		is_game_active = true
 		first_move_made = true
 		timer_active = true
-		print("✅ Игра восстановлена. Ходов: ", game_state["moves_count"])
+		print("✅ Игра восстановлена. Ходов: ", moves)
+
+func update_ui():
+	if game_state:
+		# ИСПРАВЛЕНО: Используем .get()
+		var score = game_state.get("score", 0)
+		var moves = game_state.get("moves_count", 0)
+		
+		score_label.text = "Счет: %d" % score
+		moves_label.text = "Ходы: %d" % moves
 
 func start_new_game(force_new: bool = true):
 	print("🎮 Запрос новой игры (force_new: %s)" % force_new)
@@ -146,13 +162,13 @@ func update_time_display():
 	time_label.text = "Время: %02d:%02d" % [minutes, seconds]
 
 # ===== СЕТЕВОЕ ВЗАИМОДЕЙСТВИЕ =====
-
 func _auto_save():
 	if not is_game_active or not game_state:
 		return
 		
-	# Исправлено: скобки
-	print("💾 Автосохранение... (Ходов: %d, Время: %d)" % [game_state["moves_count"], game_time])
+	# ИСПРАВЛЕНО: Используем .get()
+	var moves = game_state.get("moves_count", 0)
+	print("💾 Автосохранение... (Ходов: %d, Время: %d)" % [moves, game_time])
 	
 	var body = JSON.new().stringify({
 		"player_id": Global.player_id,
@@ -160,7 +176,6 @@ func _auto_save():
 		"time_elapsed": game_time
 	})
 	var headers = ["Content-Type: application/json"]
-	# Используем отдельный HTTPRequest, чтобы не блокировать основной
 	var save_http = HTTPRequest.new()
 	add_child(save_http)
 	save_http.request(Global.server_url + "/save", headers, HTTPClient.METHOD_POST, body)
@@ -221,11 +236,6 @@ func _on_request_completed(result, response_code, headers, body):
 	else:
 		printerr("❌ Ошибка парсинга JSON")
 
-func update_ui():
-	if game_state:
-		# Исправлено: скобки
-		score_label.text = "Счет: %d" % game_state["score"]
-		moves_label.text = "Ходы: %d" % game_state["moves_count"]
 
 func show_win():
 	if game_over_panel:

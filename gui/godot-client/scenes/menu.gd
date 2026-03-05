@@ -84,6 +84,17 @@ func connect_to_server():
 
 func _on_http_completed(result, response_code, headers, body):
 	# Если сервер вернул код ошибки (не 200)
+	if response_code == 409:
+		print("⚠️ Конфликт: найдено активное сохранение")
+		var response_text = body.get_string_from_utf8()
+		var json = JSON.new()
+		var error = json.parse(response_text)
+		if error == OK:
+			_show_restore_dialog(json.data)
+		else:
+			# Если не удалось распарсить, просто начинаем новую
+			_proceed_to_game_scene("new")
+		return
 	if response_code != 200:
 		print("⚠️ Ошибка сервера: ", response_code)
 		var response_text = body.get_string_from_utf8()
@@ -96,7 +107,8 @@ func _on_http_completed(result, response_code, headers, body):
 		elif pending_action == "check_save":
 			_proceed_to_game_scene("new")
 		return
-	
+
+		
 	var response_text = body.get_string_from_utf8()
 	var json = JSON.new()
 	var error = json.parse(response_text)
@@ -195,7 +207,17 @@ func handle_success_response(data: Dictionary):
 func _on_start_pressed():
 	"""Кнопка 'Играть' - проверяем наличие сохранений"""
 	print("🔍 Проверка сохранений перед стартом...")
-
+	
+	# Ждем, пока загрузится player_id
+	if not Global.is_player_loaded or Global.player_id.is_empty():
+		print("⏳ Ожидание загрузки player_id...")
+		# Показываем индикатор загрузки или просто ждем
+		await get_tree().create_timer(0.5).timeout
+		if not Global.is_player_loaded:
+			# Если все еще не загружен, пробуем запросить заново
+			request_new_identity()
+			await get_tree().create_timer(0.5).timeout
+	
 	# Определяем тип игры
 	if games[current_game_index] == "Клондайк":
 		Global.current_variant = "klondike"
@@ -206,35 +228,7 @@ func _on_start_pressed():
 	var error = http.request(url, Global.get_player_headers(), HTTPClient.METHOD_GET)
 	
 	if error != OK:
-		# Если ошибка запроса, просто идем в игру (новую)
 		_proceed_to_game_scene("new")
-
-func _show_restore_dialog(save_data: Dictionary):
-	"""Показать диалог восстановления"""
-	if not restore_dialog:
-		printerr("❌ RestoreDialog не найден в сцене!")
-		# Если диалога нет, по умолчанию начинаем новую
-		_proceed_to_game_scene("new")
-		return
-	
-	# Формируем текст
-	var text = "Найдена незаконченная игра!\n\n"
-	text += "📊 Ходы: %d\n" % save_data.get("moves", 0)
-	text += "⏱️ Время: %s\n" % _format_time(save_data.get("time", 0))
-	text += "💰 Счет: %d\n\n" % save_data.get("score", 0)
-	
-	if save_data.get("is_suspended", false):
-		text += "(Прошло более часа с последнего хода)"
-	else:
-		text += "(Игра была прервана)"
-	
-	text += "\nПродолжить?"
-	
-	restore_dialog.dialog_text = text
-	restore_dialog.popup_centered()
-	
-	# Сохраняем ID сохранения для использования в колбэках
-	restore_dialog.set_meta("save_id", save_data.save_id)
 
 func _on_restore_confirmed():
 	"""Игрок нажал 'Продолжить'"""
@@ -283,6 +277,34 @@ func _proceed_to_game_scene(mode: String):
 	
 	# Переход
 	get_tree().change_scene_to_file(scene_path)
+
+# ===== ДИАЛОГ ВОССТАНОВЛЕНИЯ =====
+
+func _show_restore_dialog(save_data: Dictionary):
+	"""Показать диалог восстановления"""
+	if not restore_dialog:
+		printerr("❌ RestoreDialog не найден в сцене!")
+		_proceed_to_game_scene("new")
+		return
+	
+	# Формируем текст
+	var text = "Найдена незаконченная игра!\n\n"
+	text += "📊 Ходы: %d\n" % save_data.get("moves", 0)
+	text += "⏱️ Время: %s\n" % _format_time(save_data.get("time", 0))
+	text += "💰 Счет: %d\n\n" % save_data.get("score", 0)
+	
+	if save_data.get("is_suspended", false):
+		text += "(Прошло более часа с последнего хода)"
+	else:
+		text += "(Игра была прервана)"
+	
+	text += "\nПродолжить?"
+	
+	restore_dialog.dialog_text = text
+	restore_dialog.popup_centered()
+	
+	# Сохраняем ID сохранения для использования в колбэках
+	restore_dialog.set_meta("save_id", save_data.get("save_id", 0))
 
 # ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 
