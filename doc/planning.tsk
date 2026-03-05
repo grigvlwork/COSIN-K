@@ -29,16 +29,16 @@
 </task>
 </task>
 <task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:50.198000" status="1" subject="Ближнее планирование">
-<task actualstartdate="2026-02-27 09:07:05.663000" creationDateTime="2026-02-27 09:05:50.197000" expandedContexts="('taskviewer',)" id="d694495e-1380-11f1-b168-ce7a14ba6107" modificationDateTime="2026-02-27 10:44:26.478000" status="1" subject="Сохранение статистики">
-<task actualstartdate="2026-02-27 10:44:33.034000" creationDateTime="2026-02-27 10:44:26.477000" expandedContexts="('taskviewer',)" id="9cf4d1cf-138e-11f1-8781-ce7a14ba6107" modificationDateTime="2026-02-27 10:46:37.809000" status="1" subject="Автоматическая идентификация игрока">
-<task actualstartdate="2026-02-27 10:45:03.313000" creationDateTime="2026-02-27 10:44:44.015000" id="a768e7f0-138e-11f1-84b4-ce7a14ba6107" modificationDateTime="2026-02-27 10:45:03.313000" status="1" subject="Подготовка данных (БД и модели)">
+<task actualstartdate="2026-02-27 09:07:05.663000" creationDateTime="2026-02-27 09:05:50.197000" expandedContexts="('taskviewer',)" id="d694495e-1380-11f1-b168-ce7a14ba6107" modificationDateTime="2026-03-05 08:45:26.008000" status="1" subject="Сохранение статистики">
+<task actualstartdate="2026-02-27 10:44:33.034000" creationDateTime="2026-02-27 10:44:26.477000" id="9cf4d1cf-138e-11f1-8781-ce7a14ba6107" modificationDateTime="2026-02-27 10:46:37.809000" status="1" subject="Автоматическая идентификация игрока">
+<task actualstartdate="2026-02-27 10:45:03.313000" completiondate="2026-03-05 08:35:12.647000" creationDateTime="2026-02-27 10:44:44.015000" id="a768e7f0-138e-11f1-84b4-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:12.646000" percentageComplete="100" status="1" subject="Подготовка данных (БД и модели)">
 <description>
 1.1. Дополнить схему БД (schema.py) - проверить, что все нужные поля есть
 1.2. Создать player_repository.py с базовыми методами (create, get, update)
 1.3. Написать тестовый скрипт для проверки работы с БД
 </description>
 </task>
-<task actualstartdate="2026-02-27 10:45:31.475000" creationDateTime="2026-02-27 10:45:13.927000" id="b93d1d70-138e-11f1-9d54-ce7a14ba6107" modificationDateTime="2026-02-27 10:45:31.474000" status="1" subject="Ядро идентификации (на сервере)">
+<task actualstartdate="2026-02-27 10:45:31.475000" completiondate="2026-03-05 08:35:08.660000" creationDateTime="2026-02-27 10:45:13.927000" id="b93d1d70-138e-11f1-9d54-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:08.659000" percentageComplete="100" status="1" subject="Ядро идентификации (на сервере)">
 <description>
 2.1. Создать player_identity.py с классом PlayerIdentity
 2.2. Реализовать метод get_or_create_player(player_id: str) для сервера
@@ -46,7 +46,7 @@
 2.4. Добавить метод rename_player(player_id: str, new_name: str)
 </description>
 </task>
-<task actualstartdate="2026-02-27 10:45:59.358000" creationDateTime="2026-02-27 10:45:41.248000" id="c985f800-138e-11f1-bf04-ce7a14ba6107" modificationDateTime="2026-02-27 10:45:59.357000" status="1" subject="Клиентская часть (хранение UUID)">
+<task actualstartdate="2026-02-27 10:45:59.358000" completiondate="2026-03-05 08:35:17.469000" creationDateTime="2026-02-27 10:45:41.248000" id="c985f800-138e-11f1-bf04-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:17.469000" percentageComplete="100" status="1" subject="Клиентская часть (хранение UUID)">
 <description>
 3.1. Определить формат файла player.identity (JSON)
 3.2. Реализовать методы для чтения/записи UUID на клиенте
@@ -63,7 +63,7 @@
 4.2. Определить форматы запросов/ответов (JSON)
 </description>
 </task>
-<task actualstartdate="2026-02-27 10:47:07.149000" creationDateTime="2026-02-27 10:46:37.808000" expandedContexts="('taskviewer',)" id="eb3c5700-138e-11f1-bf49-ce7a14ba6107" modificationDateTime="2026-02-27 12:02:21.682000" status="1" subject="Интеграция с Godot клиентом">
+<task actualstartdate="2026-02-27 10:47:07.149000" creationDateTime="2026-02-27 10:46:37.808000" id="eb3c5700-138e-11f1-bf49-ce7a14ba6107" modificationDateTime="2026-02-27 12:02:21.682000" status="1" subject="Интеграция с Godot клиентом">
 <description>
 5.1. Написать скрипт player_auth.gd для Godot
 5.2. Реализовать логику при запуске игры:
@@ -73,13 +73,24 @@
 5.3. Добавить экран "Профиль" с возможностью смены имени
 5.4. Реализовать отображение статистики на экране профиля
 </description>
-<task actualstartdate="2026-02-27 12:02:11.181000" creationDateTime="2026-02-27 12:01:38.738000" id="65ffc11e-1399-11f1-aff2-ce7a14ba6107" modificationDateTime="2026-02-27 12:02:11.181000" status="1" subject="Окно статистики" />
-<task actualstartdate="2026-02-27 12:02:35.342000" creationDateTime="2026-02-27 12:02:21.681000" id="7f98560f-1399-11f1-bcca-ce7a14ba6107" modificationDateTime="2026-02-27 12:02:35.341000" status="1" subject="Обновление меню и других файлов" />
+<task actualstartdate="2026-02-27 12:02:11.181000" completiondate="2026-03-05 08:34:59.406000" creationDateTime="2026-02-27 12:01:38.738000" id="65ffc11e-1399-11f1-aff2-ce7a14ba6107" modificationDateTime="2026-03-05 08:34:59.405000" percentageComplete="100" status="1" subject="Окно статистики" />
+<task actualstartdate="2026-02-27 12:02:35.342000" completiondate="2026-03-05 08:35:02.327000" creationDateTime="2026-02-27 12:02:21.681000" id="7f98560f-1399-11f1-bcca-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:02.327000" percentageComplete="100" status="1" subject="Обновление меню и других файлов" />
 </task>
 </task>
-<task actualstartdate="2026-02-27 09:07:02.068000" creationDateTime="2026-02-27 09:06:20.789000" id="e8d01a4f-1380-11f1-bdb5-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:02.067000" status="1" subject="База данных" />
-<task actualstartdate="2026-02-27 09:07:03.881000" creationDateTime="2026-02-27 09:06:33.221000" id="f039134f-1380-11f1-949b-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:03.880000" status="1" subject="Учет статистики" />
+<task actualstartdate="2026-03-05 08:44:03.332000" creationDateTime="2026-03-05 08:43:43.565000" expandedContexts="('taskviewer',)" id="be52a7cf-1834-11f1-9882-ce7a14ba6107" modificationDateTime="2026-03-05 08:44:31.534000" status="1" subject="API сохранений">
+<task actualstartdate="2026-03-05 08:44:43.139000" completiondate="2026-03-05 09:42:24.346000" creationDateTime="2026-03-05 08:44:31.534000" id="daea24de-1834-11f1-9cd8-ce7a14ba6107" modificationDateTime="2026-03-05 09:42:24.344000" percentageComplete="100" status="1" subject="Недостающие эндпойнты" />
+</task>
+<task actualstartdate="2026-02-27 09:07:02.068000" completiondate="2026-03-05 08:35:22.299000" creationDateTime="2026-02-27 09:06:20.789000" id="e8d01a4f-1380-11f1-bdb5-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:22.299000" percentageComplete="100" status="1" subject="База данных" />
+<task actualstartdate="2026-03-05 08:45:21.369000" creationDateTime="2026-03-05 08:45:00.948000" id="ec725d40-1834-11f1-ab0a-ce7a14ba6107" modificationDateTime="2026-03-05 08:45:21.369000" status="1" subject="Доработка меню, проверка сохранений перед new" />
+<task actualstartdate="2026-02-27 09:07:03.881000" creationDateTime="2026-02-27 09:06:33.221000" id="f039134f-1380-11f1-949b-ce7a14ba6107" modificationDateTime="2026-03-05 08:44:26.477000" status="1" subject="Учет статистики">
+<task actualstartdate="2026-03-05 08:35:41.511000" creationDateTime="2026-03-05 08:35:29.611000" id="97e741b0-1833-11f1-b797-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:41.510000" status="1" subject="Тестирование" />
+</task>
 <task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:04.591000" status="1" subject="Учет достижений" />
+<task actualstartdate="2026-03-05 08:45:50.046000" creationDateTime="2026-03-05 08:45:26.008000" expandedContexts="('taskviewer',)" id="fb623780-1834-11f1-bfe5-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:43.264000" status="1" subject="Доработка klondike">
+<task actualstartdate="2026-03-05 08:46:11.799000" creationDateTime="2026-03-05 08:45:55.170000" id="0cc3fc21-1835-11f1-ba27-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:11.799000" status="1" subject="Автосохранение при выходе" />
+<task actualstartdate="2026-03-05 08:46:32.815000" creationDateTime="2026-03-05 08:46:16.525000" id="197e7fd1-1835-11f1-9f81-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:32.815000" status="1" subject="Загрузка сохраненной игры" />
+<task actualstartdate="2026-03-05 08:46:48.686000" creationDateTime="2026-03-05 08:46:43.263000" id="296e64f0-1835-11f1-acce-ce7a14ba6107" modificationDateTime="2026-03-05 08:46:48.686000" status="1" subject="кнопка &quot;Новая игра&quot; с завершением текущей" />
+</task>
 </task>
 </task>
 </task>

@@ -10,6 +10,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import sys
 import os
+from datetime import datetime
 from typing import Optional, Dict, Any
 import uuid
 
@@ -281,12 +282,48 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'players': leaders
             })
             return
+        # ===== СПИСОК СОХРАНЕНИЙ ИГРОКА =====
+        if parsed.path == '/player/saves':
+            """Получить список сохранений игрока."""
+            player_id = query.get('player_id', [None])[0]
+            game_type = query.get('game_type', [None])[0]  # Опциональный фильтр
 
+            if not player_id:
+                self._send_response({
+                    'success': False,
+                    'error': 'Missing player_id'
+                }, 400)
+                return
+
+            # Получаем сохранения через API
+            saves = self.stats_api.get_player_saves(player_id, game_type)
+
+            # Форматируем для Godot (только нужные поля)
+            formatted_saves = []
+            for save in saves:
+                formatted_saves.append({
+                    'id': save['id'],
+                    'game_type': save['game_type'],
+                    'save_type': save['save_type'],
+                    'moves': save['moves'],
+                    'time': save['time'],
+                    'score': save['score'],
+                    'description': save['description'],
+                    'updated_at': save['updated_at']
+                })
+
+            self._send_response({
+                'success': True,
+                'saves': formatted_saves,
+                'count': len(formatted_saves)
+            })
+            return
         # Неизвестный путь
         self._send_response({
             'success': False,
             'error': f'Unknown path: {parsed.path}'
         }, 404)
+
 
     def do_POST(self):
         """POST запросы: действия и создание игры."""
@@ -398,6 +435,79 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 })
 
             return
+        # ===== СОХРАНЕНИЕ ИГРЫ =====
+        if parsed.path == '/save':
+            """Сохранить текущую игру (автосохранение)."""
+            player_id = command.get('player_id')
+            game_state = command.get('game_state')
+            game_type = command.get('game_type', 'klondike')
+
+            # Проверка обязательных полей
+            if not player_id:
+                self._send_response({
+                    'success': False,
+                    'error': 'Missing player_id'
+                }, 400)
+                return
+
+            if not game_state:
+                self._send_response({
+                    'success': False,
+                    'error': 'Missing game_state'
+                }, 400)
+                return
+
+            # Дополнительные данные
+            moves_count = command.get('moves_count', 0)
+            score = command.get('score', 0)
+            time_elapsed = command.get('time_elapsed', 0)
+
+            # Сохраняем через API
+            result = self.stats_api.save_game(
+                player_id=player_id,
+                game_type=game_type,
+                game_state=game_state,
+                save_type='autosave',
+                description=f'Автосохранение {datetime.now().strftime("%H:%M:%S")}'
+            )
+
+            self._send_response(result)
+            return
+        # ===== ЗАГРУЗКА СОХРАНЕННОЙ ИГРЫ =====
+        if parsed.path == '/save/load':
+            """Загрузить сохранённую игру по ID."""
+            saved_game_id = command.get('saved_game_id')
+
+            if not saved_game_id:
+                self._send_response({
+                    'success': False,
+                    'error': 'Missing saved_game_id'
+                }, 400)
+                return
+
+            # Загружаем через API
+            saved = self.stats_api.load_saved_game(int(saved_game_id))
+
+            if saved and saved.get('success'):
+                self._send_response({
+                    'success': True,
+                    'saved_game_id': saved['game_id'],
+                    'game_type': saved['game_type'],
+                    'game_state': saved['game_state'],
+                    'moves': saved['moves'],
+                    'time': saved['time'],
+                    'score': saved['score'],
+                    'save_type': saved['save_type'],
+                    'saved_at': saved['saved_at']
+                })
+            else:
+                self._send_response({
+                    'success': False,
+                    'error': 'Save not found'
+                }, 404)
+
+            return
+
         # ===== СМЕНА ИМЕНИ ИГРОКА =====
         if parsed.path == '/player/rename':
             """Изменить имя игрока."""

@@ -8,6 +8,8 @@ var is_busy = false
 var first_move_made = false
 var timer_active = false
 var last_request_type = ""
+var is_game_active = false      # Игра началась (первый ход сделан)
+var current_game_id = null      # ID игры от сервера
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
@@ -84,10 +86,14 @@ func start_new_game():
 	timer = 0
 	first_move_made = false
 	timer_active = false
+	is_game_active = false  # Сбрасываем при новой игре
+	current_game_id = null   # Сбрасываем ID
 	update_time_display()
 	if game_over_panel:
 		game_over_panel.hide()
-	var body = '{"variant":"klondike"}'
+	
+	# Добавляем player_id в запрос
+	var body = '{"variant":"klondike", "player_id": "' + Global.player_id + '"}'
 	var headers = ["Content-Type: application/json"]
 	http.request(Global.server_url + "/new", headers, HTTPClient.METHOD_POST, body)
 
