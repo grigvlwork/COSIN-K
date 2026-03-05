@@ -657,6 +657,36 @@ class StatsAPI:
             'message': f'Удалено {count} старых сохранений'
         }
 
+    def delete_autosave(self, player_id: str, game_type: str) -> Dict[str, Any]:
+        """
+        Удалить автосохранение игрока для конкретного типа игры.
+
+        Используется при:
+        1. Победе (сохранение больше не нужно)
+        2. Принудительном начале новой игры (игрок сдался)
+
+        Args:
+            player_id: UUID игрока
+            game_type: Тип игры ('klondike', 'spider', и т.д.)
+
+        Returns:
+            Dict: {'success': True/False}
+        """
+        # Ищем существующее автосохранение через сервис
+        saves = self.stats.get_player_saves(player_id, game_type)
+        autosave = next((s for s in saves if s.save_type == 'autosave'), None)
+
+        if autosave:
+            success = self.stats.delete_saved_game(autosave.id)
+            if success:
+                print(f"🗑️ Автосохранение удалено: {player_id} / {game_type}")
+                return {'success': True}
+            else:
+                return {'success': False, 'error': 'Failed to delete save'}
+
+        # Если сохранения нет — это тоже успех (идемпотентность)
+        return {'success': True}
+
     # ===== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ =====
 
     def get_available_games(self) -> List[str]:

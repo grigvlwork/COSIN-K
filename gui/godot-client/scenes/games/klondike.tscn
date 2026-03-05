@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://cgy7udkbdl6vx"]
 
-[ext_resource type="Script" uid="uid://cljbwv2355o4v" path="res://scenes/games/klondike.gd" id="1_ae4ji"]
+[ext_resource type="Script" uid="uid://fu6125fklu50" path="res://debug_tree.gd" id="1_u1vkt"]
 [ext_resource type="PackedScene" uid="uid://1hhgj4vbjqcn" path="res://scenes/ui/counters_container.tscn" id="2_u1vkt"]
 [ext_resource type="PackedScene" uid="uid://djsfhu74iej22" path="res://scenes/ui/buttons.tscn" id="3_cnung"]
 
@@ -11,7 +11,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_ae4ji")
+script = ExtResource("1_u1vkt")
 
 [node name="Display" type="Control" parent="."]
 layout_mode = 1

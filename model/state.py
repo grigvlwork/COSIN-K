@@ -1,10 +1,11 @@
+# model/state.py
 """
 GameState — чистое состояние игры.
 Только данные, никакой логики перемещений!
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from .pile import Pile
 
 
@@ -85,6 +86,71 @@ class GameState:
             score=self.score,
             moves_count=self.moves_count,
             time_elapsed=self.time_elapsed
+        )
+
+    # === Сериализация ===
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Преобразовать состояние в словарь для JSON.
+        """
+        # Преобразуем словарь piles: {name: Pile} -> {name: dict}
+        piles_dict = {}
+        for name, pile in self.piles.items():
+            piles_dict[name] = pile.to_dict()
+
+        return {
+            "piles": piles_dict,
+            "stock": self.stock.to_dict(),
+            "waste": self.waste.to_dict(),
+            "score": self.score,
+            "moves_count": self.moves_count,
+            "time_elapsed": self.time_elapsed
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "GameState":
+        """
+        Создать состояние из словаря (из JSON).
+        """
+        # Восстанавливаем словарь piles
+        piles = {}
+        piles_data = data.get("piles", {})
+        for name, pile_data in piles_data.items():
+            # pile_data может быть уже словарем или объектом Pile (при глубоком копировании)
+            if isinstance(pile_data, Pile):
+                piles[name] = pile_data
+            elif isinstance(pile_data, dict):
+                piles[name] = Pile.from_dict(pile_data)
+            else:
+                # На всякий случай создаем пустую стопку
+                piles[name] = Pile(name)
+
+        # Восстанавливаем stock
+        stock_data = data.get("stock")
+        if isinstance(stock_data, Pile):
+            stock = stock_data
+        elif isinstance(stock_data, dict):
+            stock = Pile.from_dict(stock_data)
+        else:
+            stock = Pile("stock")
+
+        # Восстанавливаем waste
+        waste_data = data.get("waste")
+        if isinstance(waste_data, Pile):
+            waste = waste_data
+        elif isinstance(waste_data, dict):
+            waste = Pile.from_dict(waste_data)
+        else:
+            waste = Pile("waste")
+
+        return cls(
+            piles=piles,
+            stock=stock,
+            waste=waste,
+            score=data.get("score", 0),
+            moves_count=data.get("moves_count", 0),
+            time_elapsed=data.get("time_elapsed", 0)
         )
 
     def __repr__(self) -> str:

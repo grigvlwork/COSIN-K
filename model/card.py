@@ -1,6 +1,7 @@
 # model/card.py
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, Any, Optional
 
 
 class Suit(Enum):
@@ -41,6 +42,95 @@ class Card:
 
     def make_face_down(self) -> 'Card':
         return Card(self.suit, self.rank, False) if self.face_up else self
+
+    # === Сериализация ===
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Преобразовать карту в словарь для JSON.
+        Сохраняем имена Enum'ов для надежности.
+        """
+        return {
+            "suit": self.suit.name,
+            "rank": self.rank.value,  # Сохраняем число (1-13)
+            "face_up": self.face_up
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Card':
+        """
+        Создать карту из словаря.
+        Ожидает: {"suit": "HEARTS", "rank": 1, "face_up": true}
+        """
+        # Если rank пришел как строка (например "ACE"), преобразуем
+        rank_data = data["rank"]
+        if isinstance(rank_data, str):
+            # Пытаемся распарсить строку как имя Enum или значение
+            try:
+                rank = Rank[rank_data.upper()]
+            except KeyError:
+                # Если это число в строке "10"
+                rank = Rank(int(rank_data))
+        else:
+            rank = Rank(rank_data)
+
+        # Если suit пришел как символ "♥"
+        suit_data = data["suit"]
+        if isinstance(suit_data, str):
+            # Если это длинное имя "HEARTS"
+            if len(suit_data) > 2:
+                suit = Suit[suit_data.upper()]
+            else:
+                # Если это символ "♥"
+                suit = Suit(suit_data)
+        else:
+            suit = Suit(suit_data)
+
+        return cls(
+            suit=suit,
+            rank=rank,
+            face_up=data.get("face_up", False)
+        )
+
+    @classmethod
+    def from_str(cls, text: str, face_up: bool = True) -> Optional['Card']:
+        """
+        Создать карту из строки вида "A♥", "10♠", "K♦".
+        Используется для парсинга, если Godot пришлет строки.
+        """
+        if not text or len(text) < 2:
+            return None
+
+        text = text.strip()
+
+        # Определяем масть (последний символ)
+        suit_symbol = text[-1]
+        suit_map = {
+            "♥": Suit.HEARTS, "H": Suit.HEARTS,
+            "♦": Suit.DIAMONDS, "D": Suit.DIAMONDS,
+            "♣": Suit.CLUBS, "C": Suit.CLUBS,
+            "♠": Suit.SPADES, "S": Suit.SPADES
+        }
+        suit = suit_map.get(suit_symbol)
+        if not suit:
+            return None
+
+        # Определяем ранг (все символы кроме последнего)
+        rank_str = text[:-1].upper()
+
+        rank_map = {
+            "A": Rank.ACE, "J": Rank.JACK, "Q": Rank.QUEEN, "K": Rank.KING
+        }
+
+        if rank_str in rank_map:
+            rank = rank_map[rank_str]
+        else:
+            try:
+                rank = Rank(int(rank_str))
+            except ValueError:
+                return None
+
+        return cls(suit, rank, face_up)
 
     # Только данные, никакого отображения!
     @property
