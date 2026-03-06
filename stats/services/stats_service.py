@@ -214,11 +214,13 @@ class StatsService:
                     self._active_games[game_id][key] = value
 
     # ===== Работа с сохранёнными играми =====
-
     def save_game(self, player_id: str, game_type: str,
                   game_state: Dict[str, Any],
                   save_type: str = 'autosave',
-                  description: str = '') -> Optional[int]:
+                  description: str = '',
+                  score: int = 0,
+                  moves_count: int = 0,
+                  time_played_seconds: int = 0) -> Optional[int]:
         """
         Сохранить игру.
 
@@ -228,6 +230,9 @@ class StatsService:
             game_state: Состояние игры
             save_type: Тип сохранения ('autosave', 'manual', 'checkpoint')
             description: Описание (для ручных сохранений)
+            score: Счет игры
+            moves_count: Количество ходов
+            time_played_seconds: Прошедшее время
 
         Returns:
             int: ID сохранения или None
@@ -239,6 +244,9 @@ class StatsService:
                 # Обновляем существующее автосохранение
                 success = self.saved_game_repo.update(existing.id, {
                     'game_state': game_state,
+                    'score': score,
+                    'moves_count': moves_count,
+                    'time_played_seconds': time_played_seconds,
                     'updated_at': datetime.now(),
                     'last_played': datetime.now()
                 })
@@ -253,11 +261,13 @@ class StatsService:
             updated_at=datetime.now(),
             last_played=datetime.now(),
             save_type=save_type,
-            description=description
+            description=description,
+            score=score,
+            moves_count=moves_count,
+            time_played_seconds=time_played_seconds
         )
 
         return self.saved_game_repo.create(saved_game)
-
     def load_saved_game(self, saved_game_id: int) -> Optional[SavedGame]:
         """
         Загрузить сохранённую игру.

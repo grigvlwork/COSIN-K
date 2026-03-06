@@ -379,19 +379,30 @@ class StatsAPI:
         Args:
             player_id: UUID игрока
             game_type: Тип игры
-            game_state: Состояние игры
+            game_state: Состояние игры (содержит score, moves_count, time_elapsed)
             save_type: Тип сохранения
             description: Описание
 
         Returns:
             Dict с ID сохранения
         """
+
+        # Извлекаем статистику из состояния
+        score = game_state.get('score', 0)
+        moves = game_state.get('moves_count', 0)
+        time_elapsed = game_state.get('time_elapsed', 0)
+
+        print(f"📊 Сохраняем игру: score={score}, moves={moves}, time={time_elapsed}")
+
         saved_id = self.stats.save_game(
             player_id=player_id,
             game_type=game_type,
             game_state=game_state,
             save_type=save_type,
-            description=description
+            description=description,
+            score=score,
+            moves_count=moves,  # ← ИСПРАВЛЕНО
+            time_played_seconds=time_elapsed  # ← ИСПРАВЛЕНО
         )
 
         if saved_id:

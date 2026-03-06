@@ -84,6 +84,10 @@ func connect_to_server():
 
 func _on_http_completed(result, response_code, headers, body):
 	# Если сервер вернул код ошибки (не 200)
+	print("\n=== _on_http_completed ===")
+	print("response_code: ", response_code)
+	print("pending_action: ", pending_action)
+	print("headers: ", headers)
 	if response_code == 409:
 		print("⚠️ Конфликт: найдено активное сохранение")
 		var response_text = body.get_string_from_utf8()
@@ -151,8 +155,9 @@ func _on_http_completed(result, response_code, headers, body):
 				
 				if data.has("state"):
 					print("✅ Состояние загружено, передаем в игру")
-					# Передаем state, время и ID
-					Global.set_pending_save(data["state"], data.get("time", 0), data.get("game_id", 0))
+					print("   Размер state: ", data["state"].size() if data["state"] is Dictionary else "не словарь!")
+					# Передаем state, время и ID (saved_game_id из сервера!)
+					Global.set_pending_save(data["state"], data.get("time", 0), data.get("saved_game_id", 0))
 					_proceed_to_game_scene("load")
 				else:
 					printerr("❌ В ответе нет ключа 'state'!")
@@ -265,7 +270,14 @@ func _on_restore_declined():
 
 func _proceed_to_game_scene(mode: String):
 	"""Переключение на сцену игры"""
+	print("\n=== 🎮 _proceed_to_game_scene ===")
+	print("mode: ", mode)
+	print("Текущий Global.pending_game_state размер: ", Global.pending_game_state.size())
+	print("Global.has_pending_save(): ", Global.has_pending_save())
+	
 	var scene_path = "res://scenes/games/klondike.tscn"
+	print("Путь к сцене: ", scene_path)
+	print("Сцена существует: ", ResourceLoader.exists(scene_path))
 	
 	if not ResourceLoader.exists(scene_path):
 		printerr("❌ Файл сцены не найден: ", scene_path)
@@ -273,26 +285,51 @@ func _proceed_to_game_scene(mode: String):
 	
 	# Если режим "new", очищаем возможный pending state
 	if mode == "new":
+		print("🧹 Режим new - очищаем pending state")
 		Global.clear_pending_save()
+	elif mode == "load":
+		print("📦 Режим load - проверяем pending state")
+		print("  - Размер state: ", Global.pending_game_state.size())
+		print("  - Время: ", Global.pending_game_time)
+		print("  - ID: ", Global.pending_game_id)
+		print("  - Ключи state: ", Global.pending_game_state.keys() if Global.pending_game_state.size() > 0 else "нет ключей")
 	
 	# Переход
-	get_tree().change_scene_to_file(scene_path)
+	print("🎬 Вызываем change_scene_to_file...")
+	var result = get_tree().change_scene_to_file(scene_path)
+	print("Результат change_scene_to_file: ", result)
+	print("=== Конец _proceed_to_game_scene ===\n")
 
 # ===== ДИАЛОГ ВОССТАНОВЛЕНИЯ =====
 
 func _show_restore_dialog(save_data: Dictionary):
 	"""Показать диалог восстановления"""
+	print("\n=== _show_restore_dialog ===")
+	print("Получены save_data: ", save_data)
+	print("Ключи save_data: ", save_data.keys())
+	
 	if not restore_dialog:
 		printerr("❌ RestoreDialog не найден в сцене!")
 		_proceed_to_game_scene("new")
 		return
 	
+	# Извлечем данные с проверкой
+	var moves = save_data.get("moves", 0)
+	var time_sec = save_data.get("time", 0)
+	var score = save_data.get("score", 0)
+	
+	print("Извлеченные данные:")
+	print("  - moves: ", moves, " (тип: ", typeof(moves), ")")
+	print("  - time: ", time_sec, " (тип: ", typeof(time_sec), ")")
+	print("  - score: ", score, " (тип: ", typeof(score), ")")
+	
 	# Формируем текст
 	var text = "Найдена незаконченная игра!\n\n"
-	text += "📊 Ходы: %d\n" % save_data.get("moves", 0)
-	text += "⏱️ Время: %s\n" % _format_time(save_data.get("time", 0))
-	text += "💰 Счет: %d\n\n" % save_data.get("score", 0)
+	text += "📊 Ходы: %d\n" % moves
+	text += "⏱️ Время: %s\n" % _format_time(time_sec)
+	text += "💰 Счет: %d\n\n" % score
 	
+	# Добавим информацию о статусе
 	if save_data.get("is_suspended", false):
 		text += "(Прошло более часа с последнего хода)"
 	else:
@@ -300,11 +337,18 @@ func _show_restore_dialog(save_data: Dictionary):
 	
 	text += "\nПродолжить?"
 	
+	print("Сформированный текст диалога:")
+	print(text)
+	
 	restore_dialog.dialog_text = text
 	restore_dialog.popup_centered()
 	
 	# Сохраняем ID сохранения для использования в колбэках
-	restore_dialog.set_meta("save_id", save_data.get("save_id", 0))
+	var save_id = save_data.get("save_id", 0)
+	print("Сохраняем save_id в meta: ", save_id)
+	restore_dialog.set_meta("save_id", save_id)
+	
+	print("=== Конец _show_restore_dialog ===\n")
 
 # ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 

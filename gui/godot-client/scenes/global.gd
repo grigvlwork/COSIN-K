@@ -33,31 +33,69 @@ func _ready():
 
 # ===== УПРАВЛЕНИЕ СОСТОЯНИЕМ ЗАГРУЗКИ =====
 
-func set_pending_save(state: Dictionary, time: int, save_id: int) -> void:
+func set_pending_save(state: Dictionary, time: int, game_id: int) -> void:
 	"""
 	Сохранить данные игры для загрузки в сцене.
 	Вызывается из menu.gd перед переключением сцены.
 	"""
+	print("\n=== 📦 Global.set_pending_save() ===")
+	print("Входные параметры:")
+	print("  - state тип: ", typeof(state))
+	print("  - state размер: ", state.size())
+	print("  - time: ", time)
+	print("  - game_id: ", game_id)
+	
+	# Проверим структуру state
+	if state.size() > 0:
+		print("  - Ключи state: ", state.keys())
+		# Проверим наличие критически важных ключей
+		var required_keys = ["piles", "stock", "waste", "score", "moves_count"]
+		for key in required_keys:
+			print("    - has '", key, "': ", state.has(key))
+	else:
+		print("  ⚠️ state пустой!")
+	
 	pending_game_state = state
 	pending_game_time = time
-	pending_game_id = save_id
-	print("📦 Подготовлено состояние для загрузки: ", save_id)
+	pending_game_id = game_id
+	
+	print("✅ Данные сохранены:")
+	print("  - pending_game_state размер: ", pending_game_state.size())
+	print("  - pending_game_time: ", pending_game_time)
+	print("  - pending_game_id: ", pending_game_id)
+	print("  - has_pending_save(): ", has_pending_save())
+	print("=== Конец set_pending_save ===\n")
 
 func clear_pending_save() -> void:
 	"""
 	Очистить данные загрузки.
 	Вызывается в klondike.gd после применения состояния.
 	"""
+	print("\n=== 🧹 Global.clear_pending_save() ===")
+	print("До очистки:")
+	print("  - pending_game_state размер: ", pending_game_state.size())
+	print("  - pending_game_time: ", pending_game_time)
+	print("  - pending_game_id: ", pending_game_id)
+	print("  - has_pending_save(): ", has_pending_save())
+	
 	pending_game_state.clear()
 	pending_game_time = 0
 	pending_game_id = 0
-	print("🧹 Данные загрузки очищены")
+	
+	print("После очистки:")
+	print("  - pending_game_state размер: ", pending_game_state.size())
+	print("  - pending_game_time: ", pending_game_time)
+	print("  - pending_game_id: ", pending_game_id)
+	print("  - has_pending_save(): ", has_pending_save())
+	print("=== Конец clear_pending_save ===\n")
 
 func has_pending_save() -> bool:
 	"""
 	Проверить, есть ли данные для загрузки.
 	"""
-	return not pending_game_state.is_empty()
+	var result = not pending_game_state.is_empty()
+	print("🔍 Global.has_pending_save() = ", result, " (размер state: ", pending_game_state.size(), ")")
+	return result
 
 # ===== РАБОТА С ИДЕНТИФИКАЦИЕЙ =====
 

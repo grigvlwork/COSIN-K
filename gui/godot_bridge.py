@@ -189,6 +189,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
         # ===== ЗАГРУЗКА / ПРОВЕРКА СОХРАНЕННОЙ ИГРЫ =====
         if parsed.path == '/load':
             """Проверить наличие сохранения и загрузить, если есть."""
+
             player_id = query.get('player_id', [None])[0]
             game_type = query.get('game_type', ['klondike'])[0]
 
@@ -199,7 +200,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             # Ищем сохранение в БД
             saves = self.stats_api.get_player_saves(player_id, game_type)
             autosaves = [s for s in saves if s.get('save_type') == 'autosave']
-
+            print(f"📂 [{session_id}] Запрос /load от player_id: {player_id}, game_type: {game_type}")
+            print(f"   Найдено сохранений: {len(autosaves)}")
             if not autosaves:
                 self._send_response({'success': True, 'has_save': False})
                 return
@@ -290,6 +292,9 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
         # ===== СОХРАНЕНИЕ ИГРЫ =====
         if parsed.path == '/save':
             """Принудительное сохранение (автосохранение от клиента)."""
+            print(f"💾 [{session_id}] Запрос /save от player_id: {command.get('player_id')}")
+            print(f"   game_type: {command.get('game_type', 'klondike')}")
+            print(f"   time_elapsed: {command.get('time_elapsed', 0)}")
             player_id = command.get('player_id')
             game_type = command.get('game_type', 'klondike')
 
@@ -318,6 +323,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 game_state=state_dict,  # Внутри уже есть score, moves, time
                 save_type='autosave'
             )
+            print(f"   Результат сохранения: {result}")
             self._send_response(result)
             return
 
@@ -366,12 +372,15 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 # (Опционально: можно оставить, чтобы можно было переиграть)
                 # Пока оставим.
 
+                state_dict = engine.state.to_dict()
+
                 self._send_response({
                     'success': True,
-                    'state': engine.state,
+                    'state': state_dict,  # ← ИСПРАВЛЕНО: словарь!
                     'score': engine.state.score,
                     'moves': engine.state.moves_count,
-                    'time': engine.state.time_elapsed
+                    'time': engine.state.time_elapsed,
+                    'saved_game_id': save_id  # ← Добавлено для меню
                 })
             else:
                 self._send_response({'success': False, 'error': 'Failed to restore state'}, 500)
@@ -570,7 +579,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'success': success,
                 'state': engine.state if success else None,
                 'score': engine.state.score if success else 0,
-                'moves': engine.state.moves_count if success else 0
+                'moves': engine.state.moves_count if success else 0,
+                'game_won': engine.rules.check_win(engine.state) if success else False
             })
 
         # ----- ОТМЕНА -----
@@ -583,7 +593,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'success': success,
                 'state': engine.state if success else None,
                 'score': engine.state.score if success else 0,
-                'moves': engine.state.moves_count if success else 0
+                'moves': engine.state.moves_count if success else 0,
+                'game_won': engine.rules.check_win(engine.state) if success else False
             })
 
         # ----- ПОВТОР -----
@@ -593,7 +604,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'success': success,
                 'state': engine.state if success else None,
                 'score': engine.state.score if success else 0,
-                'moves': engine.state.moves_count if success else 0
+                'moves': engine.state.moves_count if success else 0,
+                'game_won': engine.rules.check_win(engine.state) if success else False
             })
 
         # ----- АВТО-ХОД -----
@@ -627,10 +639,12 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
                 self._send_response({
                     'success': success,
-                    'move': {'from': selected_move.from_pile, 'to': selected_move.to_pile, 'count': len(selected_move.cards)},
+                    'move': {'from': selected_move.from_pile, 'to': selected_move.to_pile,
+                             'count': len(selected_move.cards)},
                     'state': engine.state if success else None,
                     'score': engine.state.score if success else 0,
-                    'moves': engine.state.moves_count if success else 0
+                    'moves': engine.state.moves_count if success else 0,
+                    'game_won': engine.rules.check_win(engine.state) if success else False
                 })
             else:
                 self._send_response({'success': False, 'error': 'No suitable move'})

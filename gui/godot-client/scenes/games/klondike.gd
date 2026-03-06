@@ -90,22 +90,36 @@ func _ready():
 
 func _load_from_global_state():
 	"""Загрузить игру из данных, переданных через Global"""
-	game_state = Global.pending_game_state
+	print("📦 _load_from_global_state() вызван")
+	
+	# Сначала копируем данные
+	game_state = Global.pending_game_state.duplicate(true)  # Глубокая копия!
 	game_time = Global.pending_game_time
 	current_game_id = Global.pending_game_id
-
-	Global.clear_pending_save()
+	
+	print("   game_state скопирован. Размер: ", game_state.size())
+	print("   game_time: ", game_time)
+	print("   current_game_id: ", current_game_id)
 	
 	# --- ДИАГНОСТИКА ---
-	print("📦 Загруженное состояние. Ключи: ", game_state.keys())
+	if game_state:
+		print("📦 Загруженное состояние. Ключи: ", game_state.keys())
+		# Проверим наличие важных ключей
+		var required_keys = ["piles", "stock", "waste", "score", "moves_count"]
+		for key in required_keys:
+			print("   has '", key, "': ", game_state.has(key))
+	else:
+		printerr("❌ game_state is null!")
+		return
 	# -------------------
-
+	
+	# ТЕПЕРЬ можно очистить Global
+	Global.clear_pending_save()
+	
 	update_ui()
 	update_time_display()
 	draw_game()
 	
-	# ИСПРАВЛЕНО: Используем .get() для безопасности
-	# Если ключа нет, вернется 0
 	var moves = game_state.get("moves_count", 0)
 	
 	if moves > 0:
