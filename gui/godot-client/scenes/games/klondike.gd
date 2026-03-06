@@ -1,3 +1,5 @@
+# gui/godot-client/scenes/games/klondike.gd
+
 extends Control
 
 var http = HTTPRequest.new()
@@ -15,9 +17,9 @@ var current_game_id = null	  # ID игры от сервера
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
 @onready var moves_label = $Display/MainLayout/CountersContainer/MovesLabel
 @onready var time_label = $Display/MainLayout/CountersContainer/TimeLabel
-@onready var game_over_panel = $Display/MainLayout/GameOverPanel
-@onready var win_label = $Display/MainLayout/GameOverPanel/WinLabel
-@onready var final_score = $Display/MainLayout/GameOverPanel/FinalScoreLabel
+@onready var game_over_panel = $Display/GameOverPanel
+@onready var win_label = $Display/GameOverPanel/VBoxContainer/WinLabel
+@onready var final_score = $Display/GameOverPanel/VBoxContainer/FinalScoreLabel
 
 @onready var new_game_button = $Display/MainLayout/Buttons/NewGameButton
 @onready var undo_button = $Display/MainLayout/Buttons/UndoButton
@@ -197,6 +199,8 @@ func _auto_save():
 func _on_request_completed(result, response_code, headers, body):
 	is_busy = false
 	var response_text = body.get_string_from_utf8()
+	if "game_won" in response_text:
+		print("📦 FULL SERVER RESPONSE: ", response_text)
 	var json = JSON.new()
 	var error = json.parse(response_text)
 
@@ -224,6 +228,7 @@ func _on_request_completed(result, response_code, headers, body):
 				
 				# 3. Ход / Отмена / Взятие карты
 				if data.has("state") and data["state"] != null:
+					var game_won = data.get("game_won", false)
 					game_state = data["state"]
 					update_ui()
 					draw_game()
@@ -236,7 +241,7 @@ func _on_request_completed(result, response_code, headers, body):
 						print("⏱️ Таймер запущен")
 					
 					# Победа
-					if data.has("game_won") and data["game_won"]:
+					if game_won:
 						show_win()
 						_auto_save()
 						

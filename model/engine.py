@@ -209,17 +209,17 @@ class SolitaireEngine:
         self._state = new_state
         self.history.push(self._state.copy(), executed_move)
 
-        # 8. Проверяем победу
-        if self.rules.check_win(self._state):
-            self._notify("game_won", {"score": self._state.score})
-
-        # 9. Уведомляем
+        # 8. Уведомляем о ходе
         self._notify("move_made", {
             "from": from_pile,
             "to": to_pile,
             "count": count,
             "score": self._state.score
         })
+
+        # 9. Проверяем победу
+        if self.rules.check_win(self._state):
+            self._notify("game_won", {"score": self._state.score})
 
         return True
 

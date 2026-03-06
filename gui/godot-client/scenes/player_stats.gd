@@ -50,7 +50,7 @@ func _ready():
 	# Подключаем кнопки
 	edit_name_button.pressed.connect(_on_edit_name_pressed)
 	close_button.pressed.connect(_on_close_pressed)
-	close_requested.connect(_on_close_pressed)
+	
 	# Загружаем статистику
 	load_stats()
 
@@ -202,7 +202,3 @@ func change_player_name(new_name: String):
 func _on_close_pressed():
 	"""Закрыть окно статистики"""
 	queue_free()
-
-
-func _on_close_requested() -> void:
-	pass # Replace with function body.

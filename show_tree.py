@@ -32,5 +32,6 @@ def generate_tree(directory, prefix="", output_lines=None):
 project_dir = "."
 tree_lines = [os.path.basename(os.path.abspath(project_dir)) + "/"]
 generate_tree(project_dir, "", tree_lines)
-
-print("\n".join(tree_lines))
+file = open('./doc/tree.txt', mode='w', encoding='UTF8')
+print("\n".join(tree_lines), file=file)
+file.close()
