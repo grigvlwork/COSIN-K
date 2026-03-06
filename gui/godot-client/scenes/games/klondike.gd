@@ -199,8 +199,6 @@ func _auto_save():
 func _on_request_completed(result, response_code, headers, body):
 	is_busy = false
 	var response_text = body.get_string_from_utf8()
-	if "game_won" in response_text:
-		print("📦 FULL SERVER RESPONSE: ", response_text)
 	var json = JSON.new()
 	var error = json.parse(response_text)
 
