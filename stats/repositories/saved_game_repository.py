@@ -21,21 +21,6 @@ from stats.data import connection_context
 class SavedGameRepository(BaseRepository[SavedGame]):
     """
     Репозиторий для операций с таблицей saved_games.
-
-    Пример использования:
-        >>> repo = SavedGameRepository(db_path)
-        >>>
-        >>> # Автосохранение
-        >>> saved = SavedGame(
-        ...     player_id="123",
-        ...     game_type="klondike",
-        ...     game_state={"cards": [...]},
-        ...     save_type="autosave"
-        ... )
-        >>> saved_id = repo.create(saved)
-        >>>
-        >>> # Загрузка автосохранения
-        >>> autosave = repo.get_autosave("123", "klondike")
     """
 
     def __init__(self, db_path: str):
@@ -45,15 +30,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
     # ===== БАЗОВЫЕ МЕТОДЫ =====
 
     def get(self, saved_id: int) -> Optional[SavedGame]:
-        """
-        Получить сохранение по ID.
-
-        Args:
-            saved_id: ID сохранения
-
-        Returns:
-            SavedGame объект или None
-        """
+        """Получить сохранение по ID."""
         query = f"SELECT * FROM {self.table_name} WHERE id = ?"
         results = self._execute(query, (saved_id,))
 
@@ -62,15 +39,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         return None
 
     def create(self, saved_game: SavedGame) -> Optional[int]:
-        """
-        Создать новое сохранение.
-
-        Args:
-            saved_game: SavedGame объект (без id)
-
-        Returns:
-            int: ID созданного сохранения или None
-        """
+        """Создать новое сохранение."""
         data = saved_game.to_dict()
 
         # Убираем поля, которые будут auto-filled
@@ -102,16 +71,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             return None
 
     def update(self, saved_id: int, data: Dict[str, Any]) -> bool:
-        """
-        Обновить сохранение.
-
-        Args:
-            saved_id: ID сохранения
-            data: Словарь с полями для обновления
-
-        Returns:
-            True если успешно
-        """
+        """Обновить сохранение."""
         if not data:
             return True
 
@@ -146,15 +106,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             return False
 
     def delete(self, saved_id: int) -> bool:
-        """
-        Удалить сохранение.
-
-        Args:
-            saved_id: ID сохранения
-
-        Returns:
-            True если успешно
-        """
+        """Удалить сохранение."""
         query = f"DELETE FROM {self.table_name} WHERE id = ?"
 
         try:
@@ -165,15 +117,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             return False
 
     def update_last_played(self, saved_id: int) -> bool:
-        """
-        Обновить время последнего доступа к сохранению.
-
-        Args:
-            saved_id: ID сохранения
-
-        Returns:
-            True если успешно
-        """
+        """Обновить время последнего доступа к сохранению."""
         query = f"""
             UPDATE {self.table_name} 
             SET last_played = CURRENT_TIMESTAMP
@@ -186,19 +130,11 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         except Exception as e:
             print(f"Error updating last_played: {e}")
             return False
+
     # ===== МЕТОДЫ ДЛЯ РАБОТЫ С АВТОСОХРАНЕНИЯМИ =====
 
     def get_autosave(self, player_id: str, game_type: str) -> Optional[SavedGame]:
-        """
-        Получить автосохранение для игрока и типа игры.
-
-        Args:
-            player_id: UUID игрока
-            game_type: Тип игры
-
-        Returns:
-            SavedGame объект или None
-        """
+        """Получить автосохранение для игрока и типа игры."""
         query = f"""
             SELECT * FROM {self.table_name} 
             WHERE player_id = ? AND game_type = ? AND save_type = 'autosave'
@@ -213,23 +149,15 @@ class SavedGameRepository(BaseRepository[SavedGame]):
 
     def save_autosave(self, player_id: str, game_type: str,
                       game_state: Dict[str, Any],
+                      seed: Optional[int] = None,
                       score: int = 0,
                       moves_count: int = 0,
                       time_played_seconds: int = 0) -> Optional[int]:
         """
         Сохранить или обновить автосохранение.
-        Использует UNIQUE constraint для автоматической замены.
 
         Args:
-            player_id: UUID игрока
-            game_type: Тип игры
-            game_state: Состояние игры
-            score: Счет игры
-            moves_count: Количество ходов
-            time_played_seconds: Прошедшее время
-
-        Returns:
-            int: ID сохранения
+            seed: Сид генерации (для переигровки)
         """
         # Проверяем существующее автосохранение
         existing = self.get_autosave(player_id, game_type)
@@ -238,6 +166,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             # Обновляем существующее
             success = self.update(existing.id, {
                 'game_state': game_state,
+                'seed': seed,  # Сохраняем сид
                 'score': score,
                 'moves_count': moves_count,
                 'time_played_seconds': time_played_seconds,
@@ -250,6 +179,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             player_id=player_id,
             game_type=game_type,
             game_state=game_state,
+            seed=seed,  # Сохраняем сид
             save_type='autosave',
             last_played=datetime.now(),
             score=score,
@@ -262,16 +192,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
 
     def get_by_player(self, player_id: str,
                       game_type: Optional[str] = None) -> List[SavedGame]:
-        """
-        Получить все сохранения игрока.
-
-        Args:
-            player_id: UUID игрока
-            game_type: Фильтр по типу игры (опционально)
-
-        Returns:
-            List[SavedGame]: Список сохранений
-        """
+        """Получить все сохранения игрока."""
         query = f"""
             SELECT * FROM {self.table_name} 
             WHERE player_id = ?
@@ -288,15 +209,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         return [SavedGame.from_dict(row) for row in results]
 
     def get_manual_saves(self, player_id: str) -> List[SavedGame]:
-        """
-        Получить только ручные сохранения игрока.
-
-        Args:
-            player_id: UUID игрока
-
-        Returns:
-            List[SavedGame]: Список ручных сохранений
-        """
+        """Получить только ручные сохранения игрока."""
         query = f"""
             SELECT * FROM {self.table_name} 
             WHERE player_id = ? AND save_type = 'manual'
@@ -307,15 +220,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         return [SavedGame.from_dict(row) for row in results]
 
     def get_checkpoints(self, player_id: str) -> List[SavedGame]:
-        """
-        Получить точки сохранения (checkpoints).
-
-        Args:
-            player_id: UUID игрока
-
-        Returns:
-            List[SavedGame]: Список точек сохранения
-        """
+        """Получить точки сохранения (checkpoints)."""
         query = f"""
             SELECT * FROM {self.table_name} 
             WHERE player_id = ? AND save_type = 'checkpoint'
@@ -328,15 +233,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
     # ===== МЕТОДЫ ДЛЯ ИЗБРАННОГО =====
 
     def toggle_favorite(self, saved_id: int) -> bool:
-        """
-        Переключить статус избранного.
-
-        Args:
-            saved_id: ID сохранения
-
-        Returns:
-            True если успешно
-        """
+        """Переключить статус избранного."""
         saved = self.get(saved_id)
         if not saved:
             return False
@@ -344,15 +241,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         return self.update(saved_id, {'is_favorite': not saved.is_favorite})
 
     def get_favorites(self, player_id: str) -> List[SavedGame]:
-        """
-        Получить избранные сохранения.
-
-        Args:
-            player_id: UUID игрока
-
-        Returns:
-            List[SavedGame]: Список избранных
-        """
+        """Получить избранные сохранения."""
         query = f"""
             SELECT * FROM {self.table_name} 
             WHERE player_id = ? AND is_favorite = 1
@@ -365,30 +254,13 @@ class SavedGameRepository(BaseRepository[SavedGame]):
     # ===== МЕТОДЫ ДЛЯ ПРЕВЬЮ =====
 
     def update_preview(self, saved_id: int, preview_data: Dict[str, Any]) -> bool:
-        """
-        Обновить данные для превью.
-
-        Args:
-            saved_id: ID сохранения
-            preview_data: Данные для превью (видимые карты и т.д.)
-
-        Returns:
-            True если успешно
-        """
+        """Обновить данные для превью."""
         return self.update(saved_id, {'preview_data': preview_data})
 
     # ===== МЕТОДЫ ДЛЯ ОЧИСТКИ =====
 
     def delete_old_autosaves(self, days: int = 30) -> int:
-        """
-        Удалить старые автосохранения.
-
-        Args:
-            days: Удалять сохранения старше N дней
-
-        Returns:
-            int: Количество удалённых сохранений
-        """
+        """Удалить старые автосохранения."""
         cutoff = datetime.now() - timedelta(days=days)
         query = f"""
             DELETE FROM {self.table_name} 
@@ -404,15 +276,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             return 0
 
     def delete_by_player(self, player_id: str) -> int:
-        """
-        Удалить все сохранения игрока.
-
-        Args:
-            player_id: UUID игрока
-
-        Returns:
-            int: Количество удалённых сохранений
-        """
+        """Удалить все сохранения игрока."""
         query = f"DELETE FROM {self.table_name} WHERE player_id = ?"
 
         try:
@@ -422,5 +286,3 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         except Exception as e:
             print(f"Error deleting player saves: {e}")
             return 0
-
-

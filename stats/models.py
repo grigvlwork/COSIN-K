@@ -89,6 +89,9 @@ class Game:
     player_id: str = ''
     game_type: str = 'klondike'
 
+    # Сид для переигровки
+    seed: Optional[int] = None
+
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
 
@@ -161,6 +164,10 @@ class SavedGame:
     id: Optional[int] = None
     player_id: str = ''
     game_type: str = 'klondike'
+
+    # Сид для переигровки
+    seed: Optional[int] = None
+
     game_state: Dict[str, Any] = field(default_factory=dict)
 
     created_at: Optional[datetime] = None
