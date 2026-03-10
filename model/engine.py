@@ -183,7 +183,7 @@ class SolitaireEngine:
 
         # 3. Берем КАРТЫ ДЛЯ ПРОВЕРКИ (не удаляя!)
         preview_cards = source.peek(count)
-        print(f"  🃏 Preview cards: {[str(c) for c in preview_cards]}")
+        # print(f"  🃏 Preview cards: {[str(c) for c in preview_cards]}")
 
         # 4. Создаём Move с картами для проверки
         move = Move(
