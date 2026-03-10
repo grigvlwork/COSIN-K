@@ -13,6 +13,7 @@ COSIN-K/
 ├── gui
 │   ├── godot-client
 │   │   ├── assets
+│   │   │   ├── cards
 │   │   │   └── decks
 │   │   │       └── classic
 │   │   │           ├── 10_of_clubs.png
@@ -144,7 +145,8 @@ COSIN-K/
 │   │       ├── games
 │   │       │   ├── klondike.gd
 │   │       │   ├── klondike.gd.uid
-│   │       │   └── klondike.tscn
+│   │       │   ├── klondike.tscn
+│   │       │   └── klondike.tscn5197690571.tmp
 │   │       ├── global.gd
 │   │       ├── global.gd.uid
 │   │       ├── menu.gd
@@ -203,7 +205,7 @@ COSIN-K/
 │       ├── __init__.py
 │       ├── player_identity.py
 │       └── stats_service.py
-├── tree.txt
+├── stats_data
 └── view
     ├── __init__.py
     ├── base.py

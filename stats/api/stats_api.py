@@ -287,6 +287,17 @@ class StatsAPI:
             ...     suits_completed=["hearts", "spades"]
             ... )
         """
+
+        print(f"\n=== StatsAPI.end_game ===")
+        print(f"  game_id: {game_id}")
+        print(f"  result: {result}")
+        print(f"  score: {score}")
+        print(f"  moves: {moves}")
+        print(f"  game_type: {game_type}")
+        print(f"  suits_completed: {suits_completed}")
+        print(f"  was_perfect: {was_perfect}")
+        # print(f"  time_elapsed: {time_elapsed}")
+
         # Получаем данные из кэша если есть
         session = self._active_games.pop(game_id, {})
 
@@ -304,12 +315,8 @@ class StatsAPI:
             game_id=game_id,
             result=result,
             score=score,
-            moves_count=total_moves,
-            undos_used=undos,
-            hints_used=hints,
-            deck_cycles=deck_cycles,
-            suits_completed=suits_completed,
-            was_perfect=was_perfect
+            suits_completed=suits_completed
+            # Все остальные параметры убраны!
         )
 
         if success:

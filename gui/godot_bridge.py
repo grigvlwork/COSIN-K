@@ -473,6 +473,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         # ===== ЗАВЕРШЕНИЕ ИГРЫ =====
         if parsed.path == '/game/end':
+            print(f"🏁 /game/end вызван с result={command.get('result')}")
             player_id = command.get('player_id')
             result_str = command.get('result', 'abandoned')
             score = command.get('score', 0)
@@ -501,7 +502,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     game_type="klondike",
                     suits_completed=suits_completed,
                     was_perfect=was_perfect,
-                    time_elapsed=time_val # Передаем время
+                    # time_elapsed=time_val # Передаем время
                 )
 
                 # Удаляем сохранение после победы
@@ -559,7 +560,21 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             available = []
             if success and hasattr(engine.rules, 'get_available_moves'):
                 available = engine.rules.get_available_moves(engine.state)
+            # ПОСЛЕ хода проверяем победу
+            game_won = engine.rules.check_win(engine.state) if success else False
 
+            # ЕСЛИ ПОБЕДА - вызываем end_game!
+            if game_won and game_id and self.stats_api:
+                print(f"🏆 ПОБЕДА! game_id={game_id}")
+                self.stats_api.end_game(
+                    game_id=game_id,
+                    result='won',
+                    score=engine.state.score,
+                    moves=engine.state.moves_count,
+                    game_type="klondike",
+                    suits_completed=self._get_suits_completed(engine.state),
+                    was_perfect=self._check_perfect_game(engine, engine.state)
+                )
             self._send_response({
                 'success': success,
                 'state': engine.state if success else None,
@@ -636,7 +651,21 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 success = engine.move(selected_move.from_pile, selected_move.to_pile, len(selected_move.cards))
                 if success and game_id and self.stats_api:
                     self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
+                    # ПОСЛЕ хода проверяем победу
+                    game_won = engine.rules.check_win(engine.state) if success else False
 
+                    # ЕСЛИ ПОБЕДА - вызываем end_game!
+                    if game_won and game_id and self.stats_api:
+                        print(f"🏆 ПОБЕДА! game_id={game_id}")
+                        self.stats_api.end_game(
+                            game_id=game_id,
+                            result='won',
+                            score=engine.state.score,
+                            moves=engine.state.moves_count,
+                            game_type="klondike",
+                            suits_completed=self._get_suits_completed(engine.state),
+                            was_perfect=self._check_perfect_game(engine, engine.state)
+                        )
                 self._send_response({
                     'success': success,
                     'move': {'from': selected_move.from_pile, 'to': selected_move.to_pile,

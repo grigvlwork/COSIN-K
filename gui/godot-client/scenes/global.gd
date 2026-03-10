@@ -1,3 +1,4 @@
+# gui/godot-client/scenes/global.gd
 extends Node
 
 # ===== НАСТРОЙКИ СЕРВЕРА =====

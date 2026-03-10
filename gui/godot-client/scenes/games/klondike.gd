@@ -220,8 +220,7 @@ func _on_request_completed(result, response_code, headers, body):
 				
 				# 2. Сдача (Abandon)
 				if last_request_type == "abandon":
-					print("🏳️ Игра сдана, возврат в меню")
-					get_tree().change_scene_to_file("res://scenes/menu.tscn")
+					print("🏳️ Игра сдана")
 					return
 				
 				# 3. Ход / Отмена / Взятие карты
@@ -241,7 +240,7 @@ func _on_request_completed(result, response_code, headers, body):
 					# Победа
 					if game_won:
 						show_win()
-						_auto_save()
+						#_auto_save()
 						
 			else:
 				# === Ошибка логики ===
@@ -260,6 +259,7 @@ func show_win():
 		win_label.text = "🎉 ПОБЕДА!"
 		final_score.text = "Счет: " + str(game_state["score"])
 		timer_active = false
+		is_game_active = false
 
 # ===== ОБРАБОТЧИКИ КНОПОК =====
 
@@ -310,6 +310,8 @@ func _on_surrender_pressed():
 
 func _confirm_surrender():
 	last_request_type = "abandon"
+	is_game_active = false
+	timer_active = false  # ← ОСТАНОВИТЬ ТАЙМЕР!
 	var body = JSON.new().stringify({
 		"player_id": Global.player_id,
 		"game_type": "klondike",
