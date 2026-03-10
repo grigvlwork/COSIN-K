@@ -1,5 +1,5 @@
 # scenes/ui/player_stats.gd
-extends Window
+extends Control
 
 signal stats_updated
 

@@ -15,25 +15,6 @@ from stats.data import get_db_path
 class StatsService:
     """
     Сервис для сбора и анализа статистики игр.
-
-    Предоставляет методы для:
-    - Записи результатов игр
-    - Расчёта агрегированной статистики
-    - Управления сохранёнными играми
-    - Анализа достижений
-
-    Пример использования:
-        >>> service = StatsService()
-        >>>
-        >>> # Начало игры
-        >>> game_id = service.start_game(player_id, "klondike")
-        >>>
-        >>> # Завершение игры
-        >>> service.end_game(game_id, "won", score=100, moves=45)
-        >>>
-        >>> # Получение статистики игрока
-        >>> stats = service.get_player_stats(player_id)
-        >>> print(f"Побед: {stats.player.games_won}")
     """
 
     def __init__(self):
@@ -49,25 +30,23 @@ class StatsService:
     # ===== Управление игровыми сессиями =====
 
     def start_game(self, player_id: str, game_type: str = "klondike",
-                   initial_state: Optional[Dict] = None) -> int:
+                   seed: Optional[int] = None) -> int:
         """
         Начать новую игру.
 
         Args:
             player_id: UUID игрока
             game_type: Тип пасьянса
-            initial_state: Начальное состояние (если загружаем сохранение)
+            seed: Сид генерации (для переигровки)
 
         Returns:
             int: ID созданной игры
-
-        Пример:
-            >>> game_id = service.start_game(player.id, "klondike")
         """
         # Создаём запись в таблице games
         game = Game(
             player_id=player_id,
             game_type=game_type,
+            seed=seed,  # Сохраняем сид сразу
             started_at=datetime.now()
         )
 
@@ -78,6 +57,7 @@ class StatsService:
             self._active_games[game_id] = {
                 'player_id': player_id,
                 'game_type': game_type,
+                'seed': seed,  # Сохраняем сид в сессии
                 'started_at': datetime.now(),
                 'moves': 0,
                 'undos': 0,
@@ -95,42 +75,38 @@ class StatsService:
                  suits_completed: Optional[List[str]] = None) -> bool:
         """
         Завершить игру и записать статистику.
-
-        Args:
-            game_id: ID игры
-            result: Результат ('won', 'lost', 'abandoned')
-            score: Набранные очки
-            game_state: Финальное состояние (если нужно сохранить)
-            suits_completed: Какие масти собраны
-
-        Returns:
-            bool: True если успешно завершена
-
-        Пример:
-            >>> service.end_game(game_id, "won", score=150,
-            ...                  suits_completed=["hearts", "spades"])
         """
+        session_data = None
+
         if game_id not in self._active_games:
             # Пробуем найти в БД
             game = self.game_repo.get(game_id)
             if not game:
                 return False
-            # Если игра есть в БД но не в кэше, используем данные из БД
+
+            # Если игра есть в БД, восстанавливаем данные
             start_time = game.started_at
             player_id = game.player_id
+            game_type = game.game_type
+            seed = game.seed  # Берем сид из БД
+
             moves = game.moves_count
             undos = game.undos_used
             hints = game.hints_used
             deck_cycles = game.deck_cycles
         else:
             # Берём данные из активной сессии
-            session = self._active_games.pop(game_id)
-            start_time = session['started_at']
-            player_id = session['player_id']
-            moves = session['moves']
-            undos = session['undos']
-            hints = session['hints']
-            deck_cycles = session['deck_cycles']
+            session_data = self._active_games.pop(game_id)
+
+            start_time = session_data['started_at']
+            player_id = session_data['player_id']
+            game_type = session_data.get('game_type', 'klondike')
+            seed = session_data.get('seed')  # Берем сид из сессии
+
+            moves = session_data['moves']
+            undos = session_data['undos']
+            hints = session_data['hints']
+            deck_cycles = session_data['deck_cycles']
 
         # Рассчитываем длительность
         end_time = datetime.now()
@@ -138,14 +114,15 @@ class StatsService:
 
         # Определяем час и день
         hour = end_time.hour
-        weekday = end_time.weekday()  # 0-6, где 0 - понедельник
-        is_weekend = weekday >= 5  # суббота и воскресенье
+        weekday = end_time.weekday()
+        is_weekend = weekday >= 5
 
         # Создаём объект игры
         game = Game(
             id=game_id,
             player_id=player_id,
-            game_type=session.get('game_type', 'klondike'),
+            game_type=game_type,
+            seed=seed,  # Сохраняем сид в историю
             started_at=start_time,
             ended_at=end_time,
             result=result,
@@ -174,15 +151,10 @@ class StatsService:
 
     def _update_player_stats(self, player_id: str, result: str,
                              score: int, duration: int):
-        """
-        Обновить статистику игрока после завершения игры.
-        """
-        # Обновляем счётчики игр
+        """Обновить статистику игрока после завершения игры."""
         if result == 'won':
             self.player_repo.increment_stat(player_id, 'games_won')
             self.player_repo.update_streak(player_id, won=True)
-
-            # Обновляем рекорды времени
             self.player_repo.update_fastest_win(player_id, duration)
             self.player_repo.update_slowest_win(player_id, duration)
 
@@ -193,29 +165,23 @@ class StatsService:
         elif result == 'abandoned':
             self.player_repo.increment_stat(player_id, 'games_abandoned')
 
-        # Обновляем счёт
         if score > 0:
             self.player_repo.update_score(player_id, score)
 
-        # Обновляем общее время
         self.player_repo.update_play_time(player_id, duration)
 
     def update_game_progress(self, game_id: int, **kwargs):
-        """
-        Обновить прогресс текущей игры.
-
-        Args:
-            game_id: ID игры
-            **kwargs: Поля для обновления (moves, undos, hints, deck_cycles)
-        """
+        """Обновить прогресс текущей игры."""
         if game_id in self._active_games:
             for key, value in kwargs.items():
                 if key in self._active_games[game_id]:
                     self._active_games[game_id][key] = value
 
     # ===== Работа с сохранёнными играми =====
+
     def save_game(self, player_id: str, game_type: str,
                   game_state: Dict[str, Any],
+                  seed: Optional[int] = None,
                   save_type: str = 'autosave',
                   description: str = '',
                   score: int = 0,
@@ -223,79 +189,28 @@ class StatsService:
                   time_played_seconds: int = 0) -> Optional[int]:
         """
         Сохранить игру.
-
-        Args:
-            player_id: UUID игрока
-            game_type: Тип игры
-            game_state: Состояние игры
-            save_type: Тип сохранения ('autosave', 'manual', 'checkpoint')
-            description: Описание (для ручных сохранений)
-            score: Счет игры
-            moves_count: Количество ходов
-            time_played_seconds: Прошедшее время
-
-        Returns:
-            int: ID сохранения или None
         """
-        # Для автосохранения проверяем, есть ли уже
-        if save_type == 'autosave':
-            existing = self.saved_game_repo.get_autosave(player_id, game_type)
-            if existing:
-                # Обновляем существующее автосохранение
-                success = self.saved_game_repo.update(existing.id, {
-                    'game_state': game_state,
-                    'score': score,
-                    'moves_count': moves_count,
-                    'time_played_seconds': time_played_seconds,
-                    'updated_at': datetime.now(),
-                    'last_played': datetime.now()
-                })
-                return existing.id if success else None
-
-        # Создаём новое сохранение
-        saved_game = SavedGame(
+        # Используем метод репозитория, который поддерживает seed
+        return self.saved_game_repo.save_autosave(
             player_id=player_id,
             game_type=game_type,
             game_state=game_state,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-            last_played=datetime.now(),
-            save_type=save_type,
-            description=description,
+            seed=seed,  # Передаем сид
             score=score,
             moves_count=moves_count,
             time_played_seconds=time_played_seconds
         )
 
-        return self.saved_game_repo.create(saved_game)
     def load_saved_game(self, saved_game_id: int) -> Optional[SavedGame]:
-        """
-        Загрузить сохранённую игру.
-
-        Args:
-            saved_game_id: ID сохранения
-
-        Returns:
-            SavedGame: объект сохранения или None
-        """
+        """Загрузить сохранённую игру."""
         saved = self.saved_game_repo.get(saved_game_id)
         if saved:
-            # Обновляем время последнего доступа
             self.saved_game_repo.update_last_played(saved_game_id)
         return saved
 
     def get_player_saves(self, player_id: str,
                          game_type: Optional[str] = None) -> List[SavedGame]:
-        """
-        Получить все сохранения игрока.
-
-        Args:
-            player_id: UUID игрока
-            game_type: Фильтр по типу игры (опционально)
-
-        Returns:
-            List[SavedGame]: Список сохранений
-        """
+        """Получить все сохранения игрока."""
         return self.saved_game_repo.get_by_player(player_id, game_type)
 
     def delete_saved_game(self, saved_game_id: int) -> bool:
@@ -306,21 +221,11 @@ class StatsService:
 
     def get_player_stats(self, player_id: str,
                          days: int = 30) -> Optional[PlayerStats]:
-        """
-        Получить расширенную статистику игрока.
-
-        Args:
-            player_id: UUID игрока
-            days: За сколько дней брать последние игры
-
-        Returns:
-            PlayerStats: Объект со статистикой или None
-        """
+        """Получить расширенную статистику игрока."""
         player = self.player_repo.get(player_id)
         if not player:
             return None
 
-        # Получаем последние игры
         cutoff_date = datetime.now() - timedelta(days=days)
         recent_games = self.game_repo.get_by_player(
             player_id,
@@ -328,7 +233,6 @@ class StatsService:
             from_date=cutoff_date
         )
 
-        # Находим лучшую и худшую игру
         best_game = None
         worst_game = None
         max_score = -1
@@ -351,42 +255,16 @@ class StatsService:
 
     def get_leaderboard(self, criterion: str = 'games_won',
                         limit: int = 10) -> List[Player]:
-        """
-        Получить таблицу лидеров.
-
-        Args:
-            criterion: Критерий сортировки
-            limit: Количество игроков
-
-        Returns:
-            List[Player]: Список лучших игроков
-        """
+        """Получить таблицу лидеров."""
         return self.player_repo.get_top_players(limit, criterion)
 
     def get_game_history(self, player_id: str,
                          limit: int = 50) -> List[Game]:
-        """
-        Получить историю игр игрока.
-
-        Args:
-            player_id: UUID игрока
-            limit: Максимальное количество игр
-
-        Returns:
-            List[Game]: Список игр
-        """
+        """Получить историю игр игрока."""
         return self.game_repo.get_by_player(player_id, limit)
 
     def get_statistics_summary(self, player_id: str) -> Dict[str, Any]:
-        """
-        Получить краткую сводку статистики для отображения в UI.
-
-        Args:
-            player_id: UUID игрока
-
-        Returns:
-            Dict: Словарь со сводкой
-        """
+        """Получить краткую сводку статистики."""
         player = self.player_repo.get(player_id)
         if not player:
             return {}
@@ -394,7 +272,6 @@ class StatsService:
         win_rate = player.win_rate
         total_hours = player.total_hours
 
-        # Получаем последние 10 игр для анализа формы
         recent = self.game_repo.get_by_player(player_id, limit=10)
         recent_wins = sum(1 for g in recent if g.result == 'won')
 
@@ -413,46 +290,31 @@ class StatsService:
             'slowest_win': self._format_time(player.slowest_win_seconds)
         }
 
-    # ===== Достижения (заготовка) =====
+    # ===== Достижения =====
 
     def check_achievements(self, player_id: str, game_result: Game) -> List[str]:
-        """
-        Проверить, получены ли новые достижения.
-
-        Args:
-            player_id: UUID игрока
-            game_result: Результат завершённой игры
-
-        Returns:
-            List[str]: Список полученных достижений
-        """
+        """Проверить, получены ли новые достижения."""
         achievements = []
         player = self.player_repo.get(player_id)
 
         if not player:
             return achievements
 
-        # Первая победа
         if player.games_won == 1 and game_result.result == 'won':
             achievements.append("first_win")
 
-        # 10 побед
         if player.games_won == 10:
             achievements.append("ten_wins")
 
-        # 100 побед
         if player.games_won == 100:
             achievements.append("hundred_wins")
 
-        # Идеальная игра
         if game_result.was_perfect:
             achievements.append("perfect_game")
 
-        # Собрать все масти
         if len(game_result.suits_completed) == 4:
             achievements.append("all_suits")
 
-        # Победа за 2 минуты
         if (game_result.result == 'won' and
                 game_result.duration_seconds and
                 game_result.duration_seconds < 120):
@@ -463,16 +325,9 @@ class StatsService:
     # ===== Вспомогательные методы =====
 
     def _check_perfect_game(self, game_state: Optional[Dict]) -> bool:
-        """
-        Проверить, была ли игра идеальной.
-        (Без отмен, без подсказок, без лишних действий)
-
-        Здесь должна быть логика проверки из игрового движка.
-        Пока заглушка.
-        """
+        """Проверить, была ли игра идеальной."""
         if not game_state:
             return False
-        # TODO: Реализовать проверку идеальной игры
         return False
 
     def _format_time(self, seconds: Optional[int]) -> str:
@@ -490,15 +345,7 @@ class StatsService:
     # ===== Административные методы =====
 
     def reset_player_stats(self, player_id: str) -> bool:
-        """
-        Сбросить статистику игрока (не удаляя игрока).
-
-        Args:
-            player_id: UUID игрока
-
-        Returns:
-            bool: True если успешно сброшено
-        """
+        """Сбросить статистику игрока."""
         reset_data = {
             'games_started': 0,
             'games_won': 0,
@@ -518,14 +365,6 @@ class StatsService:
         return self.player_repo.update(player_id, reset_data)
 
     def cleanup_old_saves(self, days: int = 30) -> int:
-        """
-        Очистить старые автосохранения.
-
-        Args:
-            days: Удалять сохранения старше N дней
-
-        Returns:
-            int: Количество удалённых сохранений
-        """
+        """Очистить старые автосохранения."""
         cutoff = datetime.now() - timedelta(days=days)
         return self.saved_game_repo.delete_old_autosaves(cutoff)

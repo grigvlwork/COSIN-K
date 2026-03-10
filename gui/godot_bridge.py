@@ -1,10 +1,6 @@
 # gui/godot_bridge.py
 """
 Godot Bridge — HTTP мост между Godot и движком пасьянса.
-Godot выбирает игру, сервер подстраивается.
-
-🔢 СТАТИСТИКА: Теперь с поддержкой идентификации игроков и сбора статистики!
-💾 СОХРАНЕНИЯ: Автосохранение, загрузка, проверка статуса (active/suspended).
 """
 
 import json
@@ -15,6 +11,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import uuid
+import random  # <-- Добавлено для генерации сида
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -27,13 +24,10 @@ class GameStateEncoder(json.JSONEncoder):
     """Сериализация GameState в JSON для отправки в Godot."""
 
     def default(self, obj):
-        # Если у объекта есть наш новый метод to_dict, используем его
         if hasattr(obj, 'to_dict'):
             return obj.to_dict()
 
-        # Fallback для старой логики (на всякий случай)
         if hasattr(obj, '__dict__'):
-            # GameState (старый формат)
             if hasattr(obj, 'piles') and hasattr(obj, 'stock') and hasattr(obj, 'waste'):
                 result = {
                     'piles': {},
@@ -46,15 +40,11 @@ class GameStateEncoder(json.JSONEncoder):
                 result['stock'] = self.default(obj.stock)
                 result['waste'] = self.default(obj.waste)
                 return result
-
-            # Pile (старый формат)
             elif hasattr(obj, 'name') and isinstance(obj, list):
                 return {
                     'name': obj.name,
                     'cards': [self.default(card) for card in obj]
                 }
-
-            # Card (старый формат)
             elif hasattr(obj, 'suit') and hasattr(obj, 'rank') and hasattr(obj, 'face_up'):
                 return {
                     'suit': obj.suit.name,
@@ -64,22 +54,15 @@ class GameStateEncoder(json.JSONEncoder):
                     'face_up': obj.face_up,
                     'color': obj.color
                 }
-
-            return {key: value for key, value in obj.__dict__.items()
-                   if not key.startswith('_')}
-
+            return {key: value for key, value in obj.__dict__.items() if not key.startswith('_')}
         return super().default(obj)
 
 
 class GodotBridgeHandler(BaseHTTPRequestHandler):
-    """
-    Обработчик HTTP запросов от Godot.
-    """
-
     games = {}
     game_ids = {}
     stats_api = None
-    SUSPENDED_THRESHOLD_HOURS = 1  # Порог для перевода в suspended
+    SUSPENDED_THRESHOLD_HOURS = 1
 
     def _get_session_id(self):
         return self.client_address[0]
@@ -102,7 +85,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             print(f"📦 [{session_id}] Создана игра: {variant}")
 
             engine = SolitaireEngine(rules)
-            engine.new_game()
+            # Не вызываем new_game здесь, вызовем позже с сидом
 
             self.games[session_id] = engine
             engine._game_variant = game_variant
@@ -186,40 +169,30 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             })
             return
 
-        # ===== ЗАГРУЗКА / ПРОВЕРКА СОХРАНЕННОЙ ИГРЫ =====
         if parsed.path == '/load':
-            """Проверить наличие сохранения и загрузить, если есть."""
-
             player_id = query.get('player_id', [None])[0]
             game_type = query.get('game_type', ['klondike'])[0]
-
             if not player_id:
                 self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
                 return
 
-            # Ищем сохранение в БД
             saves = self.stats_api.get_player_saves(player_id, game_type)
             autosaves = [s for s in saves if s.get('save_type') == 'autosave']
-            print(f"📂 [{session_id}] Запрос /load от player_id: {player_id}, game_type: {game_type}")
-            print(f"   Найдено сохранений: {len(autosaves)}")
             if not autosaves:
                 self._send_response({'success': True, 'has_save': False})
                 return
 
-            save = autosaves[0]  # Берем последнее автосохранение
-
-            # Проверяем время (Suspended logic)
+            save = autosaves[0]
             last_played_str = save.get('updated_at') or save.get('created_at')
             is_suspended = False
 
             if last_played_str:
                 try:
-                    # Предполагаем формат ISO 8601
                     last_played = datetime.fromisoformat(last_played_str)
                     if datetime.now() - last_played > timedelta(hours=self.SUSPENDED_THRESHOLD_HOURS):
                         is_suspended = True
                 except:
-                    pass # Если дата не парсится, считаем активной
+                    pass
 
             self._send_response({
                 'success': True,
@@ -275,7 +248,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         self._send_response({'success': False, 'error': f'Unknown path: {parsed.path}'}, 404)
 
-
     def do_POST(self):
         parsed = urlparse(self.path)
         session_id = self._get_session_id()
@@ -291,15 +263,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         # ===== СОХРАНЕНИЕ ИГРЫ =====
         if parsed.path == '/save':
-            """Принудительное сохранение (автосохранение от клиента)."""
-            print(f"💾 [{session_id}] Запрос /save от player_id: {command.get('player_id')}")
-            print(f"   game_type: {command.get('game_type', 'klondike')}")
-            print(f"   time_elapsed: {command.get('time_elapsed', 0)}")
             player_id = command.get('player_id')
             game_type = command.get('game_type', 'klondike')
-
-            # Время от клиента (важно!)
-            # Мы обновляем время в состоянии движка перед сохранением
             time_elapsed = command.get('time_elapsed', 0)
 
             engine = self._get_engine(session_id)
@@ -308,28 +273,24 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': False, 'error': 'No active game to save'}, 400)
                 return
 
-            # 1. Синхронизируем время (чтобы сохранилось актуальное)
             engine.update_play_time(time_elapsed)
-
-            # 2. Сериализуем состояние через новый метод
-            # Этот метод вернет словарь со всеми данными (score, moves, time)
             state_dict = engine.state.to_dict()
 
-            # 3. Сохраняем через API
-            # Передаем только то, что принимает метод
+            # Извлекаем сид из движка (он должен там быть)
+            current_seed = getattr(engine, '_seed', None)
+
             result = self.stats_api.save_game(
                 player_id=player_id,
                 game_type=game_type,
-                game_state=state_dict,  # Внутри уже есть score, moves, time
+                game_state=state_dict,
+                seed=current_seed,  # Сохраняем сид
                 save_type='autosave'
             )
-            print(f"   Результат сохранения: {result}")
             self._send_response(result)
             return
 
         # ===== ЗАГРУЗКА СОХРАНЕННОЙ ИГРЫ В ПАМЯТЬ =====
         if parsed.path == '/load/save':
-            """Загрузить сохранение в движок и начать игру."""
             player_id = command.get('player_id')
             save_id = command.get('save_id')
 
@@ -337,50 +298,42 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': False, 'error': 'Missing save_id'}, 400)
                 return
 
-            # 1. Получаем данные из БД
             save_data = self.stats_api.load_saved_game(int(save_id))
 
             if not save_data or not save_data.get('success'):
                 self._send_response({'success': False, 'error': 'Save not found in DB'}, 404)
                 return
 
-            # 2. Определяем тип игры
             variant = "klondike"
             if save_data.get('game_type') == 'klondike-3':
                 variant = "klondike-3"
 
-            # 3. Создаем НОВЫЙ движок для этой сессии
-            # Важно: мы не ищем игру в self.games, мы создаем новую сессию
             engine = self._create_engine(session_id, variant)
             if not engine:
                 self._send_response({'success': False, 'error': 'Failed to create engine'}, 500)
                 return
 
-            # 4. Восстанавливаем состояние из БД
+            # Восстанавливаем состояние
             state_dict = save_data['game_state']
 
-            # Преобразуем время, если оно пришло как строка (на всякий случай)
+            # Восстанавливаем сид в движок
+            loaded_seed = save_data.get('seed')
+            engine._seed = loaded_seed
+
             if 'time_elapsed' in save_data:
-                time_val = save_data['time_elapsed']
-                if isinstance(time_val, str):
-                    # Обработка если нужно, обычно int
-                    pass
-                engine.update_play_time(int(time_val))
+                engine.update_play_time(int(save_data['time_elapsed']))
 
             if engine.restore_state(state_dict):
-                # 5. Удаляем сохранение из БД, так как мы его загрузили
-                # (Опционально: можно оставить, чтобы можно было переиграть)
-                # Пока оставим.
-
                 state_dict = engine.state.to_dict()
 
                 self._send_response({
                     'success': True,
-                    'state': state_dict,  # ← ИСПРАВЛЕНО: словарь!
+                    'state': state_dict,
                     'score': engine.state.score,
                     'moves': engine.state.moves_count,
                     'time': engine.state.time_elapsed,
-                    'saved_game_id': save_id  # ← Добавлено для меню
+                    'saved_game_id': save_id,
+                    'seed': loaded_seed  # Возвращаем сид клиенту
                 })
             else:
                 self._send_response({'success': False, 'error': 'Failed to restore state'}, 500)
@@ -388,30 +341,23 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         # ===== СДАТЬСЯ (ABANDON) =====
         if parsed.path == '/abandon':
-            """Сдаться и удалить сохранение."""
             player_id = command.get('player_id')
             game_type = command.get('game_type', 'klondike')
 
             engine = self._get_engine(session_id)
             game_id = self._get_game_id(session_id)
 
-            # 1. Записываем проигрыш в статистику, если игра была начата
             if game_id and engine:
-                 self.stats_api.end_game(
+                self.stats_api.end_game(
                     game_id=game_id,
-                    result='lost', # Или 'abandoned'
+                    result='lost',
                     score=engine.state.score,
                     moves=engine.state.moves_count,
                     game_type=game_type
                 )
 
-            # 2. Удаляем сохранение
-            # (Нужно реализовать метод в stats_api или просто вызвать delete_saved_game)
-            # Упрощенно: удаляем через delete_saved_game, если знаем ID сохранения
-            # Но надежнее очистить все автосохранения игрока для этого типа
-            self.stats_api.delete_autosave(player_id, game_type) # Нужно будет добавить этот метод
+            self.stats_api.delete_autosave(player_id, game_type)
 
-            # 3. Очищаем сессию
             if session_id in self.games:
                 del self.games[session_id]
             if session_id in self.game_ids:
@@ -424,16 +370,15 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
         if parsed.path == '/new':
             variant = command.get('variant', 'klondike')
             player_id = command.get('player_id')
-            force_new = command.get('force_new', False) # Флаг принудительного начала новой игры
+            force_new = command.get('force_new', False)
+            request_seed = command.get('seed')  # Получаем сид (если переигровка)
 
-            print(f"📥 [{session_id}] Запрос /new для {variant}")
+            print(f"📥 [{session_id}] Запрос /new для {variant}. Seed: {request_seed}")
 
-            # Проверяем наличие сохранения
             if not force_new and player_id:
                 saves = self.stats_api.get_player_saves(player_id, variant)
                 autosaves = [s for s in saves if s.get('save_type') == 'autosave']
                 if autosaves:
-                    # Нашли сохранение! Возвращаем конфликт.
                     save = autosaves[0]
                     self._send_response({
                         'success': False,
@@ -442,16 +387,23 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                         'moves': save.get('moves', 0),
                         'time': save.get('time', 0),
                         'score': save.get('score', 0)
-                    }, 409) # HTTP 409 Conflict
+                    }, 409)
                     return
 
-            # Создаем новый движок
             engine = self._create_engine(session_id, variant)
 
             if engine:
+                # Генерация сида
+                final_seed = request_seed if request_seed is not None else random.randint(0, 999999999)
+
+                # Инициализация игры с сидом
+                engine.new_game(seed=final_seed)
+                # Сохраняем сид внутри движка для доступа при /save
+                engine._seed = final_seed
+
                 game_id = None
                 if player_id and self.stats_api:
-                    result = self.stats_api.start_game(player_id, variant)
+                    result = self.stats_api.start_game(player_id, variant, seed=final_seed)
                     if result.get('success'):
                         game_id = result.get('game_id')
                         self.game_ids[session_id] = game_id
@@ -461,7 +413,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     'variant': variant,
                     'state': engine.state,
                     'score': 0,
-                    'moves': 0
+                    'moves': 0,
+                    'seed': final_seed  # Отправляем сид клиенту
                 }
                 if game_id:
                     response_data['game_id'] = game_id
@@ -473,12 +426,11 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         # ===== ЗАВЕРШЕНИЕ ИГРЫ =====
         if parsed.path == '/game/end':
-            print(f"🏁 /game/end вызван с result={command.get('result')}")
             player_id = command.get('player_id')
             result_str = command.get('result', 'abandoned')
             score = command.get('score', 0)
             moves = command.get('moves', 0)
-            time_val = command.get('time', 0) # Получаем время от клиента
+            time_val = command.get('time', 0)
 
             engine = self._get_engine(session_id)
             game_id = self._get_game_id(session_id)
@@ -487,9 +439,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             was_perfect = False
 
             if engine and engine.state:
-                # Синхронизируем время на случай, если /save не вызывали
                 engine.update_play_time(time_val)
-
                 suits_completed = self._get_suits_completed(engine.state)
                 was_perfect = self._check_perfect_game(engine, engine.state)
 
@@ -502,10 +452,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     game_type="klondike",
                     suits_completed=suits_completed,
                     was_perfect=was_perfect,
-                    # time_elapsed=time_val # Передаем время
                 )
 
-                # Удаляем сохранение после победы
                 if result_str == 'won':
                     self.stats_api.delete_autosave(player_id, "klondike")
 
@@ -519,7 +467,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': True, 'game_completed': True, 'result': result_str})
             return
 
-        # ===== СМЕНА ИМЕНИ ИГРОКА =====
         if parsed.path == '/player/rename':
             player_id = command.get('player_id')
             new_name = command.get('new_name')
@@ -538,7 +485,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             self._send_response({'success': False, 'error': 'No active game. Call /new first!', 'need_init': True}, 404)
             return
 
-        # Передаем время от клиента при любом действии (для актуальности state)
         if 'time_elapsed' in command:
             engine.update_play_time(command['time_elapsed'])
 
@@ -560,10 +506,9 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             available = []
             if success and hasattr(engine.rules, 'get_available_moves'):
                 available = engine.rules.get_available_moves(engine.state)
-            # ПОСЛЕ хода проверяем победу
+
             game_won = engine.rules.check_win(engine.state) if success else False
 
-            # ЕСЛИ ПОБЕДА - вызываем end_game!
             if game_won and game_id and self.stats_api:
                 print(f"🏆 ПОБЕДА! game_id={game_id}")
                 self.stats_api.end_game(
@@ -581,24 +526,24 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'score': engine.state.score if success else 0,
                 'moves': engine.state.moves_count if success else 0,
                 'available_moves': len(available) if success else 0,
-                'game_won': engine.rules.check_win(engine.state) if success else False
+                'game_won': game_won
             })
 
-        # ----- ВЗЯТЬ КАРТЫ -----
         elif parsed.path == '/draw':
             success = engine.draw()
             if success and game_id and self.stats_api:
                 self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
+
+            game_won = engine.rules.check_win(engine.state) if success else False
 
             self._send_response({
                 'success': success,
                 'state': engine.state if success else None,
                 'score': engine.state.score if success else 0,
                 'moves': engine.state.moves_count if success else 0,
-                'game_won': engine.rules.check_win(engine.state) if success else False
+                'game_won': game_won
             })
 
-        # ----- ОТМЕНА -----
         elif parsed.path == '/undo':
             success = engine.undo()
             if success and game_id and self.stats_api:
@@ -612,7 +557,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'game_won': engine.rules.check_win(engine.state) if success else False
             })
 
-        # ----- ПОВТОР -----
         elif parsed.path == '/redo':
             success = engine.redo()
             self._send_response({
@@ -623,7 +567,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'game_won': engine.rules.check_win(engine.state) if success else False
             })
 
-        # ----- АВТО-ХОД -----
         elif parsed.path == '/auto_move':
             from_pile = command.get('from')
             if not from_pile:
@@ -651,10 +594,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 success = engine.move(selected_move.from_pile, selected_move.to_pile, len(selected_move.cards))
                 if success and game_id and self.stats_api:
                     self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
-                    # ПОСЛЕ хода проверяем победу
-                    game_won = engine.rules.check_win(engine.state) if success else False
 
-                    # ЕСЛИ ПОБЕДА - вызываем end_game!
+                    game_won = engine.rules.check_win(engine.state) if success else False
                     if game_won and game_id and self.stats_api:
                         print(f"🏆 ПОБЕДА! game_id={game_id}")
                         self.stats_api.end_game(
@@ -678,17 +619,16 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             else:
                 self._send_response({'success': False, 'error': 'No suitable move'})
 
-        # ----- ПОДСКАЗКА -----
         elif parsed.path == '/hint':
             hint = engine.rules.get_hint(engine.state)
             if hint:
                 if game_id and self.stats_api:
                     self.stats_api.update_game_progress(game_id, hints=getattr(engine.state, 'hints_used', 0) + 1)
-                self._send_response({'success': True, 'hint': {'from': hint.from_pile, 'to': hint.to_pile, 'count': len(hint.cards)}})
+                self._send_response(
+                    {'success': True, 'hint': {'from': hint.from_pile, 'to': hint.to_pile, 'count': len(hint.cards)}})
             else:
                 self._send_response({'success': False, 'error': 'No hints available'})
 
-        # ----- ПРОВЕРКА ПОБЕДЫ -----
         elif parsed.path == '/check_win':
             won = engine.rules.check_win(engine.state)
             self._send_response({
@@ -720,6 +660,7 @@ def start_server(host='127.0.0.1', port=8080):
     print("👤 Игроки идентифицируются по UUID")
     print("📈 Статистика сохраняется в БД")
     print("💾 Автосохранение и загрузка активны")
+    print("🎰 Поддержка переигровки с сидом активна")
     print("=" * 50)
 
     server = ThreadingHTTPServer((host, port), GodotBridgeHandler)
@@ -736,6 +677,7 @@ def start_server(host='127.0.0.1', port=8080):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', type=int, default=8080)
