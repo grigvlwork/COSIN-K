@@ -1,8 +1,9 @@
+# model/pile.py
 """
 Pile — стопка карт с дополнительными методами доступа.
 """
 
-from typing import List, Optional, Iterator
+from typing import List, Optional, Iterator, Dict, Any
 from .card import Card
 
 
@@ -143,6 +144,31 @@ class Pile(List[Card]):
         new_pile = Pile(self.name)
         new_pile.extend([Card(c.suit, c.rank, c.face_up) for c in self])
         return new_pile
+
+    # === Сериализация ===
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Преобразовать стопку в словарь для JSON.
+        """
+        return {
+            "name": self.name,
+            "cards": [card.to_dict() for card in self]
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Pile":
+        """
+        Создать стопку из словаря.
+        Ожидает: {"name": "tableau_0", "cards": [...]}
+        """
+        name = data.get("name", "")
+        cards_data = data.get("cards", [])
+
+        # Создаем объекты Card из данных
+        cards = [Card.from_dict(c) for c in cards_data]
+
+        return cls(name=name, cards=cards)
 
     # === Представление ===
 

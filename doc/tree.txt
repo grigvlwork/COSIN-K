@@ -133,6 +133,7 @@ COSIN-K/
 │   │   ├── icon.svg.import
 │   │   ├── project.godot
 │   │   └── scenes
+│   │       ├── PlayerStats.tscn
 │   │       ├── card_test.gd
 │   │       ├── card_test.gd.uid
 │   │       ├── card_test.tscn
@@ -144,12 +145,15 @@ COSIN-K/
 │   │       ├── games
 │   │       │   ├── klondike.gd
 │   │       │   ├── klondike.gd.uid
-│   │       │   └── klondike.tscn
+│   │       │   ├── klondike.tscn
+│   │       │   └── klondike.tscn5197690571.tmp
 │   │       ├── global.gd
 │   │       ├── global.gd.uid
 │   │       ├── menu.gd
 │   │       ├── menu.gd.uid
 │   │       ├── menu.tscn
+│   │       ├── player_stats.gd
+│   │       ├── player_stats.gd.uid
 │   │       ├── splash.gd
 │   │       ├── splash.gd.uid
 │   │       ├── splash.tscn
@@ -193,12 +197,15 @@ COSIN-K/
 │   ├── models.py
 │   ├── repositories
 │   │   ├── __init__.py
+│   │   ├── base_repository.py
 │   │   ├── game_repository.py
-│   │   └── player_repository.py
+│   │   ├── player_repository.py
+│   │   └── saved_game_repository.py
 │   └── services
 │       ├── __init__.py
 │       ├── player_identity.py
 │       └── stats_service.py
+├── stats_data
 └── view
     ├── __init__.py
     ├── base.py

@@ -1,4 +1,5 @@
 """
+model/rules/klondike.py
 KlondikeRules — классическая косынка (Solitaire/Patience).
 """
 

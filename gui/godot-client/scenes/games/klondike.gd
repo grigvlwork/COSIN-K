@@ -1,3 +1,5 @@
+# gui/godot-client/scenes/games/klondike.gd
+
 extends Control
 
 var http = HTTPRequest.new()
@@ -8,30 +10,31 @@ var is_busy = false
 var first_move_made = false
 var timer_active = false
 var last_request_type = ""
+var is_game_active = false	  # Игра началась (первый ход сделан)
+var current_game_id = null	  # ID игры от сервера
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
 @onready var moves_label = $Display/MainLayout/CountersContainer/MovesLabel
 @onready var time_label = $Display/MainLayout/CountersContainer/TimeLabel
-@onready var game_over_panel = $Display/MainLayout/GameOverPanel  # Если есть
-@onready var win_label = $Display/MainLayout/GameOverPanel/WinLabel
-@onready var final_score = $Display/MainLayout/GameOverPanel/FinalScoreLabel
+@onready var game_over_panel = $Display/GameOverPanel
+@onready var win_label = $Display/GameOverPanel/VBoxContainer/WinLabel
+@onready var final_score = $Display/GameOverPanel/VBoxContainer/FinalScoreLabel
 
 @onready var new_game_button = $Display/MainLayout/Buttons/NewGameButton
 @onready var undo_button = $Display/MainLayout/Buttons/UndoButton
 @onready var menu_button = $Display/MainLayout/Buttons/MenuButton
+@onready var surrender_button = $Display/MainLayout/Buttons/SurrenderButton
 
 # ===== ССЫЛКИ НА ИГРОВЫЕ ЭЛЕМЕНТЫ =====
 @onready var stock_slot = $Display/MainLayout/UpperRow/StockSlot
 @onready var waste_slot = $Display/MainLayout/UpperRow/WasteSlot
 
-# === БАЗЫ ПО ИНДЕКСАМ ===
 @onready var foundation_0 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation0
 @onready var foundation_1 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation1
 @onready var foundation_2 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation2
 @onready var foundation_3 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation3
 
-# === TABLEAU СЛОТЫ ===
 @onready var tableau_slots = [
 	$Display/MainLayout/LowerRow/Tableau_0,
 	$Display/MainLayout/LowerRow/Tableau_1,
@@ -43,7 +46,7 @@ var last_request_type = ""
 ]
 
 const CARD_SCALE = 0.2
-const STACK_OFFSET = 30  # Вертикальный отступ между картами в столбце
+const STACK_OFFSET = 30
 
 func _ready():
 	add_child(http)
@@ -54,41 +57,107 @@ func _ready():
 	undo_button.pressed.connect(_on_undo_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
 
-	# === ОБЛАСТЬ ДЛЯ КЛИКА ПО КОЛОДЕ (ИСПРАВЛЕНО) ===
-# Используем Control вместо Area2D для совместимости с Control-иерархией
+	if surrender_button:
+		surrender_button.pressed.connect(_on_surrender_pressed)
+
+	# === ОБЛАСТЬ ДЛЯ КЛИКА ПО КОЛОДЕ ===
 	var stock_click_area = Control.new()
 	stock_click_area.name = "StockClickArea"
-
-# Задаём размер области (под размер карты)
 	stock_click_area.custom_minimum_size = Vector2(100, 145)
-
-# Останавливаем события здесь
 	stock_click_area.mouse_filter = Control.MOUSE_FILTER_STOP
-
-# ✅ Подключаем gui_input (вместо input_event!)
 	stock_click_area.gui_input.connect(_on_stock_clicked)
-
 	stock_slot.add_child(stock_click_area)
-	# Для каждого слота (можно добавить в _ready после инициализации):
+
+	# Настройка фильтров мыши
 	stock_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	waste_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for slot in foundation_slots():
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for slot in tableau_slots:
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	start_new_game()
+		
+	if game_over_panel:
+		game_over_panel.hide()
 
-func start_new_game():
-	print("🎮 Новая игра (Klondike)")
+	# === ЛОГИКА СТАРТА ===
+	# Проверяем, передали ли нам состояние для загрузки из Меню
+	if Global.has_pending_save():
+		print("📥 Загрузка переданного состояния...")
+		_load_from_global_state()
+	else:
+		print("🆕 Запрос новой игры...")
+		start_new_game(true)
+
+# ===== УПРАВЛЕНИЕ ИГРОЙ =====
+
+func _load_from_global_state():
+	"""Загрузить игру из данных, переданных через Global"""
+	print("📦 _load_from_global_state() вызван")
+	
+	# Сначала копируем данные
+	game_state = Global.pending_game_state.duplicate(true)  # Глубокая копия!
+	game_time = Global.pending_game_time
+	current_game_id = Global.pending_game_id
+	
+	print("   game_state скопирован. Размер: ", game_state.size())
+	print("   game_time: ", game_time)
+	print("   current_game_id: ", current_game_id)
+	
+	# --- ДИАГНОСТИКА ---
+	if game_state:
+		print("📦 Загруженное состояние. Ключи: ", game_state.keys())
+		# Проверим наличие важных ключей
+		var required_keys = ["piles", "stock", "waste", "score", "moves_count"]
+		for key in required_keys:
+			print("   has '", key, "': ", game_state.has(key))
+	else:
+		printerr("❌ game_state is null!")
+		return
+	# -------------------
+	
+	# ТЕПЕРЬ можно очистить Global
+	Global.clear_pending_save()
+	
+	update_ui()
+	update_time_display()
+	draw_game()
+	
+	var moves = game_state.get("moves_count", 0)
+	
+	if moves > 0:
+		is_game_active = true
+		first_move_made = true
+		timer_active = true
+		print("✅ Игра восстановлена. Ходов: ", moves)
+
+func update_ui():
+	if game_state:
+		# ИСПРАВЛЕНО: Используем .get()
+		var score = game_state.get("score", 0)
+		var moves = game_state.get("moves_count", 0)
+		
+		score_label.text = "Счет: %d" % score
+		moves_label.text = "Ходы: %d" % moves
+
+func start_new_game(force_new: bool = true):
+	print("🎮 Запрос новой игры (force_new: %s)" % force_new)
 	game_time = 0
 	timer = 0
 	first_move_made = false
 	timer_active = false
+	is_game_active = false
+	current_game_id = null
 	update_time_display()
 	if game_over_panel:
 		game_over_panel.hide()
-	var body = '{"variant":"klondike"}'
+
+	var body = JSON.new().stringify({
+		"variant": "klondike", 
+		"player_id": Global.player_id,
+		"force_new": force_new
+	})
 	var headers = ["Content-Type: application/json"]
+	last_request_type = "new"
 	http.request(Global.server_url + "/new", headers, HTTPClient.METHOD_POST, body)
 
 func _process(delta):
@@ -99,14 +168,33 @@ func _process(delta):
 			game_time += 1
 			update_time_display()
 
+			# Опционально: Автосохранение каждые 60 секунд
+			# if game_time % 60 == 0:
+			#	_auto_save()
+
 func update_time_display():
 	var minutes = game_time / 60
 	var seconds = game_time % 60
 	time_label.text = "Время: %02d:%02d" % [minutes, seconds]
 
-func get_game_state():
-	print("📥 Запрашиваем состояние")
-	http.request(Global.server_url + "/state")
+# ===== СЕТЕВОЕ ВЗАИМОДЕЙСТВИЕ =====
+func _auto_save():
+	if not is_game_active or not game_state:
+		return
+		
+	# ИСПРАВЛЕНО: Используем .get()
+	var moves = game_state.get("moves_count", 0)
+	print("💾 Автосохранение... (Ходов: %d, Время: %d)" % [moves, game_time])
+	
+	var body = JSON.new().stringify({
+		"player_id": Global.player_id,
+		"game_type": "klondike",
+		"time_elapsed": game_time
+	})
+	var headers = ["Content-Type: application/json"]
+	var save_http = HTTPRequest.new()
+	add_child(save_http)
+	save_http.request(Global.server_url + "/save", headers, HTTPClient.METHOD_POST, body)
 
 func _on_request_completed(result, response_code, headers, body):
 	is_busy = false
@@ -116,52 +204,65 @@ func _on_request_completed(result, response_code, headers, body):
 
 	if error == OK:
 		var data = json.data
-		if data.has("variant"):
-			print("✅ Игра создана, запрашиваем состояние...")
-			get_game_state()
-			return
-		
 		if data.has("success"):
 			if data["success"] == true:
+				# === Успешный ответ ===
+
+				# 1. Создана новая игра
+				if last_request_type == "new":
+					print("✅ Новая игра создана")
+					if data.has("state"):
+						game_state = data.state
+						current_game_id = data.get("game_id")
+						update_ui()
+						draw_game()
+					return
+				
+				# 2. Сдача (Abandon)
+				if last_request_type == "abandon":
+					print("🏳️ Игра сдана")
+					return
+				
+				# 3. Ход / Отмена / Взятие карты
 				if data.has("state") and data["state"] != null:
+					var game_won = data.get("game_won", false)
 					game_state = data["state"]
 					update_ui()
 					draw_game()
+					
+					# Запуск таймера при первом ходе
 					if not first_move_made and (last_request_type == "move" or last_request_type == "draw"):
 						first_move_made = true
 						timer_active = true
-						print("⏱️ Первый ход сделан (" + last_request_type + "), таймер запущен")
+						is_game_active = true
+						print("⏱️ Таймер запущен")
 					
-					if data.has("game_won") and data["game_won"]:
+					# Победа
+					if game_won:
 						show_win()
+						#_auto_save()
+						
 			else:
-				printerr("⚠️ Ошибка сервера: ", data.get("error", "Unknown error"))
+				# === Ошибка логики ===
+				var err_code = data.get("error")
+				printerr("⚠️ Ошибка сервера: ", err_code)
+				# Тут можно добавить обработку ошибок (например, показать Alert)
+		else:
+			printerr("⚠️ Некорректный формат ответа")
 	else:
 		printerr("❌ Ошибка парсинга JSON")
 
-func update_ui():
-	if game_state:
-		score_label.text = "Счет: %d" % game_state["score"]
-		moves_label.text = "Ходы: %d" % game_state["moves_count"]
 
 func show_win():
 	if game_over_panel:
 		game_over_panel.show()
 		win_label.text = "🎉 ПОБЕДА!"
 		final_score.text = "Счет: " + str(game_state["score"])
+		timer_active = false
+		is_game_active = false
 
-# ===== КЛИКИ И КНОПКИ =====
+# ===== ОБРАБОТЧИКИ КНОПОК =====
 
-#func _on_stock_clicked(viewport, event, shape_idx):
-	#if event is InputEventMouseButton and event.pressed:
-		#if event.button_index == MOUSE_BUTTON_LEFT:
-			#print("🃏 Взять карту из колоды")
-			#var body = '{}'
-			#var headers = ["Content-Type: application/json"]
-			#last_request_type = "draw"
-			#http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
-
-# ✅ Подпись для gui_input (1 параметр)
 func _on_stock_clicked(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		print("🃏 Взять карту из колоды")
@@ -171,7 +272,16 @@ func _on_stock_clicked(event):
 		http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
 
 func _on_new_game_pressed():
-	start_new_game()
+	# Если игра уже идет, спросить подтверждение
+	if is_game_active:
+		var dialog = ConfirmationDialog.new()
+		dialog.dialog_text = "Начать новую игру? Текущий прогресс будет потерян."
+		dialog.title = "Новая игра"
+		dialog.confirmed.connect(start_new_game.bind(true))
+		add_child(dialog)
+		dialog.popup_centered()
+	else:
+		start_new_game(true)
 	last_request_type = ""
 
 func _on_undo_pressed():
@@ -183,18 +293,47 @@ func _on_undo_pressed():
 
 func _on_menu_pressed():
 	print("🏠 Возврат в меню")
+	# Автосохранение перед выходом
+	_auto_save()
+	# Небольшая задержка для отправки запроса
+	await get_tree().create_timer(0.2).timeout
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+func _on_surrender_pressed():
+	print("🏳️ Сдаться")
+	var dialog = ConfirmationDialog.new()
+	dialog.dialog_text = "Вы уверены, что хотите сдаться? Игра будет засчитана как проигрыш."
+	dialog.title = "Сдаться"
+	dialog.confirmed.connect(_confirm_surrender)
+	add_child(dialog)
+	dialog.popup_centered()
+
+func _confirm_surrender():
+	last_request_type = "abandon"
+	is_game_active = false
+	timer_active = false  # ← ОСТАНОВИТЬ ТАЙМЕР!
+	var body = JSON.new().stringify({
+		"player_id": Global.player_id,
+		"game_type": "klondike",
+		"time": game_time
+	})
+	var headers = ["Content-Type: application/json"]
+	http.request(Global.server_url + "/abandon", headers, HTTPClient.METHOD_POST, body)
+
+# Уведомление о закрытии окна
+func _notification(what):
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		print("💾 Сохранение перед выходом...")
+		_auto_save()
+		get_tree().quit()
 
 # ===== ОТРИСОВКА =====
 
 func draw_game():
-	# Очищаем старые карты из всех слотов
 	_clear_cards_from_slot(stock_slot)
 	_clear_cards_from_slot(waste_slot)
-	
 	for i in 4:
 		_clear_cards_from_slot(foundation_slots()[i])
-	
 	for slot in tableau_slots:
 		_clear_cards_from_slot(slot)
 	
@@ -204,14 +343,11 @@ func draw_game():
 	draw_tableau()
 
 func _clear_cards_from_slot(slot: Control):
-	# 1. Ищем CardLayer внутри слота
 	var card_layer = slot.get_node_or_null("CardLayer")
 	if card_layer:
-		# 2. Очищаем карты внутри CardLayer
 		for child in card_layer.get_children():
 			if child.name.begins_with("Card_"):
 				child.queue_free()
-	# 3. На всякий случай чистим и прямых детей (защита от старого кода)
 	for child in slot.get_children():
 		if child.name.begins_with("Card_"):
 			child.queue_free()
@@ -220,6 +356,11 @@ func foundation_slots():
 	return [foundation_0, foundation_1, foundation_2, foundation_3]
 
 func draw_stock():
+	# Явная проверка наличия ключей
+	if not game_state.has("stock") or not game_state.has("waste"):
+		printerr("❌ Ошибка: в game_state нет stock или waste!")
+		return
+
 	var stock = game_state["stock"]
 	var waste = game_state["waste"]
 
@@ -227,7 +368,6 @@ func draw_stock():
 		var card = stock["cards"][0]
 		draw_card(card, stock_slot, "stock")
 	elif waste["cards"].size() > 0:
-		# Рисуем заглушку для пустой колоды
 		var sprite = Sprite2D.new()
 		sprite.name = "Card_EmptyStock"
 		sprite.texture = DeckManager.get_back_texture()
@@ -237,6 +377,8 @@ func draw_stock():
 		stock_slot.add_child(sprite)
 
 func draw_waste():
+	if not game_state.has("waste"):
+		return
 	var waste = game_state["waste"]
 	if waste["cards"].size() > 0:
 		var cards = waste["cards"]
@@ -249,51 +391,49 @@ func draw_waste():
 
 func draw_foundations():
 	var slots = foundation_slots()
-	
 	for i in 4:
 		var pile_name = "foundation_" + str(i)
 		var slot_node = slots[i]
 		
-		if game_state["piles"].has(pile_name):
+		# Используем .has для проверки
+		if game_state.has("piles") and game_state["piles"].has(pile_name):
 			var pile = game_state["piles"][pile_name]
 			if pile["cards"].size() > 0:
-				var card = pile["cards"][-1]  # Верхняя карта
+				var card = pile["cards"][-1]
 				draw_card(card, slot_node, pile_name)
-			# Если база пуста — ничего не рисуем (нейтральный слот)
 
 func draw_tableau():
+	# Исправлено: проверка через has и доступ через скобки
+	if not game_state.has("piles"):
+		return
+
 	for i in range(7):
 		var pile_name = "tableau_" + str(i)
-		var pile = game_state["piles"][pile_name]
-		var cards = pile["cards"]
-		var slot_node = tableau_slots[i]
 		
-		for j in range(cards.size()):
-			var card = cards[j]
-			var y_offset = j * STACK_OFFSET
-			var pos = Vector2(0, y_offset)
-			draw_card(card, slot_node, pile_name, pos)
+		if game_state["piles"].has(pile_name):
+			var pile = game_state["piles"][pile_name]
+			var cards = pile["cards"]
+			var slot_node = tableau_slots[i]
 
-# Было:
-# parent_slot.add_child(area)
+			for j in range(cards.size()):
+				var card = cards[j]
+				var y_offset = j * STACK_OFFSET
+				var pos = Vector2(0, y_offset)
+				draw_card(card, slot_node, pile_name, pos)
 
-# Стало:
 func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vector2 = Vector2(0, 0)):
-	# === НАЙДИ CardLayer ВНУТРИ СЛОТА ===
 	var card_layer = parent_slot.get_node_or_null("CardLayer")
 	if card_layer == null:
 		card_layer = Node2D.new()
 		card_layer.name = "CardLayer"
 		parent_slot.add_child(card_layer)
 	
-	# === СОЗДАЁМ КАРТУ КАК Control (не Area2D!) ===
 	var card_control = Control.new()
 	card_control.name = "Card_" + str(randi())
 	card_control.position = offset
-	card_control.mouse_filter = Control.MOUSE_FILTER_STOP  # Останавливаем события здесь
-	card_control.z_index = 100  # Поверх других
-	
-	# === СПРАЙТ ===
+	card_control.mouse_filter = Control.MOUSE_FILTER_STOP
+	card_control.z_index = 100
+
 	var sprite = Sprite2D.new()
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
@@ -304,7 +444,6 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	
 	sprite.centered = false
 	sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
-	# Размер контрола = размеру спрайта
 	if sprite.texture:
 		card_control.custom_minimum_size = Vector2(
 			sprite.texture.get_width() * CARD_SCALE,
@@ -312,20 +451,10 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 		)
 	
 	card_control.add_child(sprite)
-	
-	# === КОЛЛИЗИЯ (для Area2D не нужна, но оставим для совместимости) ===
-	# Можно убрать, если используешь только gui_input
-	
-	# === ПОДКЛЮЧАЕМ gui_input (вместо input_event!) ===
 	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data))
-	
-	# === ДОБАВЛЯЕМ В CardLayer ===
 	card_layer.add_child(card_control)
 
-# ✅ Подпись для gui_input: 1 параметр (event) + 2 bound = 3 всего
 func _on_card_clicked(event, pile_name, card_data):
-	print("🖱️ Клик зарегистрирован! pile_name=", pile_name)
-
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if is_busy:
 			return
@@ -334,40 +463,15 @@ func _on_card_clicked(event, pile_name, card_data):
 			print("🃏 Клик по колоде -> Взять карту")
 			var body = '{}'
 			var headers = ["Content-Type: application/json"]
+			last_request_type = "draw"
 			http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
 			return
 
 		if not card_data["face_up"]:
-			print("ℹ️ Карта закрыта. Автоход невозможен.")
 			return
 
-		print("🃏 Клик по карте: ", card_data["rank"], " ", card_data["suit"], " из стопки: ", pile_name)
+		print("🃏 Авто-ход из: ", pile_name)
 		last_request_type = "move"
 		var body = JSON.new().stringify({"from": pile_name})
 		var headers = ["Content-Type: application/json"]
 		http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
-
-# ✅ Правильная подпись для Godot 4.x
-#func _on_card_clicked(viewport, event, shape_idx, pile_name, card_data):
-	## Проверяем, что это клик левой кнопкой мыши
-	#print("🖱️ Клик зарегистрирован! pile_name=", pile_name)
-	#if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		#if is_busy:
-			#return
-		#
-		#if pile_name == "stock":
-			#print("🃏 Клик по колоде -> Взять карту")
-			#var body = '{}'
-			#var headers = ["Content-Type: application/json"]
-			#http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
-			#return
-#
-		#if not card_data["face_up"]:
-			#print("ℹ️ Карта закрыта. Автоход невозможен.")
-			#return
-#
-		#print("🃏 Клик по карте: ", card_data["rank"], " ", card_data["suit"], " из стопки: ", pile_name)
-		#last_request_type = "move"
-		#var body = JSON.new().stringify({"from": pile_name})
-		#var headers = ["Content-Type: application/json"]
-		#http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)

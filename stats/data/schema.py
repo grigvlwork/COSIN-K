@@ -56,6 +56,9 @@ def create_tables(conn: sqlite3.Connection) -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             player_id TEXT NOT NULL REFERENCES players(id),
             game_type TEXT DEFAULT 'klondike',  -- Какой пасьянс играли
+            
+             -- Сид для переигровки
+            seed INTEGER,
 
             -- Время
             started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -89,6 +92,10 @@ def create_tables(conn: sqlite3.Connection) -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
             game_type TEXT NOT NULL,
+            
+            -- Сид для переигровки (сохраняем, чтобы можно было переиграть даже незавершенную)
+            seed INTEGER,
+                        
             game_state TEXT NOT NULL,  -- JSON с полным состоянием игры
 
             -- Временные метки

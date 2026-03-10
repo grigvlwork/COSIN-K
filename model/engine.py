@@ -1,10 +1,11 @@
+# model/engine.py
 """
 GameEngine — игровая логика и управление ходами.
 """
 
 from typing import List, Callable, Optional, Dict, Any
 import random
-# import time
+import time
 from dataclasses import dataclass, field
 
 from .card import Card, Suit, Rank
@@ -57,8 +58,8 @@ class SolitaireEngine:
         # 4. Создаём начальное состояние
         self._state = GameState(
             piles=dealt_piles,
-            stock=Pile("stock", stock_cards),  # Явно передаем Pile
-            waste=Pile("waste"),  # Явно передаем Pile
+            stock=Pile("stock", stock_cards),
+            waste=Pile("waste"),
             score=0,
             moves_count=0,
             time_elapsed=0
@@ -66,12 +67,50 @@ class SolitaireEngine:
 
         # 5. Сохраняем в истории
         self.history.clear()
-        # t0 = time.time()
         self.history.push(self._state.copy(), move=None)
-        # print("History push took:", time.time() - t0)
 
         # 6. Уведомляем
         self._notify("game_started", {"seed": seed})
+
+    def restore_state(self, state_dict: Dict[str, Any]) -> bool:
+        """
+        Восстановить игру из сохранения (словаря).
+
+        Args:
+            state_dict: Словарь с данными игры (из БД или JSON)
+
+        Returns:
+            bool: True если восстановление успешно
+        """
+        try:
+            # 1. Восстанавливаем состояние через метод модели
+            self._state = GameState.from_dict(state_dict)
+
+            # 2. Сбрасываем историю (undo недоступно после загрузки)
+            self.history.clear()
+            self.history.push(self._state.copy(), move=None)
+
+            # 3. Уведомляем подписчиков
+            self._notify("game_restored", {
+                "moves": self._state.moves_count,
+                "score": self._state.score
+            })
+
+            print(f"✅ Игра восстановлена: {self._state.moves_count} ходов, {self._state.score} очков")
+            return True
+
+        except Exception as e:
+            print(f"❌ Ошибка восстановления игры: {e}")
+            self._state = None
+            return False
+
+    def update_play_time(self, seconds: int) -> None:
+        """
+        Обновить время игры (синхронизация с клиентом).
+        Godot шлет время, сервер запоминает.
+        """
+        if self._state:
+            self._state.time_elapsed = seconds
 
     def _create_shuffled_deck(self, seed: Optional[int]) -> List[Card]:
         """Создать перемешанную колоду."""
@@ -144,7 +183,7 @@ class SolitaireEngine:
 
         # 3. Берем КАРТЫ ДЛЯ ПРОВЕРКИ (не удаляя!)
         preview_cards = source.peek(count)
-        print(f"  🃏 Preview cards: {[str(c) for c in preview_cards]}")
+        # print(f"  🃏 Preview cards: {[str(c) for c in preview_cards]}")
 
         # 4. Создаём Move с картами для проверки
         move = Move(
@@ -166,21 +205,21 @@ class SolitaireEngine:
             print(f"  ❌ Execute failed: {e}")
             return False
 
-        # 7. Сохраняем новое состояние (ВЕРНУТЬ ЭТО!)
+        # 7. Сохраняем новое состояние
         self._state = new_state
         self.history.push(self._state.copy(), executed_move)
 
-        # 8. Проверяем победу
-        if self.rules.check_win(self._state):
-            self._notify("game_won", {"score": self._state.score})
-
-        # 9. Уведомляем
+        # 8. Уведомляем о ходе
         self._notify("move_made", {
             "from": from_pile,
             "to": to_pile,
             "count": count,
             "score": self._state.score
         })
+
+        # 9. Проверяем победу
+        if self.rules.check_win(self._state):
+            self._notify("game_won", {"score": self._state.score})
 
         return True
 
@@ -196,28 +235,22 @@ class SolitaireEngine:
         source = new_state.get_pile(from_pile)
         target = new_state.get_pile(to_pile)
 
-        # print("FROM:", repr(from_pile))
-        # print("TO:", repr(to_pile))
-        # print(type(self._state.piles))
-        # print(self._state.piles.keys())
-        # print(self._state.__dict__)
-
         if source is None or target is None:
             print(f"❌ ERROR: Invalid piles! '{from_pile}' or '{to_pile}' not found.")
             print(f"🔍 Available piles: {list(new_state.piles.keys())}")
             raise ValueError(f"Invalid piles: {from_pile} or {to_pile}")
 
-        # Запоминаем состояние ДО хода для определения перевернутых карт
+        # Запоминаем состояние ДО хода
         previous_state = self._state
 
         # Берём карты
-        from_index = len(source) - count  # индекс первой карты
+        from_index = len(source) - count
         cards = source.take(count)
 
         # Добавляем в целевую стопку
         target.add(cards)
 
-        # ПОЛУЧАЕМ ПЕРЕВЕРНУТЫЕ КАРТЫ (ПОСЛЕ ИЗМЕНЕНИЙ)
+        # ПОЛУЧАЕМ ПЕРЕВЕРНУТЫЕ КАРТЫ
         flipped_cards = self.rules.get_flipped_cards(previous_state,
                                                      Move(from_pile, to_pile, cards, from_index))
 
@@ -235,8 +268,6 @@ class SolitaireEngine:
             from_index=from_index
         )
 
-        # ИСПРАВЛЕНИЕ: Вызываем score_move и передаем previous_state
-        # previous_state мы запомнили в начале функции (строка self._state до копирования)
         score_delta = self.rules.score_move(new_state, move_for_score, previous_state)
         new_state.score += score_delta
         new_state.moves_count += 1
@@ -247,7 +278,7 @@ class SolitaireEngine:
             to_pile=to_pile,
             cards=cards,
             from_index=from_index,
-            flipped_cards=flipped_cards,  # ← ТЕПЕРЬ НЕ ПУСТО!
+            flipped_cards=flipped_cards,
             score_delta=score_delta
         )
 
@@ -318,8 +349,7 @@ class SolitaireEngine:
             score_delta=self.rules.score_recycle(self._state)
         )
 
-        # НЕ обновляем self._state здесь — это сделает draw()
-        self.history.push(new_state.copy(), move)  # сохраняем recycle в историю
+        self.history.push(new_state.copy(), move)
         self._notify("recycle", {"count": len(cards)})
 
         return True

@@ -73,3 +73,11 @@ text = "✕ Выход"
 
 [node name="Spacer2" type="Control" parent="MainContainer"]
 layout_mode = 2
+
+[node name="RestoreDialog" type="ConfirmationDialog" parent="."]
+oversampling_override = 1.0
+title = "Есть сохраненная игра"
+initial_position = 2
+size = Vector2i(243, 100)
+ok_button_text = "Продолжить"
+cancel_button_text = "Новая игра"

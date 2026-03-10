@@ -287,6 +287,17 @@ class StatsAPI:
             ...     suits_completed=["hearts", "spades"]
             ... )
         """
+
+        print(f"\n=== StatsAPI.end_game ===")
+        print(f"  game_id: {game_id}")
+        print(f"  result: {result}")
+        print(f"  score: {score}")
+        print(f"  moves: {moves}")
+        print(f"  game_type: {game_type}")
+        print(f"  suits_completed: {suits_completed}")
+        print(f"  was_perfect: {was_perfect}")
+        # print(f"  time_elapsed: {time_elapsed}")
+
         # Получаем данные из кэша если есть
         session = self._active_games.pop(game_id, {})
 
@@ -304,12 +315,8 @@ class StatsAPI:
             game_id=game_id,
             result=result,
             score=score,
-            moves_count=total_moves,
-            undos_used=undos,
-            hints_used=hints,
-            deck_cycles=deck_cycles,
-            suits_completed=suits_completed,
-            was_perfect=was_perfect
+            suits_completed=suits_completed
+            # Все остальные параметры убраны!
         )
 
         if success:
@@ -379,19 +386,30 @@ class StatsAPI:
         Args:
             player_id: UUID игрока
             game_type: Тип игры
-            game_state: Состояние игры
+            game_state: Состояние игры (содержит score, moves_count, time_elapsed)
             save_type: Тип сохранения
             description: Описание
 
         Returns:
             Dict с ID сохранения
         """
+
+        # Извлекаем статистику из состояния
+        score = game_state.get('score', 0)
+        moves = game_state.get('moves_count', 0)
+        time_elapsed = game_state.get('time_elapsed', 0)
+
+        print(f"📊 Сохраняем игру: score={score}, moves={moves}, time={time_elapsed}")
+
         saved_id = self.stats.save_game(
             player_id=player_id,
             game_type=game_type,
             game_state=game_state,
             save_type=save_type,
-            description=description
+            description=description,
+            score=score,
+            moves_count=moves,  # ← ИСПРАВЛЕНО
+            time_played_seconds=time_elapsed  # ← ИСПРАВЛЕНО
         )
 
         if saved_id:
@@ -656,6 +674,36 @@ class StatsAPI:
             'deleted_count': count,
             'message': f'Удалено {count} старых сохранений'
         }
+
+    def delete_autosave(self, player_id: str, game_type: str) -> Dict[str, Any]:
+        """
+        Удалить автосохранение игрока для конкретного типа игры.
+
+        Используется при:
+        1. Победе (сохранение больше не нужно)
+        2. Принудительном начале новой игры (игрок сдался)
+
+        Args:
+            player_id: UUID игрока
+            game_type: Тип игры ('klondike', 'spider', и т.д.)
+
+        Returns:
+            Dict: {'success': True/False}
+        """
+        # Ищем существующее автосохранение через сервис
+        saves = self.stats.get_player_saves(player_id, game_type)
+        autosave = next((s for s in saves if s.save_type == 'autosave'), None)
+
+        if autosave:
+            success = self.stats.delete_saved_game(autosave.id)
+            if success:
+                print(f"🗑️ Автосохранение удалено: {player_id} / {game_type}")
+                return {'success': True}
+            else:
+                return {'success': False, 'error': 'Failed to delete save'}
+
+        # Если сохранения нет — это тоже успех (идемпотентность)
+        return {'success': True}
 
     # ===== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ =====
 

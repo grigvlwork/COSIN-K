@@ -164,6 +164,28 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             print(f"Error deleting saved game: {e}")
             return False
 
+    def update_last_played(self, saved_id: int) -> bool:
+        """
+        Обновить время последнего доступа к сохранению.
+
+        Args:
+            saved_id: ID сохранения
+
+        Returns:
+            True если успешно
+        """
+        query = f"""
+            UPDATE {self.table_name} 
+            SET last_played = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """
+
+        try:
+            self._execute(query, (saved_id,))
+            return True
+        except Exception as e:
+            print(f"Error updating last_played: {e}")
+            return False
     # ===== МЕТОДЫ ДЛЯ РАБОТЫ С АВТОСОХРАНЕНИЯМИ =====
 
     def get_autosave(self, player_id: str, game_type: str) -> Optional[SavedGame]:
@@ -190,7 +212,10 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         return None
 
     def save_autosave(self, player_id: str, game_type: str,
-                      game_state: Dict[str, Any]) -> Optional[int]:
+                      game_state: Dict[str, Any],
+                      score: int = 0,
+                      moves_count: int = 0,
+                      time_played_seconds: int = 0) -> Optional[int]:
         """
         Сохранить или обновить автосохранение.
         Использует UNIQUE constraint для автоматической замены.
@@ -199,6 +224,9 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             player_id: UUID игрока
             game_type: Тип игры
             game_state: Состояние игры
+            score: Счет игры
+            moves_count: Количество ходов
+            time_played_seconds: Прошедшее время
 
         Returns:
             int: ID сохранения
@@ -210,6 +238,9 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             # Обновляем существующее
             success = self.update(existing.id, {
                 'game_state': game_state,
+                'score': score,
+                'moves_count': moves_count,
+                'time_played_seconds': time_played_seconds,
                 'last_played': datetime.now()
             })
             return existing.id if success else None
@@ -220,7 +251,10 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             game_type=game_type,
             game_state=game_state,
             save_type='autosave',
-            last_played=datetime.now()
+            last_played=datetime.now(),
+            score=score,
+            moves_count=moves_count,
+            time_played_seconds=time_played_seconds
         )
         return self.create(saved)
 

@@ -12,7 +12,7 @@ def generate_tree(directory, prefix="", output_lines=None):
         return output_lines
 
     # Фильтруем мусор (скрытые файлы, git, godot импорты)
-    ignore_list = ['.git', '.godot', '.import', '__pycache__']
+    ignore_list = ['.git', '.godot', '.import', '__pycache__', 'venv']
     entries = [e for e in entries if not e.startswith('.') and e not in ignore_list]
 
     for index, entry in enumerate(entries):
@@ -32,5 +32,6 @@ def generate_tree(directory, prefix="", output_lines=None):
 project_dir = "."
 tree_lines = [os.path.basename(os.path.abspath(project_dir)) + "/"]
 generate_tree(project_dir, "", tree_lines)
-
-print("\n".join(tree_lines))
+file = open('./doc/tree.txt', mode='w', encoding='UTF8')
+print("\n".join(tree_lines), file=file)
+file.close()

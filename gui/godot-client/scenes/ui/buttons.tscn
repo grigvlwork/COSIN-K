@@ -40,6 +40,10 @@ layout_mode = 2
 shortcut = SubResource("Shortcut_e2o6t")
 text = "🔄 Новая игра (F2)"
 
+[node name="SurrenderButton" type="Button" parent="."]
+layout_mode = 2
+text = "Сдаться"
+
 [node name="UndoButton" type="Button" parent="."]
 layout_mode = 2
 shortcut = SubResource("Shortcut_fc0e3")
