@@ -28,15 +28,11 @@
 <task actualstartdate="2026-02-27 09:00:34.913000" creationDateTime="2026-02-27 09:00:30.184000" id="17d60680-1380-11f1-88e0-ce7a14ba6107" modificationDateTime="2026-02-27 09:00:34.912000" status="1" subject="Сброс прогресса" />
 </task>
 </task>
-<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-05 13:17:39.223000" status="1" subject="Ближнее планирование">
-<task actualstartdate="2026-02-27 09:07:05.663000" creationDateTime="2026-02-27 09:05:50.197000" expandedContexts="('taskviewer',)" id="d694495e-1380-11f1-b168-ce7a14ba6107" modificationDateTime="2026-03-05 13:17:39.223000" status="1" subject="Сохранение статистики">
-<task actualstartdate="2026-02-27 09:07:03.881000" creationDateTime="2026-02-27 09:06:33.221000" expandedContexts="('taskviewer',)" id="f039134f-1380-11f1-949b-ce7a14ba6107" modificationDateTime="2026-03-05 08:44:26.477000" status="1" subject="Учет статистики">
-<task actualstartdate="2026-03-05 08:35:41.511000" creationDateTime="2026-03-05 08:35:29.611000" id="97e741b0-1833-11f1-b797-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:41.510000" status="1" subject="Тестирование" />
-</task>
-</task>
+<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-10 14:10:49.194000" status="1" subject="Ближнее планирование">
+<task actualstartdate="2026-03-10 14:11:07.987000" creationDateTime="2026-03-10 14:10:49.193000" id="442c9591-1c50-11f1-b4bf-ce7a14ba6107" modificationDateTime="2026-03-10 14:11:07.987000" status="1" subject="Сохранение сида в базе" />
 <task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:04.591000" status="1" subject="Учет достижений" />
 </task>
-<task creationDateTime="2026-03-05 13:16:51.956000" id="e690f95e-185a-11f1-8df2-ce7a14ba6107" modificationDateTime="2026-03-05 13:17:16.661000" status="1" subject="Готово">
+<task creationDateTime="2026-03-05 13:16:51.956000" id="e690f95e-185a-11f1-8df2-ce7a14ba6107" modificationDateTime="2026-03-10 14:10:41.138000" status="1" subject="Готово">
 <task actualstartdate="2026-03-05 10:30:04.214000" completiondate="2026-03-05 10:53:00.276000" creationDateTime="2026-03-05 10:29:43.526000" id="8d27b061-1843-11f1-863f-ce7a14ba6107" modificationDateTime="2026-03-05 10:53:00.275000" percentageComplete="100" status="1" subject="Модель данных (Сериализация)">
 <description>
 card.py: Добавить методы to_dict / from_dict.
@@ -115,6 +111,11 @@ engine.py: Добавить метод restore_state(state_dict). Он долж�
 Реализовать логику выхода в меню.
 Реализовать проверку активной игры при старте.
 </description>
+</task>
+<task actualstartdate="2026-02-27 09:07:05.663000" completiondate="2026-03-10 14:10:35.580000" creationDateTime="2026-02-27 09:05:50.197000" expandedContexts="('taskviewer',)" id="d694495e-1380-11f1-b168-ce7a14ba6107" modificationDateTime="2026-03-10 14:10:35.580000" percentageComplete="100" status="1" subject="Сохранение статистики">
+<task actualstartdate="2026-02-27 09:07:03.881000" completiondate="2026-03-10 14:10:32.482000" creationDateTime="2026-02-27 09:06:33.221000" expandedContexts="('taskviewer',)" id="f039134f-1380-11f1-949b-ce7a14ba6107" modificationDateTime="2026-03-10 14:10:32.481000" percentageComplete="100" status="1" subject="Учет статистики">
+<task actualstartdate="2026-03-05 08:35:41.511000" completiondate="2026-03-10 14:10:29.565000" creationDateTime="2026-03-05 08:35:29.611000" id="97e741b0-1833-11f1-b797-ce7a14ba6107" modificationDateTime="2026-03-10 14:10:29.565000" percentageComplete="100" status="1" subject="Тестирование" />
+</task>
 </task>
 <task actualstartdate="2026-02-27 09:07:02.068000" completiondate="2026-03-05 08:35:22.299000" creationDateTime="2026-02-27 09:06:20.789000" id="e8d01a4f-1380-11f1-bdb5-ce7a14ba6107" modificationDateTime="2026-03-05 08:35:22.299000" percentageComplete="100" status="1" subject="База данных" />
 <task actualstartdate="2026-03-05 08:45:21.369000" completiondate="2026-03-05 13:16:34.103000" creationDateTime="2026-03-05 08:45:00.948000" id="ec725d40-1834-11f1-ab0a-ce7a14ba6107" modificationDateTime="2026-03-05 13:16:34.084000" percentageComplete="100" status="1" subject="Доработка меню, проверка сохранений перед new" />
