@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://lm1rc8mr7au5"]
+[gd_scene load_steps=3 format=3 uid="uid://lm1rc8mr7au5"]
 
+[ext_resource type="Theme" uid="uid://dbnjvx44qqhqs" path="res://main_theme.tres" id="1_vjb58"]
 [ext_resource type="Script" uid="uid://bd6mydithxl4g" path="res://scenes/menu.gd" id="1_yqeox"]
 
 [node name="Menu" type="Control"]
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_vjb58")
 script = ExtResource("1_yqeox")
 
 [node name="MainContainer" type="VBoxContainer" parent="."]

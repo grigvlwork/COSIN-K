@@ -1,11 +1,13 @@
-[gd_scene load_steps=2 format=3 uid="uid://c10rm88rne71i"]
+[gd_scene load_steps=3 format=3 uid="uid://c10rm88rne71i"]
 
 [ext_resource type="Script" uid="uid://dwjogtafuborq" path="res://scenes/player_stats.gd" id="1_d0gwb"]
+[ext_resource type="Theme" uid="uid://dbnjvx44qqhqs" path="res://main_theme.tres" id="1_e030u"]
 
 [node name="PlayerStats" type="Window"]
 oversampling_override = 1.0
 title = "Статистика"
 size = Vector2i(750, 350)
+theme = ExtResource("1_e030u")
 script = ExtResource("1_d0gwb")
 
 [node name="MainContainer" type="VBoxContainer" parent="."]
