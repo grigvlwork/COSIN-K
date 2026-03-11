@@ -12,6 +12,7 @@ var timer_active = false
 var last_request_type = ""
 var is_game_active = false	  # Игра началась (первый ход сделан)
 var current_game_id = null	  # ID игры от сервера
+var current_seed = 0          # <--- [1] Добавляем переменную для хранения сида
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
@@ -20,11 +21,13 @@ var current_game_id = null	  # ID игры от сервера
 @onready var game_over_panel = $Display/GameOverPanel
 @onready var win_label = $Display/GameOverPanel/VBoxContainer/WinLabel
 @onready var final_score = $Display/GameOverPanel/VBoxContainer/FinalScoreLabel
+@onready var seed_label = $Display/MainLayout/CountersContainer/SeedLabel
 
 @onready var new_game_button = $Display/MainLayout/Buttons/NewGameButton
 @onready var undo_button = $Display/MainLayout/Buttons/UndoButton
 @onready var menu_button = $Display/MainLayout/Buttons/MenuButton
 @onready var surrender_button = $Display/MainLayout/Buttons/SurrenderButton
+@onready var replay_button = $Display/MainLayout/Buttons/ReplayButton
 
 # ===== ССЫЛКИ НА ИГРОВЫЕ ЭЛЕМЕНТЫ =====
 @onready var stock_slot = $Display/MainLayout/UpperRow/StockSlot
@@ -59,6 +62,9 @@ func _ready():
 
 	if surrender_button:
 		surrender_button.pressed.connect(_on_surrender_pressed)
+		
+	if replay_button:
+		replay_button.pressed.connect(_on_replay_pressed)
 
 	# === ОБЛАСТЬ ДЛЯ КЛИКА ПО КОЛОДЕ ===
 	var stock_click_area = Control.new()
@@ -98,10 +104,13 @@ func _load_from_global_state():
 	game_state = Global.pending_game_state.duplicate(true)  # Глубокая копия!
 	game_time = Global.pending_game_time
 	current_game_id = Global.pending_game_id
+	current_seed = Global.pending_game_state.get("seed", 0)
 	
 	print("   game_state скопирован. Размер: ", game_state.size())
 	print("   game_time: ", game_time)
 	print("   current_game_id: ", current_game_id)
+	print("   current_seed: ", current_seed)
+	
 	
 	# --- ДИАГНОСТИКА ---
 	if game_state:
@@ -138,9 +147,12 @@ func update_ui():
 		
 		score_label.text = "Счет: %d" % score
 		moves_label.text = "Ходы: %d" % moves
+		if seed_label:
+			seed_label.text = "Сид: %d" % current_seed
 
-func start_new_game(force_new: bool = true):
-	print("🎮 Запрос новой игры (force_new: %s)" % force_new)
+func start_new_game(force_new: bool = true, specific_seed = null):
+	# <--- [7] Добавлен аргумент specific_seed для возможности перезапуска
+	print("🎮 Запрос новой игры (force_new: %s, seed: %s)" % [force_new, specific_seed])
 	game_time = 0
 	timer = 0
 	first_move_made = false
@@ -151,11 +163,17 @@ func start_new_game(force_new: bool = true):
 	if game_over_panel:
 		game_over_panel.hide()
 
-	var body = JSON.new().stringify({
+	var payload = {
 		"variant": "klondike", 
 		"player_id": Global.player_id,
 		"force_new": force_new
-	})
+	}
+	
+	# <--- [8] Если передан конкретный сид, добавляем его в запрос
+	if specific_seed != null and specific_seed > 0:
+		payload["seed"] = specific_seed
+
+	var body = JSON.new().stringify(payload)
 	var headers = ["Content-Type: application/json"]
 	last_request_type = "new"
 	http.request(Global.server_url + "/new", headers, HTTPClient.METHOD_POST, body)
@@ -214,6 +232,11 @@ func _on_request_completed(result, response_code, headers, body):
 					if data.has("state"):
 						game_state = data.state
 						current_game_id = data.get("game_id")
+						# <--- [9] Сохраняем полученный от сервера сид
+						current_seed = data.state.get("seed", 0)
+						if current_seed == 0:
+							# Иногда сервер может вернуть сид в корне ответа, а не в state
+							current_seed = data.get("seed", 0)
 						update_ui()
 						draw_game()
 					return
@@ -307,6 +330,12 @@ func _on_surrender_pressed():
 	dialog.confirmed.connect(_confirm_surrender)
 	add_child(dialog)
 	dialog.popup_centered()
+
+func _on_replay_pressed():
+	print("🔄 Повтор игры с сидом: ", current_seed)
+	# Если игра активна, можно спросить подтверждение, но обычно это не требуется, 
+	# так как игрок намеренно хочет переиграть.
+	start_new_game(true, current_seed)
 
 func _confirm_surrender():
 	last_request_type = "abandon"
