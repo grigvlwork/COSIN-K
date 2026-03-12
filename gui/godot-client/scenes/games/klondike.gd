@@ -191,6 +191,10 @@ func start_new_game(force_new: bool = true, specific_seed = null):
 	http.request(Global.server_url + "/new", headers, HTTPClient.METHOD_POST, body)
 
 func _process(delta):
+	# Опционально: Автосохранение каждые 60 секунд
+	#if game_time % 60 == 0:
+		#_auto_save()
+	# 1. Логика таймера (была)
 	if game_state and (not game_over_panel or not game_over_panel.visible) and timer_active:
 		timer += delta
 		if timer >= 1.0:
@@ -198,9 +202,13 @@ func _process(delta):
 			game_time += 1
 			update_time_display()
 
-			# Опционально: Автосохранение каждые 60 секунд
-			# if game_time % 60 == 0:
-			#	_auto_save()
+	# 2. Логика перетаскивания (новое)
+	if is_dragging and dragged_card_node:
+		var mouse_pos = get_global_mouse_position()
+		# Двигаем карту за мышкой с учетом смещения (offset)
+		dragged_card_node.global_position = mouse_pos - drag_offset
+
+
 
 func update_time_display():
 	var minutes = game_time / 60
@@ -529,7 +537,6 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	# Возвращаем ссылку на созданный контрол (может пригодиться)
 	return card_control
 
-# Измените заголовок функции: добавили card_node
 func _on_card_clicked(event, pile_name, card_data, card_node):
 	
 	# === Обработка нажатий ===
@@ -591,4 +598,75 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 		if is_dragging:
 			print("🏁 Отпускание карты")
 			# Здесь будет логика сброса карты
-			#_end_drag() 
+			_end_drag() 
+			
+func _end_drag():
+	if not is_dragging:
+		return
+		
+	# 1. Сбрасываем визуальные эффекты
+	if dragged_card_node:
+		dragged_card_node.z_index = 0
+	
+	# 2. Определяем, над какой стопкой отпустили карту
+	var target_pile = _get_pile_under_mouse()
+	
+	# 3. Если отпустили над допустимой стопкой (не туда же, откуда взяли)
+	if target_pile != "" and target_pile != drag_source_pile:
+		print("📂 Попытка перенести в: ", target_pile)
+		
+		# Отправляем запрос на сервер (обычный ход, не авто)
+		last_request_type = "move"
+		var body = JSON.new().stringify({
+			"from": drag_source_pile,
+			"to": target_pile
+		})
+		var headers = ["Content-Type: application/json"]
+		http.request(Global.server_url + "/move", headers, HTTPClient.METHOD_POST, body)
+		
+		# Блокируем интерфейс, пока ждем ответ
+		is_busy = true
+	else:
+		print("❌ Неверная цель или отмена")
+		# Если отпустили в пустом месте или над той же стопкой — просто перерисуем
+		draw_game() 
+	
+	# 4. Сбрасываем переменные состояния
+	is_dragging = false
+	drag_source_pile = ""
+	drag_card_data = null
+	dragged_card_node = null
+
+func _get_pile_under_mouse() -> String:
+	var mouse_pos = get_global_mouse_position()
+	
+	# Список всех стопок для проверки
+	var all_slots = []
+	
+	# 1. Foundations (дома)
+	for i in range(4):
+		var node = foundation_slots()[i]
+		all_slots.append({"name": "foundation_" + str(i), "node": node})
+	
+	# 2. Tableau (колонки)
+	for i in range(7):
+		var node = tableau_slots[i]
+		all_slots.append({"name": "tableau_" + str(i), "node": node})
+	
+	# 3. Waste (сброс)
+	all_slots.append({"name": "waste", "node": waste_slot})
+	
+	# Проверяем попадание
+	for slot_info in all_slots:
+		var node = slot_info["node"]
+		# Используем get_global_rect() для проверки попадания
+		var rect = node.get_global_rect()
+		
+		# ВАЖНО: Для Tableau расширим зону захвата вниз
+		if slot_info["name"].begins_with("tableau"):
+			rect.size.y = 800 # Условно на весь экран вниз
+		
+		if rect.has_point(mouse_pos):
+			return slot_info["name"]
+			
+	return ""
