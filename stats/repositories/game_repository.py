@@ -534,3 +534,28 @@ class GameRepository(BaseRepository[Game]):
         except Exception as e:
             print(f"Error deleting old games: {e}")
             return 0
+
+    def has_won_seed(self, player_id: str, seed: int) -> bool:
+        """
+        Проверить, была ли уже победа с таким сидом у данного игрока.
+
+        Args:
+            player_id: UUID игрока
+            seed: Сид расклада
+
+        Returns:
+            True если победа уже была, False если нет
+        """
+        if not seed:
+            return False
+
+        query = f"""
+            SELECT COUNT(*) as count
+            FROM {self.table_name}
+            WHERE player_id = ? AND seed = ? AND result = 'won'
+        """
+
+        results = self._execute(query, (player_id, seed))
+        if results and len(results) > 0:
+            return results[0]['count'] > 0
+        return False

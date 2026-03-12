@@ -122,13 +122,16 @@ class StatsAPI:
         session = self._active_games.pop(game_id, {})
         total_moves = moves or session.get('moves', 0)
 
-        # Завершаем игру через сервис
-        success = self.stats.end_game(
+        # Завершаем игру через сервис (теперь он возвращает словарь)
+        end_result = self.stats.end_game(
             game_id=game_id,
             result=result,
             score=score,
             suits_completed=suits_completed
         )
+
+        success = end_result.get('success', False)
+        is_first_win = end_result.get('is_first_win', False)
 
         if success:
             player_id = session.get('player_id')
@@ -141,6 +144,7 @@ class StatsAPI:
                         'result': result,
                         'score': score,
                         'moves': total_moves,
+                        'is_first_win': is_first_win,  # <--- Передаем клиенту
                         'player_stats': {
                             'games_won': stats.player.games_won,
                             'games_played': stats.player.games_started,
@@ -149,7 +153,13 @@ class StatsAPI:
                             'best_streak': stats.player.best_win_streak
                         }
                     }
-            return {'success': True, 'game_completed': True, 'result': result, 'score': score}
+            return {
+                'success': True,
+                'game_completed': True,
+                'result': result,
+                'score': score,
+                'is_first_win': is_first_win  # <--- Передаем клиенту
+            }
 
         return {'success': False, 'error': 'Не удалось завершить игру'}
 

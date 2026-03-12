@@ -12,7 +12,15 @@ var timer_active = false
 var last_request_type = ""
 var is_game_active = false	  # Игра началась (первый ход сделан)
 var current_game_id = null	  # ID игры от сервера
-var current_seed = 0          # <--- [1] Добавляем переменную для хранения сида
+var current_seed = 0          # Переменная для хранения сида
+var is_first_win = true	      # Переменная для хранения статуса победы
+var is_replay_mode = false
+# ===== DRAG AND DROP =====
+var is_dragging = false
+var drag_source_pile = ""
+var drag_card_data = null
+var dragged_card_node = null # Ссылка на узел карты, которую тянем
+var drag_offset = Vector2()  # Смещение, чтобы карта не прыгала центром к курсору
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
@@ -141,14 +149,18 @@ func _load_from_global_state():
 
 func update_ui():
 	if game_state:
-		# ИСПРАВЛЕНО: Используем .get()
 		var score = game_state.get("score", 0)
 		var moves = game_state.get("moves_count", 0)
 		
 		score_label.text = "Счет: %d" % score
 		moves_label.text = "Ходы: %d" % moves
+		
+		# Если вы хотите помечать игры, запущенные через кнопку "Replay"
 		if seed_label:
-			seed_label.text = "Сид: %d" % current_seed
+			if is_replay_mode: # Эта переменная должна быть объявлена как var is_replay_mode = false
+				seed_label.text = "Сид: %d (Повтор)" % current_seed
+			else:
+				seed_label.text = "Сид: %d" % current_seed
 
 func start_new_game(force_new: bool = true, specific_seed = null):
 	# <--- [7] Добавлен аргумент specific_seed для возможности перезапуска
@@ -270,8 +282,9 @@ func _on_request_completed(result, response_code, headers, body):
 					
 					# Победа
 					if game_won:
+						# Сохраняем статус победы (первая или повторная)
+						is_first_win = data.get("is_first_win", true)
 						show_win()
-						#_auto_save()
 						
 			else:
 				# === Ошибка логики ===
@@ -287,8 +300,18 @@ func _on_request_completed(result, response_code, headers, body):
 func show_win():
 	if game_over_panel:
 		game_over_panel.show()
-		win_label.text = "🎉 ПОБЕДА!"
-		final_score.text = "Счет: " + str(game_state["score"])
+		
+		# Проверяем флаг первой победы
+		if is_first_win:
+			# --- ПЕРВАЯ ПОБЕДА (Зачетная) ---
+			win_label.text = "🎉 ПОБЕДА!"
+			final_score.text = "Счет: " + str(game_state["score"])
+			# Можно добавить эффекты или звуки победы
+		else:
+			# --- ПОВТОРНАЯ ПОБЕДА (Практика) ---
+			win_label.text = "🏆 ПОВТОРНЫЙ РЕКОРД"
+			final_score.text = "Счет: " + str(game_state["score"]) + " (Практика)"
+			
 		timer_active = false
 		is_game_active = false
 
@@ -304,6 +327,7 @@ func _on_stock_clicked(event):
 
 func _on_new_game_pressed():
 	# Если игра уже идет, спросить подтверждение
+	is_replay_mode = false
 	if is_game_active:
 		var dialog = ConfirmationDialog.new()
 		dialog.dialog_text = "Начать новую игру? Текущий прогресс будет потерян."
@@ -341,6 +365,7 @@ func _on_surrender_pressed():
 
 func _on_replay_pressed():
 	print("🔄 Повтор игры с сидом: ", current_seed)
+	is_replay_mode = true
 	# Если игра активна, можно спросить подтверждение, но обычно это не требуется, 
 	# так как игрок намеренно хочет переиграть.
 	start_new_game(true, current_seed)
@@ -465,50 +490,105 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 		card_layer.name = "CardLayer"
 		parent_slot.add_child(card_layer)
 	
+	# Создаем уникальное имя для карты, чтобы находить её позже
+	# (Это поможет в будущем не пересоздавать карты, а обновлять их)
+	var card_id = str(card_data.get("suit", "")) + "_" + str(card_data.get("rank", ""))
 	var card_control = Control.new()
-	card_control.name = "Card_" + str(randi())
+	card_control.name = "Card_" + card_id + "_" + str(randi()) # Уникальное имя
 	card_control.position = offset
+	
+	# Важно: Размер карты должен определяться текстурой
 	card_control.mouse_filter = Control.MOUSE_FILTER_STOP
-	card_control.z_index = 100
-
-	var sprite = Sprite2D.new()
+	
+	# --- ИЗМЕНЕНИЕ: Используем TextureRect вместо Sprite2D ---
+	var texture_rect = TextureRect.new()
+	texture_rect.name = "Texture"
+	
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
-	sprite.texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
+	texture_rect.texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
 
-	if sprite.texture == null:
-		sprite.modulate = Color.RED
+	if texture_rect.texture == null:
+		texture_rect.modulate = Color.RED
 	
-	sprite.centered = false
-	sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
-	if sprite.texture:
-		card_control.custom_minimum_size = Vector2(
-			sprite.texture.get_width() * CARD_SCALE,
-			sprite.texture.get_height() * CARD_SCALE
-		)
+	# Настраиваем масштабирование
+	texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.custom_minimum_size = Vector2(
+		texture_rect.texture.get_width() * CARD_SCALE,
+		texture_rect.texture.get_height() * CARD_SCALE
+	) if texture_rect.texture else Vector2(100, 145)
 	
-	card_control.add_child(sprite)
-	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data))
+	card_control.add_child(texture_rect)
+	# -------------------------------------------------------
+
+	# Подключаем сигнал. Передаем сам control, чтобы потом менять его z_index
+	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data, card_control))
 	card_layer.add_child(card_control)
+	
+	# Возвращаем ссылку на созданный контрол (может пригодиться)
+	return card_control
 
-func _on_card_clicked(event, pile_name, card_data):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if is_busy:
-			return
+# Измените заголовок функции: добавили card_node
+func _on_card_clicked(event, pile_name, card_data, card_node):
+	
+	# === Обработка нажатий ===
+	if event is InputEventMouseButton and event.pressed:
 		
-		if pile_name == "stock":
-			print("🃏 Клик по колоде -> Взять карту")
-			var body = '{}'
+		# --- Левая кнопка: Перетаскивание ---
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if is_busy:
+				return
+
+			if pile_name == "stock":
+				print("🃏 Клик по колоде -> Взять карту")
+				var body = '{}'
+				var headers = ["Content-Type: application/json"]
+				last_request_type = "draw"
+				http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+				return
+
+			if not card_data["face_up"]:
+				return
+
+			print("🖱️ Начало перетаскивания из: ", pile_name)
+			
+			# 1. Запоминаем данные
+			is_dragging = true
+			drag_source_pile = pile_name
+			drag_card_data = card_data 
+			dragged_card_node = card_node # Запоминаем узел для перемещения
+			
+			# 2. Запоминаем смещение (чтобы карта не прыгала центром к курсору)
+			var mouse_pos = get_global_mouse_position()
+			drag_offset = mouse_pos - card_node.global_position
+			
+			# 3. Поднимаем карту над остальными
+			card_node.z_index = 100
+			
+			# Важно: помечаем событие как обработанное, чтобы не кликнуть "насквозь"
+			# get_viewport().set_input_as_handled() 
+			
+		# --- Правая кнопка: Авто-ход ---
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			if is_busy:
+				return
+			
+			if pile_name == "stock":
+				return 
+
+			if not card_data["face_up"]:
+				return
+
+			print("🃏 Авто-ход (ПКМ) из: ", pile_name)
+			last_request_type = "move"
+			var body = JSON.new().stringify({"from": pile_name})
 			var headers = ["Content-Type: application/json"]
-			last_request_type = "draw"
-			http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
-			return
-
-		if not card_data["face_up"]:
-			return
-
-		print("🃏 Авто-ход из: ", pile_name)
-		last_request_type = "move"
-		var body = JSON.new().stringify({"from": pile_name})
-		var headers = ["Content-Type: application/json"]
-		http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
+			http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
+	
+	# === Обработка отпускания ===
+	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if is_dragging:
+			print("🏁 Отпускание карты")
+			# Здесь будет логика сброса карты
+			#_end_drag() 

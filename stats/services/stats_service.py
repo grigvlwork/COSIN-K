@@ -72,41 +72,51 @@ class StatsService:
 
     def end_game(self, game_id: int, result: str,
                  score: int = 0, game_state: Optional[Dict] = None,
-                 suits_completed: Optional[List[str]] = None) -> bool:
+                 suits_completed: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Завершить игру и записать статистику.
+
+        Returns:
+            Dict: {'success': bool, 'is_first_win': bool}
         """
         session_data = None
+        is_first_win = False  # Флаг по умолчанию
 
+        # ... (блок извлечения данных из сессии или БД) ...
         if game_id not in self._active_games:
-            # Пробуем найти в БД
             game = self.game_repo.get(game_id)
             if not game:
-                return False
+                return {'success': False}
 
-            # Если игра есть в БД, восстанавливаем данные
             start_time = game.started_at
             player_id = game.player_id
             game_type = game.game_type
-            seed = game.seed  # Берем сид из БД
+            seed = game.seed
 
             moves = game.moves_count
             undos = game.undos_used
             hints = game.hints_used
             deck_cycles = game.deck_cycles
         else:
-            # Берём данные из активной сессии
             session_data = self._active_games.pop(game_id)
 
             start_time = session_data['started_at']
             player_id = session_data['player_id']
             game_type = session_data.get('game_type', 'klondike')
-            seed = session_data.get('seed')  # Берем сид из сессии
+            seed = session_data.get('seed')
 
             moves = session_data['moves']
             undos = session_data['undos']
             hints = session_data['hints']
             deck_cycles = session_data['deck_cycles']
+
+        # === НОВАЯ ЛОГИКА ПРОВЕРКИ СИДА ===
+        # Если это победа, проверяем, была ли она ранее
+        if result == 'won' and seed:
+            already_won = self.game_repo.has_won_seed(player_id, seed)
+            if not already_won:
+                is_first_win = True
+        # ==================================
 
         # Рассчитываем длительность
         end_time = datetime.now()
@@ -122,7 +132,7 @@ class StatsService:
             id=game_id,
             player_id=player_id,
             game_type=game_type,
-            seed=seed,  # Сохраняем сид в историю
+            seed=seed,
             started_at=start_time,
             ended_at=end_time,
             result=result,
@@ -140,23 +150,28 @@ class StatsService:
             is_weekend=is_weekend
         )
 
-        # Обновляем запись в БД
+        # Обновляем запись в БД (ВСЕГДА сохраняем попытку)
         success = self.game_repo.update(game_id, game.to_dict())
 
         if success:
-            # Обновляем статистику игрока
-            self._update_player_stats(player_id, result, score, duration)
+            # Обновляем статистику игрока с учетом флага первой победы
+            self._update_player_stats(player_id, result, score, duration, is_first_win)
 
-        return success
+        return {'success': success, 'is_first_win': is_first_win}
 
     def _update_player_stats(self, player_id: str, result: str,
-                             score: int, duration: int):
+                             score: int, duration: int, is_first_win: bool = False):
         """Обновить статистику игрока после завершения игры."""
         if result == 'won':
-            self.player_repo.increment_stat(player_id, 'games_won')
-            self.player_repo.update_streak(player_id, won=True)
-            self.player_repo.update_fastest_win(player_id, duration)
-            self.player_repo.update_slowest_win(player_id, duration)
+            # Увеличиваем счетчик побед ТОЛЬКО если это первая победа на этом сиде
+            if is_first_win:
+                self.player_repo.increment_stat(player_id, 'games_won')
+                self.player_repo.update_streak(player_id, won=True)
+
+            # Рекорды времени обновляем только для зачетных побед
+            if is_first_win:
+                self.player_repo.update_fastest_win(player_id, duration)
+                self.player_repo.update_slowest_win(player_id, duration)
 
         elif result == 'lost':
             self.player_repo.increment_stat(player_id, 'games_lost')
