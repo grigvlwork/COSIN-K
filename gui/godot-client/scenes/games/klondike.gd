@@ -74,15 +74,7 @@ func _ready():
 	if replay_button:
 		replay_button.pressed.connect(_on_replay_pressed)
 
-	# === ОБЛАСТЬ ДЛЯ КЛИКА ПО КОЛОДЕ ===
-	var stock_click_area = Control.new()
-	stock_click_area.name = "StockClickArea"
-	stock_click_area.custom_minimum_size = Vector2(100, 145)
-	stock_click_area.mouse_filter = Control.MOUSE_FILTER_STOP
-	stock_click_area.gui_input.connect(_on_stock_clicked)
-	stock_slot.add_child(stock_click_area)
-
-	# Настройка фильтров мыши
+		# Настройка фильтров мыши
 	stock_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	waste_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for slot in foundation_slots():
@@ -325,14 +317,6 @@ func show_win():
 
 # ===== ОБРАБОТЧИКИ КНОПОК =====
 
-func _on_stock_clicked(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		print("🃏 Взять карту из колоды")
-		var body = '{}'
-		var headers = ["Content-Type: application/json"]
-		last_request_type = "draw"
-		http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
-
 func _on_new_game_pressed():
 	# Если игра уже идет, спросить подтверждение
 	is_replay_mode = false
@@ -413,39 +397,61 @@ func draw_game():
 	draw_tableau()
 
 func _clear_cards_from_slot(slot: Control):
+	# 1. Очищаем слой карт (CardLayer)
 	var card_layer = slot.get_node_or_null("CardLayer")
 	if card_layer:
 		for child in card_layer.get_children():
-			if child.name.begins_with("Card_"):
-				child.queue_free()
+			child.queue_free()
+	
+	# 2. Очищаем всё, что лежит прямо в слоте (карты или EmptyStock)
 	for child in slot.get_children():
-		if child.name.begins_with("Card_"):
+		# Удаляем карты и индикатор пустой колоды
+		if child.name.begins_with("Card_") or child.name == "EmptyStock":
 			child.queue_free()
 
 func foundation_slots():
 	return [foundation_0, foundation_1, foundation_2, foundation_3]
 
 func draw_stock():
-	# Явная проверка наличия ключей
 	if not game_state.has("stock") or not game_state.has("waste"):
-		printerr("❌ Ошибка: в game_state нет stock или waste!")
 		return
 
 	var stock = game_state["stock"]
 	var waste = game_state["waste"]
 
+	# 1. В колоде есть карты
 	if stock["cards"].size() > 0:
 		var card = stock["cards"][0]
 		draw_card(card, stock_slot, "stock")
+		
+	# 2. Колода пуста, но в сбросе есть карты (можно перевернуть)
 	elif waste["cards"].size() > 0:
-		var sprite = Sprite2D.new()
-		sprite.name = "Card_EmptyStock"
-		sprite.texture = DeckManager.get_back_texture()
-		sprite.modulate = Color(1, 1, 1, 0.3)
-		sprite.centered = false
-		sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
-		stock_slot.add_child(sprite)
+		# Очистка теперь происходит в draw_game -> _clear_cards...
+		# Поэтому просто создаем индикатор
+		var empty_stock = TextureRect.new()
+		empty_stock.name = "EmptyStock"
+		empty_stock.texture = DeckManager.get_back_texture()
+		empty_stock.modulate = Color(1, 1, 1, 0.3)
+		empty_stock.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		empty_stock.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		empty_stock.custom_minimum_size = Vector2(100, 145)
+		empty_stock.mouse_filter = Control.MOUSE_FILTER_STOP
+		empty_stock.gui_input.connect(_on_empty_stock_clicked)
+		stock_slot.add_child(empty_stock)
+		
+	# 3. Колода пуста И сброс пуст (всё разобрано)
+	# -> Ничего не делаем, функция _clear_cards_from_slot всё убрала
 
+func _on_empty_stock_clicked(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if is_busy:
+			return
+		print("🃏 Recycle: Взять карту из сброса")
+		var body = '{}'
+		var headers = ["Content-Type: application/json"]
+		last_request_type = "draw"
+		http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+		
 func draw_waste():
 	if not game_state.has("waste"):
 		return
