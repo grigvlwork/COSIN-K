@@ -1,12 +1,6 @@
 # stats/repositories/saved_game_repository.py
 """
 Репозиторий для работы с сохранёнными играми (таблица saved_games).
-
-Предоставляет методы для:
-- Автосохранения текущей игры
-- Ручных сохранений
-- Загрузки сохранённых игр
-- Управления несколькими сохранениями
 """
 
 from typing import Optional, List, Dict, Any
@@ -35,7 +29,14 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         results = self._execute(query, (saved_id,))
 
         if results and len(results) > 0:
-            return SavedGame.from_dict(results[0])
+            row = results[0]
+            # === ИСПРАВЛЕНИЕ: Парсим JSON поля ===
+            if 'game_state' in row and isinstance(row['game_state'], str):
+                row['game_state'] = json.loads(row['game_state'])
+            if 'preview_data' in row and isinstance(row['preview_data'], str):
+                row['preview_data'] = json.loads(row['preview_data'])
+            # ====================================
+            return SavedGame.from_dict(row)
         return None
 
     def create(self, saved_game: SavedGame) -> Optional[int]:
@@ -47,7 +48,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         data.pop('created_at', None)
         data.pop('updated_at', None)
 
-        # Преобразуем JSON поля
+        # Преобразуем JSON поля в строки для БД
         if 'game_state' in data and data['game_state']:
             data['game_state'] = json.dumps(data['game_state'])
         if 'preview_data' in data and data['preview_data']:
@@ -82,7 +83,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         if not update_data:
             return True
 
-        # Преобразуем JSON поля
+        # Преобразуем JSON поля в строки для БД
         if 'game_state' in update_data and update_data['game_state']:
             update_data['game_state'] = json.dumps(update_data['game_state'])
         if 'preview_data' in update_data and update_data['preview_data']:
@@ -144,7 +145,14 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         results = self._execute(query, (player_id, game_type))
 
         if results and len(results) > 0:
-            return SavedGame.from_dict(results[0])
+            row = results[0]
+            # === ИСПРАВЛЕНИЕ: Парсим JSON поля ===
+            if 'game_state' in row and isinstance(row['game_state'], str):
+                row['game_state'] = json.loads(row['game_state'])
+            if 'preview_data' in row and isinstance(row['preview_data'], str):
+                row['preview_data'] = json.loads(row['preview_data'])
+            # ====================================
+            return SavedGame.from_dict(row)
         return None
 
     def save_autosave(self, player_id: str, game_type: str,
@@ -155,9 +163,6 @@ class SavedGameRepository(BaseRepository[SavedGame]):
                       time_played_seconds: int = 0) -> Optional[int]:
         """
         Сохранить или обновить автосохранение.
-
-        Args:
-            seed: Сид генерации (для переигровки)
         """
         # Проверяем существующее автосохранение
         existing = self.get_autosave(player_id, game_type)
@@ -166,7 +171,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             # Обновляем существующее
             success = self.update(existing.id, {
                 'game_state': game_state,
-                'seed': seed,  # Сохраняем сид
+                'seed': seed,
                 'score': score,
                 'moves_count': moves_count,
                 'time_played_seconds': time_played_seconds,
@@ -179,7 +184,7 @@ class SavedGameRepository(BaseRepository[SavedGame]):
             player_id=player_id,
             game_type=game_type,
             game_state=game_state,
-            seed=seed,  # Сохраняем сид
+            seed=seed,
             save_type='autosave',
             last_played=datetime.now(),
             score=score,
@@ -206,7 +211,16 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         query += " ORDER BY updated_at DESC"
 
         results = self._execute(query, tuple(params))
-        return [SavedGame.from_dict(row) for row in results]
+
+        # === ИСПРАВЛЕНИЕ: Парсим JSON для каждого элемента ===
+        items = []
+        for row in results:
+            if 'game_state' in row and isinstance(row['game_state'], str):
+                row['game_state'] = json.loads(row['game_state'])
+            if 'preview_data' in row and isinstance(row['preview_data'], str):
+                row['preview_data'] = json.loads(row['preview_data'])
+            items.append(SavedGame.from_dict(row))
+        return items
 
     def get_manual_saves(self, player_id: str) -> List[SavedGame]:
         """Получить только ручные сохранения игрока."""
@@ -217,7 +231,15 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         """
 
         results = self._execute(query, (player_id,))
-        return [SavedGame.from_dict(row) for row in results]
+        # === ИСПРАВЛЕНИЕ ===
+        items = []
+        for row in results:
+            if 'game_state' in row and isinstance(row['game_state'], str):
+                row['game_state'] = json.loads(row['game_state'])
+            if 'preview_data' in row and isinstance(row['preview_data'], str):
+                row['preview_data'] = json.loads(row['preview_data'])
+            items.append(SavedGame.from_dict(row))
+        return items
 
     def get_checkpoints(self, player_id: str) -> List[SavedGame]:
         """Получить точки сохранения (checkpoints)."""
@@ -228,7 +250,15 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         """
 
         results = self._execute(query, (player_id,))
-        return [SavedGame.from_dict(row) for row in results]
+        # === ИСПРАВЛЕНИЕ ===
+        items = []
+        for row in results:
+            if 'game_state' in row and isinstance(row['game_state'], str):
+                row['game_state'] = json.loads(row['game_state'])
+            if 'preview_data' in row and isinstance(row['preview_data'], str):
+                row['preview_data'] = json.loads(row['preview_data'])
+            items.append(SavedGame.from_dict(row))
+        return items
 
     # ===== МЕТОДЫ ДЛЯ ИЗБРАННОГО =====
 
@@ -249,7 +279,15 @@ class SavedGameRepository(BaseRepository[SavedGame]):
         """
 
         results = self._execute(query, (player_id,))
-        return [SavedGame.from_dict(row) for row in results]
+        # === ИСПРАВЛЕНИЕ ===
+        items = []
+        for row in results:
+            if 'game_state' in row and isinstance(row['game_state'], str):
+                row['game_state'] = json.loads(row['game_state'])
+            if 'preview_data' in row and isinstance(row['preview_data'], str):
+                row['preview_data'] = json.loads(row['preview_data'])
+            items.append(SavedGame.from_dict(row))
+        return items
 
     # ===== МЕТОДЫ ДЛЯ ПРЕВЬЮ =====
 

@@ -232,11 +232,19 @@ func _on_request_completed(result, response_code, headers, body):
 					if data.has("state"):
 						game_state = data.state
 						current_game_id = data.get("game_id")
-						# <--- [9] Сохраняем полученный от сервера сид
-						current_seed = data.state.get("seed", 0)
-						if current_seed == 0:
-							# Иногда сервер может вернуть сид в корне ответа, а не в state
-							current_seed = data.get("seed", 0)
+						
+						# === ИСПРАВЛЕНИЕ: Поиск сида ===
+						# 1. Сначала ищем сид в корне ответа (сервера обычно шлют его тут)
+						var received_seed = data.get("seed", 0)
+						
+						# 2. Если в корне нет, ищем внутри state
+						if received_seed == 0 and game_state.has("seed"):
+							received_seed = game_state.get("seed", 0)
+						
+						current_seed = received_seed
+						print("📝 Получен сид: ", current_seed)
+						# ================================
+						
 						update_ui()
 						draw_game()
 					return
