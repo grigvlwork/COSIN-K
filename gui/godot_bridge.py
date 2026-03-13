@@ -18,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from model import SolitaireEngine
 from model.rules.factory import GameFactory
 from stats.api import StatsAPI
+from stats.data import init_database
 
 
 class GameStateEncoder(json.JSONEncoder):
@@ -353,7 +354,9 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     result='lost',
                     score=engine.state.score,
                     moves=engine.state.moves_count,
-                    game_type=game_type
+                    game_type=game_type,
+                    cards_moved=engine.cards_moved_count,
+                    cards_flipped=engine.cards_flipped_count,
                 )
 
             self.stats_api.delete_autosave(player_id, game_type)
@@ -437,11 +440,15 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
             suits_completed = []
             was_perfect = False
+            cards_moved = 0
+            cards_flipped = 0
 
             if engine and engine.state:
                 engine.update_play_time(time_val)
                 suits_completed = self._get_suits_completed(engine.state)
                 was_perfect = self._check_perfect_game(engine, engine.state)
+                cards_moved = engine.cards_moved_count
+                cards_flipped = engine.cards_flipped_count
 
             if game_id and self.stats_api:
                 stats_result = self.stats_api.end_game(
@@ -452,6 +459,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     game_type="klondike",
                     suits_completed=suits_completed,
                     was_perfect=was_perfect,
+                    cards_moved=cards_moved,
+                    cards_flipped=cards_flipped,
                 )
 
                 if result_str == 'won':
@@ -518,7 +527,9 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     moves=engine.state.moves_count,
                     game_type="klondike",
                     suits_completed=self._get_suits_completed(engine.state),
-                    was_perfect=self._check_perfect_game(engine, engine.state)
+                    was_perfect=self._check_perfect_game(engine, engine.state),
+                    cards_moved = engine.cards_moved_count,
+                    cards_flipped = engine.cards_flipped_count,
                 )
             self._send_response({
                 'success': success,
@@ -605,7 +616,9 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                             moves=engine.state.moves_count,
                             game_type="klondike",
                             suits_completed=self._get_suits_completed(engine.state),
-                            was_perfect=self._check_perfect_game(engine, engine.state)
+                            was_perfect=self._check_perfect_game(engine, engine.state),
+                            cards_moved=engine.cards_moved_count,
+                            cards_flipped=engine.cards_flipped_count,
                         )
                 self._send_response({
                     'success': success,
@@ -649,12 +662,22 @@ def start_server(host='127.0.0.1', port=8080):
     print("=" * 50)
     print("🎮 Solitaire Engine Server")
     print("=" * 50)
+
+    # 1. Инициализация БД
+    print("📊 База данных: Проверка...")
+    init_database()
+    print("✅ База данных: Готова")
+
+    # 2. Инициализация API и Статистики (ОДИН РАЗ)
+    print("🏆 Достижения: Инициализация...")
+    GodotBridgeHandler.stats_api = StatsAPI(storage_path="./stats_data")
+    GodotBridgeHandler.stats_api.stats.init_achievements_on_startup()
+    print("✅ Статистика и достижения: Готовы")
+
+    # Вывод информации
     print(f"📡 Сервер: http://{host}:{port}")
     print(f"🆔 Режим: Мультисессионный")
     print(f"🎲 Игры:   {', '.join(GameFactory.available_games())}")
-    print("📊 Статистика: Загрузка...")
-    GodotBridgeHandler.stats_api = StatsAPI(storage_path="./stats_data")
-    print("✅ Статистика: Готова")
     print("=" * 50)
     print("🔥 Godot сам выбирает игру при /new")
     print("👤 Игроки идентифицируются по UUID")
@@ -673,7 +696,6 @@ def start_server(host='127.0.0.1', port=8080):
     except KeyboardInterrupt:
         print("\n👋 Сервер остановлен")
         server.server_close()
-
 
 if __name__ == "__main__":
     import argparse

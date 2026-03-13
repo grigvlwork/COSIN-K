@@ -12,6 +12,16 @@ var timer_active = false
 var last_request_type = ""
 var is_game_active = false	  # Игра началась (первый ход сделан)
 var current_game_id = null	  # ID игры от сервера
+var current_seed = 0          # Переменная для хранения сида
+var is_first_win = true	      # Переменная для хранения статуса победы
+var is_replay_mode = false
+# ===== DRAG AND DROP =====
+var is_dragging = false
+var drag_source_pile = ""
+var drag_card_data = null
+var dragged_card_node = null # Ссылка на узел карты, которую тянем
+var drag_offset = Vector2()  # Смещение, чтобы карта не прыгала центром к курсору
+var drag_nodes = [] # Список всех перетаскиваемых узлов
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
@@ -20,11 +30,13 @@ var current_game_id = null	  # ID игры от сервера
 @onready var game_over_panel = $Display/GameOverPanel
 @onready var win_label = $Display/GameOverPanel/VBoxContainer/WinLabel
 @onready var final_score = $Display/GameOverPanel/VBoxContainer/FinalScoreLabel
+@onready var seed_label = $Display/MainLayout/CountersContainer/SeedLabel
 
 @onready var new_game_button = $Display/MainLayout/Buttons/NewGameButton
 @onready var undo_button = $Display/MainLayout/Buttons/UndoButton
 @onready var menu_button = $Display/MainLayout/Buttons/MenuButton
 @onready var surrender_button = $Display/MainLayout/Buttons/SurrenderButton
+@onready var replay_button = $Display/MainLayout/Buttons/ReplayButton
 
 # ===== ССЫЛКИ НА ИГРОВЫЕ ЭЛЕМЕНТЫ =====
 @onready var stock_slot = $Display/MainLayout/UpperRow/StockSlot
@@ -59,16 +71,11 @@ func _ready():
 
 	if surrender_button:
 		surrender_button.pressed.connect(_on_surrender_pressed)
+		
+	if replay_button:
+		replay_button.pressed.connect(_on_replay_pressed)
 
-	# === ОБЛАСТЬ ДЛЯ КЛИКА ПО КОЛОДЕ ===
-	var stock_click_area = Control.new()
-	stock_click_area.name = "StockClickArea"
-	stock_click_area.custom_minimum_size = Vector2(100, 145)
-	stock_click_area.mouse_filter = Control.MOUSE_FILTER_STOP
-	stock_click_area.gui_input.connect(_on_stock_clicked)
-	stock_slot.add_child(stock_click_area)
-
-	# Настройка фильтров мыши
+		# Настройка фильтров мыши
 	stock_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	waste_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for slot in foundation_slots():
@@ -98,10 +105,13 @@ func _load_from_global_state():
 	game_state = Global.pending_game_state.duplicate(true)  # Глубокая копия!
 	game_time = Global.pending_game_time
 	current_game_id = Global.pending_game_id
+	current_seed = Global.pending_game_state.get("seed", 0)
 	
 	print("   game_state скопирован. Размер: ", game_state.size())
 	print("   game_time: ", game_time)
 	print("   current_game_id: ", current_game_id)
+	print("   current_seed: ", current_seed)
+	
 	
 	# --- ДИАГНОСТИКА ---
 	if game_state:
@@ -132,15 +142,22 @@ func _load_from_global_state():
 
 func update_ui():
 	if game_state:
-		# ИСПРАВЛЕНО: Используем .get()
 		var score = game_state.get("score", 0)
 		var moves = game_state.get("moves_count", 0)
 		
 		score_label.text = "Счет: %d" % score
 		moves_label.text = "Ходы: %d" % moves
+		
+		# Если вы хотите помечать игры, запущенные через кнопку "Replay"
+		if seed_label:
+			if is_replay_mode: # Эта переменная должна быть объявлена как var is_replay_mode = false
+				seed_label.text = "Сид: %d (Повтор)" % current_seed
+			else:
+				seed_label.text = "Сид: %d" % current_seed
 
-func start_new_game(force_new: bool = true):
-	print("🎮 Запрос новой игры (force_new: %s)" % force_new)
+func start_new_game(force_new: bool = true, specific_seed = null):
+	# <--- [7] Добавлен аргумент specific_seed для возможности перезапуска
+	print("🎮 Запрос новой игры (force_new: %s, seed: %s)" % [force_new, specific_seed])
 	game_time = 0
 	timer = 0
 	first_move_made = false
@@ -151,26 +168,42 @@ func start_new_game(force_new: bool = true):
 	if game_over_panel:
 		game_over_panel.hide()
 
-	var body = JSON.new().stringify({
+	var payload = {
 		"variant": "klondike", 
 		"player_id": Global.player_id,
 		"force_new": force_new
-	})
+	}
+	
+	# <--- [8] Если передан конкретный сид, добавляем его в запрос
+	if specific_seed != null and specific_seed > 0:
+		payload["seed"] = specific_seed
+
+	var body = JSON.new().stringify(payload)
 	var headers = ["Content-Type: application/json"]
 	last_request_type = "new"
 	http.request(Global.server_url + "/new", headers, HTTPClient.METHOD_POST, body)
 
 func _process(delta):
+	# Опционально: Автосохранение каждые 60 секунд
+	#if game_time % 60 == 0:
+		#_auto_save()
+	# Таймер
 	if game_state and (not game_over_panel or not game_over_panel.visible) and timer_active:
 		timer += delta
 		if timer >= 1.0:
 			timer = 0
 			game_time += 1
 			update_time_display()
-
-			# Опционально: Автосохранение каждые 60 секунд
-			# if game_time % 60 == 0:
-			#	_auto_save()
+	# Перетаскивание
+	if is_dragging and dragged_card_node:
+		var mouse_pos = get_global_mouse_position()
+		dragged_card_node.global_position = mouse_pos - drag_offset
+		
+		# Двигаем хвост
+		for i in range(1, drag_nodes.size()):
+			var node = drag_nodes[i]
+			var offset_from_head = node.get_meta("drag_offset_from_head", Vector2.ZERO)
+			node.global_position = dragged_card_node.global_position + offset_from_head
 
 func update_time_display():
 	var minutes = game_time / 60
@@ -214,6 +247,19 @@ func _on_request_completed(result, response_code, headers, body):
 					if data.has("state"):
 						game_state = data.state
 						current_game_id = data.get("game_id")
+						
+						# === ИСПРАВЛЕНИЕ: Поиск сида ===
+						# 1. Сначала ищем сид в корне ответа (сервера обычно шлют его тут)
+						var received_seed = data.get("seed", 0)
+						
+						# 2. Если в корне нет, ищем внутри state
+						if received_seed == 0 and game_state.has("seed"):
+							received_seed = game_state.get("seed", 0)
+						
+						current_seed = received_seed
+						print("📝 Получен сид: ", current_seed)
+						# ================================
+						
 						update_ui()
 						draw_game()
 					return
@@ -239,8 +285,9 @@ func _on_request_completed(result, response_code, headers, body):
 					
 					# Победа
 					if game_won:
+						# Сохраняем статус победы (первая или повторная)
+						is_first_win = data.get("is_first_win", true)
 						show_win()
-						#_auto_save()
 						
 			else:
 				# === Ошибка логики ===
@@ -256,23 +303,26 @@ func _on_request_completed(result, response_code, headers, body):
 func show_win():
 	if game_over_panel:
 		game_over_panel.show()
-		win_label.text = "🎉 ПОБЕДА!"
-		final_score.text = "Счет: " + str(game_state["score"])
+		
+		# Проверяем флаг первой победы
+		if is_first_win:
+			# --- ПЕРВАЯ ПОБЕДА (Зачетная) ---
+			win_label.text = "🎉 ПОБЕДА!"
+			final_score.text = "Счет: " + str(game_state["score"])
+			# Можно добавить эффекты или звуки победы
+		else:
+			# --- ПОВТОРНАЯ ПОБЕДА (Практика) ---
+			win_label.text = "🏆 ПОВТОРНЫЙ РЕКОРД"
+			final_score.text = "Счет: " + str(game_state["score"]) + " (Практика)"
+			
 		timer_active = false
 		is_game_active = false
 
 # ===== ОБРАБОТЧИКИ КНОПОК =====
 
-func _on_stock_clicked(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		print("🃏 Взять карту из колоды")
-		var body = '{}'
-		var headers = ["Content-Type: application/json"]
-		last_request_type = "draw"
-		http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
-
 func _on_new_game_pressed():
 	# Если игра уже идет, спросить подтверждение
+	is_replay_mode = false
 	if is_game_active:
 		var dialog = ConfirmationDialog.new()
 		dialog.dialog_text = "Начать новую игру? Текущий прогресс будет потерян."
@@ -307,6 +357,13 @@ func _on_surrender_pressed():
 	dialog.confirmed.connect(_confirm_surrender)
 	add_child(dialog)
 	dialog.popup_centered()
+
+func _on_replay_pressed():
+	print("🔄 Повтор игры с сидом: ", current_seed)
+	is_replay_mode = true
+	# Если игра активна, можно спросить подтверждение, но обычно это не требуется, 
+	# так как игрок намеренно хочет переиграть.
+	start_new_game(true, current_seed)
 
 func _confirm_surrender():
 	last_request_type = "abandon"
@@ -343,39 +400,61 @@ func draw_game():
 	draw_tableau()
 
 func _clear_cards_from_slot(slot: Control):
+	# 1. Очищаем слой карт (CardLayer)
 	var card_layer = slot.get_node_or_null("CardLayer")
 	if card_layer:
 		for child in card_layer.get_children():
-			if child.name.begins_with("Card_"):
-				child.queue_free()
+			child.queue_free()
+	
+	# 2. Очищаем всё, что лежит прямо в слоте (карты или EmptyStock)
 	for child in slot.get_children():
-		if child.name.begins_with("Card_"):
+		# Удаляем карты и индикатор пустой колоды
+		if child.name.begins_with("Card_") or child.name == "EmptyStock":
 			child.queue_free()
 
 func foundation_slots():
 	return [foundation_0, foundation_1, foundation_2, foundation_3]
 
 func draw_stock():
-	# Явная проверка наличия ключей
 	if not game_state.has("stock") or not game_state.has("waste"):
-		printerr("❌ Ошибка: в game_state нет stock или waste!")
 		return
 
 	var stock = game_state["stock"]
 	var waste = game_state["waste"]
 
+	# 1. В колоде есть карты
 	if stock["cards"].size() > 0:
 		var card = stock["cards"][0]
 		draw_card(card, stock_slot, "stock")
+		
+	# 2. Колода пуста, но в сбросе есть карты (можно перевернуть)
 	elif waste["cards"].size() > 0:
-		var sprite = Sprite2D.new()
-		sprite.name = "Card_EmptyStock"
-		sprite.texture = DeckManager.get_back_texture()
-		sprite.modulate = Color(1, 1, 1, 0.3)
-		sprite.centered = false
-		sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
-		stock_slot.add_child(sprite)
+		# Очистка теперь происходит в draw_game -> _clear_cards...
+		# Поэтому просто создаем индикатор
+		var empty_stock = TextureRect.new()
+		empty_stock.name = "EmptyStock"
+		empty_stock.texture = DeckManager.get_back_texture()
+		empty_stock.modulate = Color(1, 1, 1, 0.3)
+		empty_stock.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		empty_stock.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		empty_stock.custom_minimum_size = Vector2(100, 145)
+		empty_stock.mouse_filter = Control.MOUSE_FILTER_STOP
+		empty_stock.gui_input.connect(_on_empty_stock_clicked)
+		stock_slot.add_child(empty_stock)
+		
+	# 3. Колода пуста И сброс пуст (всё разобрано)
+	# -> Ничего не делаем, функция _clear_cards_from_slot всё убрала
 
+func _on_empty_stock_clicked(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if is_busy:
+			return
+		print("🃏 Recycle: Взять карту из сброса")
+		var body = '{}'
+		var headers = ["Content-Type: application/json"]
+		last_request_type = "draw"
+		http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+		
 func draw_waste():
 	if not game_state.has("waste"):
 		return
@@ -428,50 +507,193 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 		card_layer.name = "CardLayer"
 		parent_slot.add_child(card_layer)
 	
+	# Создаем уникальное имя для карты, чтобы находить её позже
+	# (Это поможет в будущем не пересоздавать карты, а обновлять их)
+	var card_id = str(card_data.get("suit", "")) + "_" + str(card_data.get("rank", ""))
 	var card_control = Control.new()
-	card_control.name = "Card_" + str(randi())
+	card_control.name = "Card_" + card_id + "_" + str(randi()) # Уникальное имя
 	card_control.position = offset
+	
+	# Важно: Размер карты должен определяться текстурой
 	card_control.mouse_filter = Control.MOUSE_FILTER_STOP
-	card_control.z_index = 100
-
-	var sprite = Sprite2D.new()
+	# === НОВОЕ: Запоминаем индекс карты в стопке ===
+	# Индекс нам нужен, чтобы знать, сколько карт "под ней" тащить
+	# Индекс можно вычислить из смещения Y (для tableau)
+	if pile_name.begins_with("tableau"):
+		# STACK_OFFSET = 30, offset.y = индекс * 30
+		var card_index = int(offset.y / STACK_OFFSET)
+		card_control.set_meta("card_index", card_index)
+	else:
+		card_control.set_meta("card_index", 0)
+	# --- ИЗМЕНЕНИЕ: Используем TextureRect вместо Sprite2D ---
+	var texture_rect = TextureRect.new()
+	texture_rect.name = "Texture"
+	
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
-	sprite.texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
+	texture_rect.texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
 
-	if sprite.texture == null:
-		sprite.modulate = Color.RED
+	if texture_rect.texture == null:
+		texture_rect.modulate = Color.RED
 	
-	sprite.centered = false
-	sprite.scale = Vector2(CARD_SCALE, CARD_SCALE)
-	if sprite.texture:
-		card_control.custom_minimum_size = Vector2(
-			sprite.texture.get_width() * CARD_SCALE,
-			sprite.texture.get_height() * CARD_SCALE
-		)
+	# Настраиваем масштабирование
+	texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.custom_minimum_size = Vector2(
+		texture_rect.texture.get_width() * CARD_SCALE,
+		texture_rect.texture.get_height() * CARD_SCALE
+	) if texture_rect.texture else Vector2(100, 145)
 	
-	card_control.add_child(sprite)
-	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data))
+	card_control.add_child(texture_rect)
+	# -------------------------------------------------------
+
+	# Подключаем сигнал. Передаем сам control, чтобы потом менять его z_index
+	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data, card_control))
 	card_layer.add_child(card_control)
+	
+	# Возвращаем ссылку на созданный контрол (может пригодиться)
+	return card_control
 
-func _on_card_clicked(event, pile_name, card_data):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if is_busy:
-			return
+func _on_card_clicked(event, pile_name, card_data, card_node):
+	
+	# === Обработка нажатий ===
+	if event is InputEventMouseButton and event.pressed:
 		
-		if pile_name == "stock":
-			print("🃏 Клик по колоде -> Взять карту")
-			var body = '{}'
+		# --- Левая кнопка: Перетаскивание ---
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if is_busy:
+				return
+			if pile_name == "stock":
+				print("🃏 Клик по колоде -> Взять карту")
+				var body = '{}'
+				var headers = ["Content-Type: application/json"]
+				last_request_type = "draw"
+				http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
+				return
+			if not card_data["face_up"]:
+				return
+			print("🖱️ Начало перетаскивания из: ", pile_name)
+			is_dragging = true
+			drag_source_pile = pile_name
+			drag_card_data = card_data 
+			dragged_card_node = card_node
+			# Находим все карты ниже (для стопок) ===
+			drag_nodes.clear() # Очищаем список перед использованием
+			drag_nodes.append(card_node) # Добавляем саму карту
+			# Если это tableau, ищем карты под ней в том же слое
+			if pile_name.begins_with("tableau"):
+				var card_layer = card_node.get_parent()
+				if card_layer:
+					# Получаем индекс текущей карты
+					var my_index = card_node.get_meta("card_index", 0)
+					# Проходим по всем детям слоя и добавляем те, что ниже
+					for child in card_layer.get_children():
+						if child == card_node: continue
+						if child.get_meta("card_index", -1) > my_index:
+							drag_nodes.append(child)
+			# Сортируем по индексу, чтобы они красиво летели вместе
+			drag_nodes.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
+			# Запоминаем смещения хвоста относительно головы
+			var head_pos = card_node.global_position
+			for i in range(1, drag_nodes.size()):
+				var node = drag_nodes[i]
+				# Сохраняем разницу в координатах
+				node.set_meta("drag_offset_from_head", node.global_position - head_pos)
+			# Эффекты
+			for node in drag_nodes:
+				node.z_index = 100
+			
+			var mouse_pos = get_global_mouse_position()
+			drag_offset = mouse_pos - card_node.global_position
+			
+		# --- Правая кнопка: Авто-ход ---
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			if is_busy:
+				return
+			
+			if pile_name == "stock":
+				return 
+
+			if not card_data["face_up"]:
+				return
+
+			print("🃏 Авто-ход (ПКМ) из: ", pile_name)
+			last_request_type = "move"
+			var body = JSON.new().stringify({"from": pile_name})
 			var headers = ["Content-Type: application/json"]
-			last_request_type = "draw"
-			http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
-			return
-
-		if not card_data["face_up"]:
-			return
-
-		print("🃏 Авто-ход из: ", pile_name)
+			http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
+	
+	# === Обработка отпускания ===
+	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if is_dragging:
+			print("🏁 Отпускание карты")
+			# Здесь будет логика сброса карты
+			_end_drag() 
+			
+func _end_drag():
+	if not is_dragging:
+		return
+	# Сбрасываем Z-index
+	for node in drag_nodes:
+		node.z_index = 0
+	# Очищаем метаданные (опционально, для порядка)
+	for node in drag_nodes:
+		if node.has_meta("drag_offset_from_head"):
+			node.remove_meta("drag_offset_from_head")
+	var target_pile = _get_pile_under_mouse()
+	# Считаем количество карт ===
+	var move_count = drag_nodes.size()
+	if target_pile != "" and target_pile != drag_source_pile:
+		print("📂 Перенос ", move_count, " карт в: ", target_pile)
 		last_request_type = "move"
-		var body = JSON.new().stringify({"from": pile_name})
+		var body = JSON.new().stringify({
+			"from": drag_source_pile,
+			"to": target_pile,
+			"count": move_count  # <--- ОТПРАВЛЯЕМ КОЛИЧЕСТВО
+		})
 		var headers = ["Content-Type: application/json"]
-		http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
+		http.request(Global.server_url + "/move", headers, HTTPClient.METHOD_POST, body)
+		
+		is_busy = true
+	else:
+		draw_game()
+	# Сброс переменных
+	is_dragging = false
+	drag_source_pile = ""
+	drag_card_data = null
+	dragged_card_node = null
+	drag_nodes.clear() # Очищаем список
+
+func _get_pile_under_mouse() -> String:
+	var mouse_pos = get_global_mouse_position()
+	
+	# Список всех стопок для проверки
+	var all_slots = []
+	
+	# 1. Foundations (дома)
+	for i in range(4):
+		var node = foundation_slots()[i]
+		all_slots.append({"name": "foundation_" + str(i), "node": node})
+	
+	# 2. Tableau (колонки)
+	for i in range(7):
+		var node = tableau_slots[i]
+		all_slots.append({"name": "tableau_" + str(i), "node": node})
+	
+	# 3. Waste (сброс)
+	all_slots.append({"name": "waste", "node": waste_slot})
+	
+	# Проверяем попадание
+	for slot_info in all_slots:
+		var node = slot_info["node"]
+		# Используем get_global_rect() для проверки попадания
+		var rect = node.get_global_rect()
+		
+		# ВАЖНО: Для Tableau расширим зону захвата вниз
+		if slot_info["name"].begins_with("tableau"):
+			rect.size.y = 800 # Условно на весь экран вниз
+		
+		if rect.has_point(mouse_pos):
+			return slot_info["name"]
+			
+	return ""

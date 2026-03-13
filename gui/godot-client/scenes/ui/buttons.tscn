@@ -53,3 +53,7 @@ text = "↩ Отмена (Ctrl+Z)"
 layout_mode = 2
 shortcut = SubResource("Shortcut_ryrav")
 text = "🏠 Меню (Esc)"
+
+[node name="ReplayButton" type="Button" parent="."]
+layout_mode = 2
+text = "Начать заново"

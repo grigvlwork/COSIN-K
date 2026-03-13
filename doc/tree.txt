@@ -6,6 +6,7 @@ COSIN-K/
 │   └── game_controller.py
 ├── doc
 │   ├── DB.txt
+│   ├── card_design.txt
 │   ├── planning.tsk
 │   ├── planning.tsk.delta
 │   ├── planning.txt
@@ -14,123 +15,149 @@ COSIN-K/
 │   ├── godot-client
 │   │   ├── assets
 │   │   │   ├── cards
-│   │   │   └── decks
-│   │   │       └── classic
-│   │   │           ├── 10_of_clubs.png
-│   │   │           ├── 10_of_clubs.png.import
-│   │   │           ├── 10_of_diamonds.png
-│   │   │           ├── 10_of_diamonds.png.import
-│   │   │           ├── 10_of_hearts.png
-│   │   │           ├── 10_of_hearts.png.import
-│   │   │           ├── 10_of_spades.png
-│   │   │           ├── 10_of_spades.png.import
-│   │   │           ├── 2_of_clubs.png
-│   │   │           ├── 2_of_clubs.png.import
-│   │   │           ├── 2_of_diamonds.png
-│   │   │           ├── 2_of_diamonds.png.import
-│   │   │           ├── 2_of_hearts.png
-│   │   │           ├── 2_of_hearts.png.import
-│   │   │           ├── 2_of_spades.png
-│   │   │           ├── 2_of_spades.png.import
-│   │   │           ├── 3_of_clubs.png
-│   │   │           ├── 3_of_clubs.png.import
-│   │   │           ├── 3_of_diamonds.png
-│   │   │           ├── 3_of_diamonds.png.import
-│   │   │           ├── 3_of_hearts.png
-│   │   │           ├── 3_of_hearts.png.import
-│   │   │           ├── 3_of_spades.png
-│   │   │           ├── 3_of_spades.png.import
-│   │   │           ├── 4_of_clubs.png
-│   │   │           ├── 4_of_clubs.png.import
-│   │   │           ├── 4_of_diamonds.png
-│   │   │           ├── 4_of_diamonds.png.import
-│   │   │           ├── 4_of_hearts.png
-│   │   │           ├── 4_of_hearts.png.import
-│   │   │           ├── 4_of_spades.png
-│   │   │           ├── 4_of_spades.png.import
-│   │   │           ├── 5_of_clubs.png
-│   │   │           ├── 5_of_clubs.png.import
-│   │   │           ├── 5_of_diamonds.png
-│   │   │           ├── 5_of_diamonds.png.import
-│   │   │           ├── 5_of_hearts.png
-│   │   │           ├── 5_of_hearts.png.import
-│   │   │           ├── 5_of_spades.png
-│   │   │           ├── 5_of_spades.png.import
-│   │   │           ├── 6_of_clubs.png
-│   │   │           ├── 6_of_clubs.png.import
-│   │   │           ├── 6_of_diamonds.png
-│   │   │           ├── 6_of_diamonds.png.import
-│   │   │           ├── 6_of_hearts.png
-│   │   │           ├── 6_of_hearts.png.import
-│   │   │           ├── 6_of_spades.png
-│   │   │           ├── 6_of_spades.png.import
-│   │   │           ├── 7_of_clubs.png
-│   │   │           ├── 7_of_clubs.png.import
-│   │   │           ├── 7_of_diamonds.png
-│   │   │           ├── 7_of_diamonds.png.import
-│   │   │           ├── 7_of_hearts.png
-│   │   │           ├── 7_of_hearts.png.import
-│   │   │           ├── 7_of_spades.png
-│   │   │           ├── 7_of_spades.png.import
-│   │   │           ├── 8_of_clubs.png
-│   │   │           ├── 8_of_clubs.png.import
-│   │   │           ├── 8_of_diamonds.png
-│   │   │           ├── 8_of_diamonds.png.import
-│   │   │           ├── 8_of_hearts.png
-│   │   │           ├── 8_of_hearts.png.import
-│   │   │           ├── 8_of_spades.png
-│   │   │           ├── 8_of_spades.png.import
-│   │   │           ├── 9_of_clubs.png
-│   │   │           ├── 9_of_clubs.png.import
-│   │   │           ├── 9_of_diamonds.png
-│   │   │           ├── 9_of_diamonds.png.import
-│   │   │           ├── 9_of_hearts.png
-│   │   │           ├── 9_of_hearts.png.import
-│   │   │           ├── 9_of_spades.png
-│   │   │           ├── 9_of_spades.png.import
-│   │   │           ├── ace_of_clubs.png
-│   │   │           ├── ace_of_clubs.png.import
-│   │   │           ├── ace_of_diamonds.png
-│   │   │           ├── ace_of_diamonds.png.import
-│   │   │           ├── ace_of_hearts.png
-│   │   │           ├── ace_of_hearts.png.import
-│   │   │           ├── ace_of_spades.png
-│   │   │           ├── ace_of_spades.png.import
-│   │   │           ├── back.png
-│   │   │           ├── back.png.import
-│   │   │           ├── black_joker.png
-│   │   │           ├── black_joker.png.import
-│   │   │           ├── jack_of_clubs.png
-│   │   │           ├── jack_of_clubs.png.import
-│   │   │           ├── jack_of_diamonds.png
-│   │   │           ├── jack_of_diamonds.png.import
-│   │   │           ├── jack_of_hearts.png
-│   │   │           ├── jack_of_hearts.png.import
-│   │   │           ├── jack_of_spades.png
-│   │   │           ├── jack_of_spades.png.import
-│   │   │           ├── king_of_clubs.png
-│   │   │           ├── king_of_clubs.png.import
-│   │   │           ├── king_of_diamonds.png
-│   │   │           ├── king_of_diamonds.png.import
-│   │   │           ├── king_of_hearts.png
-│   │   │           ├── king_of_hearts.png.import
-│   │   │           ├── king_of_spades.png
-│   │   │           ├── king_of_spades.png.import
-│   │   │           ├── queen_of_clubs.png
-│   │   │           ├── queen_of_clubs.png.import
-│   │   │           ├── queen_of_diamonds.png
-│   │   │           ├── queen_of_diamonds.png.import
-│   │   │           ├── queen_of_hearts.png
-│   │   │           ├── queen_of_hearts.png.import
-│   │   │           ├── queen_of_spades.png
-│   │   │           ├── queen_of_spades.png.import
-│   │   │           ├── red_joker.png
-│   │   │           └── red_joker.png.import
+│   │   │   ├── decks
+│   │   │   │   ├── classic
+│   │   │   │   │   ├── 10_of_clubs.png
+│   │   │   │   │   ├── 10_of_clubs.png.import
+│   │   │   │   │   ├── 10_of_diamonds.png
+│   │   │   │   │   ├── 10_of_diamonds.png.import
+│   │   │   │   │   ├── 10_of_hearts.png
+│   │   │   │   │   ├── 10_of_hearts.png.import
+│   │   │   │   │   ├── 10_of_spades.png
+│   │   │   │   │   ├── 10_of_spades.png.import
+│   │   │   │   │   ├── 2_of_clubs.png
+│   │   │   │   │   ├── 2_of_clubs.png.import
+│   │   │   │   │   ├── 2_of_diamonds.png
+│   │   │   │   │   ├── 2_of_diamonds.png.import
+│   │   │   │   │   ├── 2_of_hearts.png
+│   │   │   │   │   ├── 2_of_hearts.png.import
+│   │   │   │   │   ├── 2_of_spades.png
+│   │   │   │   │   ├── 2_of_spades.png.import
+│   │   │   │   │   ├── 3_of_clubs.png
+│   │   │   │   │   ├── 3_of_clubs.png.import
+│   │   │   │   │   ├── 3_of_diamonds.png
+│   │   │   │   │   ├── 3_of_diamonds.png.import
+│   │   │   │   │   ├── 3_of_hearts.png
+│   │   │   │   │   ├── 3_of_hearts.png.import
+│   │   │   │   │   ├── 3_of_spades.png
+│   │   │   │   │   ├── 3_of_spades.png.import
+│   │   │   │   │   ├── 4_of_clubs.png
+│   │   │   │   │   ├── 4_of_clubs.png.import
+│   │   │   │   │   ├── 4_of_diamonds.png
+│   │   │   │   │   ├── 4_of_diamonds.png.import
+│   │   │   │   │   ├── 4_of_hearts.png
+│   │   │   │   │   ├── 4_of_hearts.png.import
+│   │   │   │   │   ├── 4_of_spades.png
+│   │   │   │   │   ├── 4_of_spades.png.import
+│   │   │   │   │   ├── 5_of_clubs.png
+│   │   │   │   │   ├── 5_of_clubs.png.import
+│   │   │   │   │   ├── 5_of_diamonds.png
+│   │   │   │   │   ├── 5_of_diamonds.png.import
+│   │   │   │   │   ├── 5_of_hearts.png
+│   │   │   │   │   ├── 5_of_hearts.png.import
+│   │   │   │   │   ├── 5_of_spades.png
+│   │   │   │   │   ├── 5_of_spades.png.import
+│   │   │   │   │   ├── 6_of_clubs.png
+│   │   │   │   │   ├── 6_of_clubs.png.import
+│   │   │   │   │   ├── 6_of_diamonds.png
+│   │   │   │   │   ├── 6_of_diamonds.png.import
+│   │   │   │   │   ├── 6_of_hearts.png
+│   │   │   │   │   ├── 6_of_hearts.png.import
+│   │   │   │   │   ├── 6_of_spades.png
+│   │   │   │   │   ├── 6_of_spades.png.import
+│   │   │   │   │   ├── 7_of_clubs.png
+│   │   │   │   │   ├── 7_of_clubs.png.import
+│   │   │   │   │   ├── 7_of_diamonds.png
+│   │   │   │   │   ├── 7_of_diamonds.png.import
+│   │   │   │   │   ├── 7_of_hearts.png
+│   │   │   │   │   ├── 7_of_hearts.png.import
+│   │   │   │   │   ├── 7_of_spades.png
+│   │   │   │   │   ├── 7_of_spades.png.import
+│   │   │   │   │   ├── 8_of_clubs.png
+│   │   │   │   │   ├── 8_of_clubs.png.import
+│   │   │   │   │   ├── 8_of_diamonds.png
+│   │   │   │   │   ├── 8_of_diamonds.png.import
+│   │   │   │   │   ├── 8_of_hearts.png
+│   │   │   │   │   ├── 8_of_hearts.png.import
+│   │   │   │   │   ├── 8_of_spades.png
+│   │   │   │   │   ├── 8_of_spades.png.import
+│   │   │   │   │   ├── 9_of_clubs.png
+│   │   │   │   │   ├── 9_of_clubs.png.import
+│   │   │   │   │   ├── 9_of_diamonds.png
+│   │   │   │   │   ├── 9_of_diamonds.png.import
+│   │   │   │   │   ├── 9_of_hearts.png
+│   │   │   │   │   ├── 9_of_hearts.png.import
+│   │   │   │   │   ├── 9_of_spades.png
+│   │   │   │   │   ├── 9_of_spades.png.import
+│   │   │   │   │   ├── ace_of_clubs.png
+│   │   │   │   │   ├── ace_of_clubs.png.import
+│   │   │   │   │   ├── ace_of_diamonds.png
+│   │   │   │   │   ├── ace_of_diamonds.png.import
+│   │   │   │   │   ├── ace_of_hearts.png
+│   │   │   │   │   ├── ace_of_hearts.png.import
+│   │   │   │   │   ├── ace_of_spades.png
+│   │   │   │   │   ├── ace_of_spades.png.import
+│   │   │   │   │   ├── back.png
+│   │   │   │   │   ├── back.png.import
+│   │   │   │   │   ├── black_joker.png
+│   │   │   │   │   ├── black_joker.png.import
+│   │   │   │   │   ├── jack_of_clubs.png
+│   │   │   │   │   ├── jack_of_clubs.png.import
+│   │   │   │   │   ├── jack_of_diamonds.png
+│   │   │   │   │   ├── jack_of_diamonds.png.import
+│   │   │   │   │   ├── jack_of_hearts.png
+│   │   │   │   │   ├── jack_of_hearts.png.import
+│   │   │   │   │   ├── jack_of_spades.png
+│   │   │   │   │   ├── jack_of_spades.png.import
+│   │   │   │   │   ├── king_of_clubs.png
+│   │   │   │   │   ├── king_of_clubs.png.import
+│   │   │   │   │   ├── king_of_diamonds.png
+│   │   │   │   │   ├── king_of_diamonds.png.import
+│   │   │   │   │   ├── king_of_hearts.png
+│   │   │   │   │   ├── king_of_hearts.png.import
+│   │   │   │   │   ├── king_of_spades.png
+│   │   │   │   │   ├── king_of_spades.png.import
+│   │   │   │   │   ├── queen_of_clubs.png
+│   │   │   │   │   ├── queen_of_clubs.png.import
+│   │   │   │   │   ├── queen_of_diamonds.png
+│   │   │   │   │   ├── queen_of_diamonds.png.import
+│   │   │   │   │   ├── queen_of_hearts.png
+│   │   │   │   │   ├── queen_of_hearts.png.import
+│   │   │   │   │   ├── queen_of_spades.png
+│   │   │   │   │   ├── queen_of_spades.png.import
+│   │   │   │   │   ├── red_joker.png
+│   │   │   │   │   └── red_joker.png.import
+│   │   │   │   ├── petit_cavalier
+│   │   │   │   │   ├── petit_cavalier_playing_cards_by_kurosujun-d5ggwge.jpg
+│   │   │   │   │   └── petit_cavalier_playing_cards_by_kurosujun-d5ggwge.jpg.import
+│   │   │   │   ├── russ1
+│   │   │   │   │   ├── f1e3f2f044858cb633fe968f1ef660e9.jpg
+│   │   │   │   │   └── f1e3f2f044858cb633fe968f1ef660e9.jpg.import
+│   │   │   │   ├── russ2
+│   │   │   │   │   ├── 48bd66ee18203e993d7d895d0572e17c.jpg
+│   │   │   │   │   └── 48bd66ee18203e993d7d895d0572e17c.jpg.import
+│   │   │   │   └── russian_style
+│   │   │   │       ├── 600010345843b1.jpg
+│   │   │   │       ├── 600010345843b1.jpg.import
+│   │   │   │       ├── Russian_playing_card_deck_(face_cards)_Russian_style_1911_original.jpg
+│   │   │   │       ├── Russian_playing_card_deck_(face_cards)_Russian_style_1911_original.jpg.import
+│   │   │   │       ├── king-cards-1.jpg
+│   │   │   │       ├── king-cards-1.jpg.import
+│   │   │   │       ├── russian-1134-1.jpg
+│   │   │   │       ├── russian-1134-1.jpg.import
+│   │   │   │       ├── slavic-costumes.jpg
+│   │   │   │       └── slavic-costumes.jpg.import
+│   │   │   └── fonts
+│   │   │       ├── Preciosa.ttf
+│   │   │       ├── Preciosa.ttf.import
+│   │   │       ├── Romantica Antiqua.ttf
+│   │   │       └── Romantica Antiqua.ttf.import
 │   │   ├── debug_tree.gd
 │   │   ├── debug_tree.gd.uid
 │   │   ├── export_presets.cfg
 │   │   ├── icon.svg
 │   │   ├── icon.svg.import
+│   │   ├── main_theme.tres
 │   │   ├── project.godot
 │   │   └── scenes
 │   │       ├── PlayerStats.tscn
@@ -188,7 +215,6 @@ COSIN-K/
 │   │   └── stats_api.py
 │   ├── data
 │   │   ├── __init__.py
-│   │   ├── patience.db
 │   │   └── schema.py
 │   ├── database.py
 │   ├── events

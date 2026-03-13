@@ -1,0 +1,7 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://dbnjvx44qqhqs"]
+
+[ext_resource type="FontFile" uid="uid://c0awkk5pr8h8k" path="res://assets/fonts/Preciosa.ttf" id="1_470mv"]
+
+[resource]
+default_font = ExtResource("1_470mv")
+default_font_size = 24

@@ -3,15 +3,10 @@
 
 <tasks>
 <task actualstartdate="2026-02-27 08:55:16.924000" creationDateTime="2026-02-27 08:48:00.260000" expandedContexts="('taskviewer',)" id="58d8b440-137e-11f1-aefa-ce7a14ba6107" modificationDateTime="2026-03-05 13:16:51.958000" status="1" subject="Разработка пасьянса">
-<task creationDateTime="2026-02-27 09:04:08.363000" id="99e17fae-1380-11f1-a519-ce7a14ba6107" modificationDateTime="2026-02-27 09:04:50.521000" status="1" subject="Дальнее планирование">
-<task creationDateTime="2026-02-27 08:53:37.906000" id="2219651e-137f-11f1-829e-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:13.896000" status="1" subject="Базовая верстка">
+<task creationDateTime="2026-02-27 09:04:08.363000" id="99e17fae-1380-11f1-a519-ce7a14ba6107" modificationDateTime="2026-03-11 11:00:14.751000" status="1" subject="Дальнее планирование">
+<task creationDateTime="2026-02-27 08:53:37.906000" expandedContexts="('taskviewer',)" id="2219651e-137f-11f1-829e-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:13.896000" status="1" subject="Базовая верстка">
 <task actualstartdate="2026-02-27 08:55:10.964000" creationDateTime="2026-02-27 08:54:08.627000" id="34690c30-137f-11f1-9d8c-ce7a14ba6107" modificationDateTime="2026-02-27 08:55:10.964000" status="1" subject="Масштабирование под разные экраны" />
 <task actualstartdate="2026-02-27 08:55:06.787000" creationDateTime="2026-02-27 08:54:37.099000" id="456187b0-137f-11f1-8f80-ce7a14ba6107" modificationDateTime="2026-02-27 08:55:06.787000" status="1" subject="Цвета и стили" />
-</task>
-<task creationDateTime="2026-02-27 08:55:48.054000" id="6fac675e-137f-11f1-aaed-ce7a14ba6107" modificationDateTime="2026-02-27 09:05:16.980000" status="1" subject="Перемещение карт">
-<task actualstartdate="2026-02-27 08:56:26.784000" creationDateTime="2026-02-27 08:56:10.766000" id="7d35fae1-137f-11f1-b810-ce7a14ba6107" modificationDateTime="2026-02-27 08:56:26.783000" status="1" subject="Drag &amp; Drop карт" />
-<task actualstartdate="2026-02-27 08:56:46.351000" creationDateTime="2026-02-27 08:56:30.341000" id="88e0e351-137f-11f1-b008-ce7a14ba6107" modificationDateTime="2026-02-27 08:56:46.351000" status="1" subject="Визуальный &quot;полет&quot; карты" />
-<task actualstartdate="2026-02-27 08:57:02.039000" creationDateTime="2026-02-27 08:56:49.037000" id="9405abcf-137f-11f1-95f6-ce7a14ba6107" modificationDateTime="2026-02-27 08:57:02.039000" status="1" subject="Сброс при невозможности хода" />
 </task>
 <task creationDateTime="2026-02-27 08:57:21.534000" expandedContexts="('taskviewer',)" id="a76451de-137f-11f1-9471-ce7a14ba6107" modificationDateTime="2026-02-27 08:58:14.535000" prerequisites="99e17fae-1380-11f1-a519-ce7a14ba6107" status="1" subject="Контекстные действия">
 <task creationDateTime="2026-02-27 08:57:45.454000" id="b5a638de-137f-11f1-87f0-ce7a14ba6107" modificationDateTime="2026-02-27 08:57:50.343000" status="1" subject="Правый клик → авто-ход" />
@@ -28,11 +23,78 @@
 <task actualstartdate="2026-02-27 09:00:34.913000" creationDateTime="2026-02-27 09:00:30.184000" id="17d60680-1380-11f1-88e0-ce7a14ba6107" modificationDateTime="2026-02-27 09:00:34.912000" status="1" subject="Сброс прогресса" />
 </task>
 </task>
-<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-10 14:10:49.194000" status="1" subject="Ближнее планирование">
-<task actualstartdate="2026-03-10 14:11:07.987000" creationDateTime="2026-03-10 14:10:49.193000" id="442c9591-1c50-11f1-b4bf-ce7a14ba6107" modificationDateTime="2026-03-10 14:11:07.987000" status="1" subject="Сохранение сида в базе" />
-<task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-02-27 09:07:04.591000" status="1" subject="Учет достижений" />
+<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-13 09:25:39.362000" status="1" subject="Ближнее планирование">
+<task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" expandedContexts="('taskviewer',)" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-03-13 11:45:41.723000" status="1" subject="Учет достижений">
+<task actualstartdate="2026-03-13 11:43:51.170000" creationDateTime="2026-03-13 11:43:29.543000" id="2e924970-1e97-11f1-8aad-db6bae543b37" modificationDateTime="2026-03-13 11:43:51.170000" status="1" subject="БД">
+<description>
+Таблица achievements (Шаблоны достижений)
+Здесь хранятся "правила" игры. Заполняется один раз при установке.
+Поля: id (ключ), name, description, icon, category, target_value (сколько нужно, например, 10 побед), is_hidden (секретное ли), condition_type (тип проверки: счетчик, время, ходы).
+Таблица player_achievements (Прогресс игроков)
+Здесь хранится состояние каждого достижения для каждого игрока.
+Поля: id, player_id (ссылка на игрока), achievement_id (ссылка на шаблон), progress (текущий прогресс, например 3 из 10), unlocked (получено ли), unlocked_at (дата получения).
+
+</description>
 </task>
-<task creationDateTime="2026-03-05 13:16:51.956000" id="e690f95e-185a-11f1-8df2-ce7a14ba6107" modificationDateTime="2026-03-10 14:10:41.138000" status="1" subject="Готово">
+<task actualstartdate="2026-03-13 11:44:19.209000" creationDateTime="2026-03-13 11:44:05.941000" id="44442e4f-1e97-11f1-995b-db6bae543b37" modificationDateTime="2026-03-13 11:44:19.209000" status="1" subject="Модели данных">
+<description>
+Нужно добавить классы для работы с новыми таблицами.
+
+Класс Achievement: описывает одно достижение из шаблона.
+Класс PlayerAchievement: описывает состояние достижения (прогресс).
+</description>
+</task>
+<task actualstartdate="2026-03-13 11:44:43.788000" creationDateTime="2026-03-13 11:44:24.076000" id="4f135cc0-1e97-11f1-9971-db6bae543b37" modificationDateTime="2026-03-13 11:44:43.788000" status="1" subject="Репозитории">
+<description>
+Слой доступа к данным. Нам понадобятся методы:
+
+get_all_achievements(): Получить список всех возможных достижений.
+get_player_achievements(player_id): Получить список достижений игрока (с прогрессом).
+init_achievements(): Метод для первичного заполнения таблицы achievements (чтобы не вставлять SQL вручную).
+update_progress(player_id, achievement_id, new_progress): Обновить прогресс.
+</description>
+</task>
+<task actualstartdate="2026-03-13 11:45:10.692000" creationDateTime="2026-03-13 11:44:55.665000" id="61e7760f-1e97-11f1-adee-db6bae543b37" modificationDateTime="2026-03-13 11:45:10.691000" status="1" subject="Бизнес-логика">
+<description>
+Это самый важный этап. Нужно связать игру и достижения.
+
+Метод init_achievements_on_startup(): Вызывать при старте сервера, чтобы создать все достижения в БД, если их там нет.
+Метод check_and_update_achievements(player_id, game_result): Вызывать его в конце игры (в методе end_game).
+Логика:
+Получить все шаблоны достижений.
+Для каждого шаблона проверить условие:
+Для счетчиков (победы, игры): Брать значение из таблицы players (например, games_won) и сравнивать с target_value.
+Для разовых (скорость, ходы): Смотреть на данные конкретной партии (game_result).
+Если условие выполнено -&gt; обновить progress и выставить unlocked = True.
+Если достижение уже получено -&gt; пропускать.
+</description>
+</task>
+<task actualstartdate="2026-03-13 11:45:32.052000" creationDateTime="2026-03-13 11:45:18.674000" id="6f9e5b21-1e97-11f1-97de-db6bae543b37" modificationDateTime="2026-03-13 11:45:32.052000" status="1" subject="API">
+<description>
+Добавить точку входа для клиента.
+
+Метод get_achievements:
+Принимает player_id.
+Возвращает список достижений, где для скрытых (не полученных) достижений название и описание заменены на "???".
+</description>
+</task>
+<task actualstartdate="2026-03-13 11:45:53.845000" creationDateTime="2026-03-13 11:45:41.723000" id="7d5b5ab0-1e97-11f1-ae50-db6bae543b37" modificationDateTime="2026-03-13 11:45:53.844000" status="1" subject="Клиент Godot ">
+<description>
+Финальная визуализация.
+
+Изменить структуру вкладки достижений (добавить ScrollContainer и VBoxContainer, как обсуждали).
+Написать функцию создания карточки (_create_achievement_card), которая показывает прогресс-бар и иконку.
+</description>
+</task>
+</task>
+</task>
+<task creationDateTime="2026-03-05 13:16:51.956000" id="e690f95e-185a-11f1-8df2-ce7a14ba6107" modificationDateTime="2026-03-13 09:25:39.362000" status="1" subject="Готово">
+<task actualstartdate="2026-03-10 14:11:07.987000" completiondate="2026-03-11 10:58:46.700000" creationDateTime="2026-03-10 14:10:49.193000" id="442c9591-1c50-11f1-b4bf-ce7a14ba6107" modificationDateTime="2026-03-11 10:58:46.700000" percentageComplete="100" status="1" subject="Сохранение сида в базе" />
+<task completiondate="2026-03-13 09:25:36.183000" creationDateTime="2026-02-27 08:55:48.054000" expandedContexts="('taskviewer',)" id="6fac675e-137f-11f1-aaed-ce7a14ba6107" modificationDateTime="2026-03-13 09:25:36.182000" percentageComplete="100" status="1" subject="Перемещение карт">
+<task actualstartdate="2026-02-27 08:56:26.784000" completiondate="2026-03-13 09:25:36.183000" creationDateTime="2026-02-27 08:56:10.766000" id="7d35fae1-137f-11f1-b810-ce7a14ba6107" modificationDateTime="2026-02-27 08:56:26.783000" percentageComplete="100" status="1" subject="Drag &amp; Drop карт" />
+<task actualstartdate="2026-02-27 08:56:46.351000" completiondate="2026-03-13 09:25:36.183000" creationDateTime="2026-02-27 08:56:30.341000" id="88e0e351-137f-11f1-b008-ce7a14ba6107" modificationDateTime="2026-02-27 08:56:46.351000" percentageComplete="100" status="1" subject="Визуальный &quot;полет&quot; карты" />
+<task actualstartdate="2026-02-27 08:57:02.039000" completiondate="2026-03-13 09:25:36.183000" creationDateTime="2026-02-27 08:56:49.037000" id="9405abcf-137f-11f1-95f6-ce7a14ba6107" modificationDateTime="2026-02-27 08:57:02.039000" percentageComplete="100" status="1" subject="Сброс при невозможности хода" />
+</task>
 <task actualstartdate="2026-03-05 10:30:04.214000" completiondate="2026-03-05 10:53:00.276000" creationDateTime="2026-03-05 10:29:43.526000" id="8d27b061-1843-11f1-863f-ce7a14ba6107" modificationDateTime="2026-03-05 10:53:00.275000" percentageComplete="100" status="1" subject="Модель данных (Сериализация)">
 <description>
 card.py: Добавить методы to_dict / from_dict.

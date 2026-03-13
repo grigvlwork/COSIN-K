@@ -31,6 +31,16 @@ class Player:
     total_score: int = 0
     highest_score: int = 0
 
+    # Счетчики карт
+    total_cards_moved: int = 0
+    total_cards_flipped: int = 0
+
+    # Собранные масти
+    completed_spades: int = 0
+    completed_hearts: int = 0
+    completed_diamonds: int = 0
+    completed_clubs: int = 0
+
     # Время
     total_play_time_seconds: int = 0
     fastest_win_seconds: Optional[int] = None
@@ -249,3 +259,77 @@ class PlayerStats:
             return None
         from collections import Counter
         return Counter(suits).most_common(1)[0][0]
+
+
+@dataclass
+class Achievement:
+    """Модель достижения (шаблон)."""
+    id: str
+    name: str
+    description: str
+    icon: str = "star"
+    category: str = "general"
+    target: int = 1
+    condition_type: str = ""  # 'wins', 'time_lt', 'moves_lt', 'suits', 'streak'
+    is_hidden: bool = False
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Achievement':
+        return cls(
+            id=data['id'],
+            name=data['name'],
+            description=data['description'],
+            icon=data.get('icon', 'star'),
+            category=data.get('category', 'general'),
+            target=data.get('target', 1),
+            condition_type=data.get('condition_type', ''),
+            is_hidden=bool(data.get('is_hidden', 0))
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'category': self.category,
+            'target': self.target,
+            'condition_type': self.condition_type,
+            'is_hidden': self.is_hidden
+        }
+
+
+@dataclass
+class PlayerAchievement:
+    """Модель прогресса достижения игрока."""
+    id: Optional[int]
+    player_id: str
+    achievement_id: str
+    progress: int = 0
+    unlocked: bool = False
+    unlocked_at: Optional[datetime] = None
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'PlayerAchievement':
+        unlocked_at = data.get('unlocked_at')
+        if isinstance(unlocked_at, str):
+            unlocked_at = datetime.fromisoformat(unlocked_at)
+
+        return cls(
+            id=data.get('id'),
+            player_id=data['player_id'],
+            achievement_id=data['achievement_id'],
+            progress=data.get('progress', 0),
+            unlocked=bool(data.get('unlocked', 0)),
+            unlocked_at=unlocked_at
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'player_id': self.player_id,
+            'achievement_id': self.achievement_id,
+            'progress': self.progress,
+            'unlocked': self.unlocked,
+            'unlocked_at': self.unlocked_at.isoformat() if self.unlocked_at else None
+        }

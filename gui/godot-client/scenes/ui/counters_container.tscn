@@ -23,3 +23,7 @@ text = "Ходы: 0"
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Время: 00:00"
+
+[node name="SeedLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Сид: 0"

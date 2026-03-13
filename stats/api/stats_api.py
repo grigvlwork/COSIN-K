@@ -122,13 +122,17 @@ class StatsAPI:
         session = self._active_games.pop(game_id, {})
         total_moves = moves or session.get('moves', 0)
 
-        # Завершаем игру через сервис
-        success = self.stats.end_game(
+        # Завершаем игру через сервис (теперь он возвращает словарь)
+        end_result = self.stats.end_game(
             game_id=game_id,
             result=result,
             score=score,
             suits_completed=suits_completed
         )
+
+        success = end_result.get('success', False)
+        is_first_win = end_result.get('is_first_win', False)
+        unlocked_ids = end_result.get('unlocked_achievements', []) # Получаем новые достижения
 
         if success:
             player_id = session.get('player_id')
@@ -141,6 +145,8 @@ class StatsAPI:
                         'result': result,
                         'score': score,
                         'moves': total_moves,
+                        'is_first_win': is_first_win,
+                        'unlocked_achievements': unlocked_ids, # Передаем клиенту
                         'player_stats': {
                             'games_won': stats.player.games_won,
                             'games_played': stats.player.games_started,
@@ -149,7 +155,14 @@ class StatsAPI:
                             'best_streak': stats.player.best_win_streak
                         }
                     }
-            return {'success': True, 'game_completed': True, 'result': result, 'score': score}
+            return {
+                'success': True,
+                'game_completed': True,
+                'result': result,
+                'score': score,
+                'is_first_win': is_first_win,
+                'unlocked_achievements': unlocked_ids
+            }
 
         return {'success': False, 'error': 'Не удалось завершить игру'}
 
@@ -260,6 +273,59 @@ class StatsAPI:
             'date': g.ended_at.isoformat() if g.ended_at else None
         } for g in games]
 
+    # ===== ДОСТИЖЕНИЯ =====
+
+    def get_achievements(self, player_id: str) -> Dict[str, Any]:
+        """
+        Получить список достижений игрока.
+        Скрывает название/описание для секретных (не полученных) достижений.
+        """
+        # Получаем все шаблоны
+        all_achievements = self.stats.achievement_repo.get_all()
+        # Получаем прогресс игрока
+        player_progress = self.stats.player_achievement_repo.get_by_player(player_id)
+
+        # Превращаем прогресс в словарь {ach_id: PlayerAchievement} для быстрого поиска
+        progress_map = {pa.achievement_id: pa for pa in player_progress}
+
+        result_list = []
+        for ach in all_achievements:
+            pa = progress_map.get(ach.id)
+            is_unlocked = pa.unlocked if pa else False
+
+            item = {
+                'id': ach.id,
+                'icon': ach.icon,
+                'category': ach.category,
+                'unlocked': is_unlocked,
+                'progress': pa.progress if pa else 0,
+                'target': ach.target
+            }
+
+            # Если получено или НЕ скрытое — показываем данные
+            if is_unlocked or not ach.is_hidden:
+                item['name'] = ach.name
+                item['description'] = ach.description
+            else:
+                # Иначе скрываем
+                item['name'] = "???"
+                item['description'] = "Секретное достижение"
+
+            # Дата получения
+            if is_unlocked and pa.unlocked_at:
+                item['unlocked_at'] = pa.unlocked_at.isoformat()
+            else:
+                item['unlocked_at'] = None
+
+            result_list.append(item)
+
+        return {
+            'success': True,
+            'achievements': result_list,
+            'total_count': len(all_achievements),
+            'unlocked_count': sum(1 for x in result_list if x['unlocked'])
+        }
+
     # ===== АДМИНИСТРИРОВАНИЕ =====
 
     def delete_autosave(self, player_id: str, game_type: str) -> Dict[str, Any]:
@@ -272,3 +338,4 @@ class StatsAPI:
                 return {'success': True}
             return {'success': False, 'error': 'Failed to delete save'}
         return {'success': True}
+
