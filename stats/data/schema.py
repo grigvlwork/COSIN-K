@@ -40,6 +40,16 @@ def create_tables(conn: sqlite3.Connection) -> None:
             -- Очки
             total_score INTEGER DEFAULT 0,
             highest_score INTEGER DEFAULT 0,
+            
+            -- Карты
+            total_cards_moved INTEGER DEFAULT 0,
+            total_cards_flipped INTEGER DEFAULT 0,
+            
+            -- Масти            
+            completed_spades INTEGER DEFAULT 0,
+            completed_hearts INTEGER DEFAULT 0,
+            completed_diamonds INTEGER DEFAULT 0,
+            completed_clubs INTEGER DEFAULT 0,
 
             -- Время
             total_play_time_seconds INTEGER DEFAULT 0,
@@ -122,6 +132,46 @@ def create_tables(conn: sqlite3.Connection) -> None:
                 ON CONFLICT REPLACE
         )
     """)
+
+    # Таблица достижений (Шаблоны)
+    cursor.execute("""
+            CREATE TABLE IF NOT EXISTS achievements (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                icon TEXT DEFAULT 'star',
+                category TEXT DEFAULT 'general',
+                target INTEGER DEFAULT 1,
+                condition_type TEXT,  -- Тип условия: 'wins', 'time', 'moves', 'suits'
+                is_hidden BOOLEAN DEFAULT 0
+            )
+        """)
+
+    # Таблица прогресса игроков по достижениям
+    cursor.execute("""
+            CREATE TABLE IF NOT EXISTS player_achievements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+                achievement_id TEXT NOT NULL REFERENCES achievements(id) ON DELETE CASCADE,
+                progress INTEGER DEFAULT 0,
+                unlocked BOOLEAN DEFAULT 0,
+                unlocked_at TIMESTAMP,
+
+                -- Один игрок не может иметь две записи об одном достижении
+                UNIQUE(player_id, achievement_id)
+            )
+        """)
+
+    # Индексы для таблицы player_achievements
+    cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_achievements_player 
+            ON player_achievements(player_id)
+        """)
+
+    cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_achievements_unlocked 
+            ON player_achievements(player_id, unlocked)
+        """)
 
     # Индексы для таблицы games
     cursor.execute("""

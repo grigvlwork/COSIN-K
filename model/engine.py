@@ -28,6 +28,8 @@ class SolitaireEngine:
         self._state: Optional[GameState] = None
         self.history = HistoryManager(limit=5000)
         self._listeners: List[Callable[[str, Dict[str, Any]], None]] = []
+        self.cards_moved_count = 0  # Счетчик перемещенных карт
+        self.cards_flipped_count = 0 # Счетчик перевернутых карт
 
     # === Свойства ===
 
@@ -69,7 +71,11 @@ class SolitaireEngine:
         self.history.clear()
         self.history.push(self._state.copy(), move=None)
 
-        # 6. Уведомляем
+        # 6. Сбрасываем счетчик карт
+        self.cards_moved_count = 0  # Сброс при новой игре
+        self.cards_flipped_count = 0
+
+        # 7. Уведомляем
         self._notify("game_started", {"seed": seed})
 
     def restore_state(self, state_dict: Dict[str, Any]) -> bool:
@@ -90,7 +96,11 @@ class SolitaireEngine:
             self.history.clear()
             self.history.push(self._state.copy(), move=None)
 
-            # 3. Уведомляем подписчиков
+            # 3. Сбрасываем счетчик карт для текущей сессии
+            self.cards_moved_count = 0
+            self.cards_flipped_count = 0
+
+            # 4. Уведомляем подписчиков
             self._notify("game_restored", {
                 "moves": self._state.moves_count,
                 "score": self._state.score
@@ -148,6 +158,7 @@ class SolitaireEngine:
         cards = [card.make_face_up() for card in cards]
         new_state.waste.add(cards)
         new_state.moves_count += 1
+        self.cards_flipped_count += actual_count
 
         # Создаём Move
         move = Move(
@@ -250,9 +261,14 @@ class SolitaireEngine:
         # Добавляем в целевую стопку
         target.add(cards)
 
+        # Увеличиваем общий счетчик карт ===
+        self.cards_moved_count += count
+
         # ПОЛУЧАЕМ ПЕРЕВЕРНУТЫЕ КАРТЫ
         flipped_cards = self.rules.get_flipped_cards(previous_state,
                                                      Move(from_pile, to_pile, cards, from_index))
+        # === Считаем перевороты при открытии карт ===
+        self.cards_flipped_count += len(flipped_cards)
 
         # Применяем переворачивание
         for pile_name, card_index in flipped_cards:

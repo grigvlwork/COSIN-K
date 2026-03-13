@@ -9,6 +9,8 @@ from stats.models import Player, Game, SavedGame, PlayerStats
 from stats.repositories.player_repository import PlayerRepository
 from stats.repositories.game_repository import GameRepository
 from stats.repositories.saved_game_repository import SavedGameRepository
+from stats.repositories.achievement_repository import AchievementRepository, PlayerAchievementRepository
+from stats.models import Achievement
 from stats.data import get_db_path
 
 
@@ -23,6 +25,8 @@ class StatsService:
         self.player_repo = PlayerRepository(db_path)
         self.game_repo = GameRepository(db_path)
         self.saved_game_repo = SavedGameRepository(db_path)
+        self.achievement_repo = AchievementRepository(db_path)
+        self.player_achievement_repo = PlayerAchievementRepository(db_path)
 
         # Кэш для текущих игр (активные сессии)
         self._active_games: Dict[int, Dict[str, Any]] = {}
@@ -70,9 +74,92 @@ class StatsService:
 
         return game_id
 
+    def init_achievements_on_startup(self):
+        """Создает достижения в БД, если их нет."""
+        default_achievements = [
+            # --- Прогресс ---
+            Achievement(id="first_win", name="Первая кровь", description="Выиграть первую игру", category="progress",
+                        condition_type="wins", target=1),
+            Achievement(id="ten_wins", name="Новичок", description="Выиграть 10 игр", category="progress",
+                        condition_type="wins", target=10),
+            Achievement(id="hundred_wins", name="Ветеран", description="Выиграть 100 игр", category="progress",
+                        condition_type="wins", target=100),
+            Achievement(id="immortal", name="Бессмертный", description="Выиграть 1000 игр", category="progress",
+                        condition_type="wins", target=1000),
+
+            # --- Ходы (Карты) ---
+            Achievement(id="cards_100", name="Первые шаги", description="Переместить 100 карт", category="cards",
+                        condition_type="cards_moved", target=100),
+            Achievement(id="cards_1000", name="Тысяча перемещений", description="Переместить 1 000 карт",
+                        category="cards", condition_type="cards_moved", target=1000),
+            Achievement(id="cards_10000", name="Карточный магнат", description="Переместить 10 000 карт",
+                        category="cards", condition_type="cards_moved", target=10000),
+            Achievement(id="cards_100000", name="Карточный король", description="Переместить 100 000 карт",
+                        category="cards", condition_type="cards_moved", target=100000),
+            Achievement(id="cards_million", name="Миллионер", description="Переместить 1 000 000 карт",
+                        category="cards", condition_type="cards_moved", target=1000000),
+
+            # --- Масти (Suits) ---
+
+            # ♠️ Пики
+            Achievement(id="spades_10", name="Гроза Пик", description="Собрать 10 мастей Пик", category="suits",
+                        condition_type="completed_spades", target=10),
+            Achievement(id="spades_100", name="Владыка Тьмы", description="Собрать 100 мастей Пик", category="suits",
+                        condition_type="completed_spades", target=100),
+            Achievement(id="spades_1000", name="Император Пик", description="Собрать 1000 мастей Пик", category="suits",
+                        condition_type="completed_spades", target=1000),
+            Achievement(id="spades_5000", name="Легенда Пик", description="Собрать 5000 мастей Пик", category="suits",
+                        condition_type="completed_spades", target=5000),
+
+            # ♥️ Черви
+            Achievement(id="hearts_10", name="Сердцеед", description="Собрать 10 мастей Черви", category="suits",
+                        condition_type="completed_hearts", target=10),
+            Achievement(id="hearts_100", name="Король Сердец", description="Собрать 100 мастей Черви", category="suits",
+                        condition_type="completed_hearts", target=100),
+            Achievement(id="hearts_1000", name="Повелитель Любви", description="Собрать 1000 мастей Черви",
+                        category="suits", condition_type="completed_hearts", target=1000),
+            Achievement(id="hearts_5000", name="Легенда Черви", description="Собрать 5000 мастей Черви",
+                        category="suits", condition_type="completed_hearts", target=5000),
+
+            # ♦️ Бубны
+            Achievement(id="diamonds_10", name="Искатель Кладов", description="Собрать 10 мастей Бубны",
+                        category="suits", condition_type="completed_diamonds", target=10),
+            Achievement(id="diamonds_100", name="Золотой Магнат", description="Собрать 100 мастей Бубны",
+                        category="suits", condition_type="completed_diamonds", target=100),
+            Achievement(id="diamonds_1000", name="Алмазный Барон", description="Собрать 1000 мастей Бубны",
+                        category="suits", condition_type="completed_diamonds", target=1000),
+            Achievement(id="diamonds_5000", name="Легенда Бубны", description="Собрать 5000 мастей Бубны",
+                        category="suits", condition_type="completed_diamonds", target=5000),
+
+            # ♣️ Трефы
+            Achievement(id="clubs_10", name="Хранитель Леса", description="Собрать 10 мастей Трефы", category="suits",
+                        condition_type="completed_clubs", target=10),
+            Achievement(id="clubs_100", name="Повелитель Треф", description="Собрать 100 мастей Трефы",
+                        category="suits", condition_type="completed_clubs", target=100),
+            Achievement(id="clubs_1000", name="Властелин Жезлов", description="Собрать 1000 мастей Трефы",
+                        category="suits", condition_type="completed_clubs", target=1000),
+            Achievement(id="clubs_5000", name="Легенда Трефы", description="Собрать 5000 мастей Трефы",
+                        category="suits", condition_type="completed_clubs", target=5000),
+
+            # --- Мастерство ---
+            Achievement(id="speed_demon", name="Молния", description="Выиграть партию менее чем за 2 минуты",
+                        category="skill", condition_type="time_lt", target=120, is_hidden=True),
+            Achievement(id="perfect_game", name="Идеально",
+                        description="Выиграть без использования подсказок и отмены ходов", category="skill",
+                        condition_type="perfect", target=1),
+            Achievement(id="streak_5", name="На кураже", description="Выиграть 5 игр подряд", category="streak",
+                        condition_type="streak", target=5),
+        ]
+
+        for ach in default_achievements:
+            if not self.achievement_repo.get(ach.id):
+                self.achievement_repo.create(ach)
+                # print(f"🏆 Достижение создано: {ach.name}")
+
     def end_game(self, game_id: int, result: str,
                  score: int = 0, game_state: Optional[Dict] = None,
-                 suits_completed: Optional[List[str]] = None) -> Dict[str, Any]:
+                 suits_completed: Optional[List[str]] = None,
+                 cards_moved: int = 0) -> Dict[str, Any]:
         """
         Завершить игру и записать статистику.
 
@@ -152,12 +239,16 @@ class StatsService:
 
         # Обновляем запись в БД (ВСЕГДА сохраняем попытку)
         success = self.game_repo.update(game_id, game.to_dict())
-
         if success:
             # Обновляем статистику игрока с учетом флага первой победы
             self._update_player_stats(player_id, result, score, duration, is_first_win)
-
-        return {'success': success, 'is_first_win': is_first_win}
+            newly_unlocked = self.check_and_update_achievements(player_id, game)
+            return {
+                'success': True,
+                'is_first_win': is_first_win,
+                'unlocked_achievements': newly_unlocked  # Возвращаем список новых достижений
+            }
+        return {'success': False}
 
     def _update_player_stats(self, player_id: str, result: str,
                              score: int, duration: int, is_first_win: bool = False):
@@ -191,6 +282,65 @@ class StatsService:
             for key, value in kwargs.items():
                 if key in self._active_games[game_id]:
                     self._active_games[game_id][key] = value
+
+    # Метод проверки достижений:
+    def check_and_update_achievements(self, player_id: str, game_result: Game) -> List[Dict]:
+        """
+        Проверяет условия достижений и обновляет прогресс.
+        Возвращает список только что разблокированных достижений.
+        """
+        all_achievements = self.achievement_repo.get_all()
+        player = self.player_repo.get(player_id)
+        newly_unlocked = []
+
+        if not player:
+            return []
+
+        for ach in all_achievements:
+            # Пропускаем уже полученные
+            pa = self.player_achievement_repo.get_player_achievement(player_id, ach.id)
+            if pa and pa.unlocked:
+                continue
+
+            # Логика проверки условий
+            current_progress = 0
+            condition_met = False
+
+            # 1. Счетчики (победы, серии)
+            if ach.condition_type == 'wins':
+                current_progress = player.games_won
+                condition_met = current_progress >= ach.target
+
+            elif ach.condition_type == 'streak':
+                current_progress = player.current_win_streak
+                condition_met = current_progress >= ach.target
+
+            # 2. Разовые (время,完美 игра)
+            elif ach.condition_type == 'time_lt':
+                if game_result.result == 'won' and game_result.duration_seconds:
+                    current_progress = game_result.duration_seconds
+                    condition_met = game_result.duration_seconds < ach.target
+                    # Для времени прогресс не накапливается, либо фиксируем лучший результат
+                    if condition_met:
+                        current_progress = ach.target  # Чтобы показать "выполнено"
+
+            elif ach.condition_type == 'perfect':
+                if game_result.result == 'won' and game_result.was_perfect:
+                    condition_met = True
+                    current_progress = 1
+
+            # Обновляем прогресс
+            unlocked_now = False
+            if condition_met and not (pa and pa.unlocked):
+                self.player_achievement_repo.update_progress(player_id, ach.id, ach.target, True)
+                newly_unlocked.append(ach.to_dict())
+                unlocked_now = True
+                print(f"🏆 Достижение получено: {ach.name}")
+            elif pa and pa.progress < current_progress and not pa.unlocked:
+                # Обновляем прогресс для счетчиков, если еще не получено
+                self.player_achievement_repo.update_progress(player_id, ach.id, current_progress, False)
+
+        return newly_unlocked
 
     # ===== Работа с сохранёнными играми =====
 
@@ -306,37 +456,6 @@ class StatsService:
             'fastest_win': self._format_time(player.fastest_win_seconds),
             'slowest_win': self._format_time(player.slowest_win_seconds)
         }
-    # ===== Достижения =====
-
-    def check_achievements(self, player_id: str, game_result: Game) -> List[str]:
-        """Проверить, получены ли новые достижения."""
-        achievements = []
-        player = self.player_repo.get(player_id)
-
-        if not player:
-            return achievements
-
-        if player.games_won == 1 and game_result.result == 'won':
-            achievements.append("first_win")
-
-        if player.games_won == 10:
-            achievements.append("ten_wins")
-
-        if player.games_won == 100:
-            achievements.append("hundred_wins")
-
-        if game_result.was_perfect:
-            achievements.append("perfect_game")
-
-        if len(game_result.suits_completed) == 4:
-            achievements.append("all_suits")
-
-        if (game_result.result == 'won' and
-                game_result.duration_seconds and
-                game_result.duration_seconds < 120):
-            achievements.append("speed_demon")
-
-        return achievements
 
     # ===== Вспомогательные методы =====
 

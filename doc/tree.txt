@@ -14,6 +14,7 @@ COSIN-K/
 ├── gui
 │   ├── godot-client
 │   │   ├── assets
+│   │   │   ├── cards
 │   │   │   ├── decks
 │   │   │   │   ├── classic
 │   │   │   │   │   ├── 10_of_clubs.png
@@ -126,20 +127,37 @@ COSIN-K/
 │   │   │   │   │   ├── queen_of_spades.png.import
 │   │   │   │   │   ├── red_joker.png
 │   │   │   │   │   └── red_joker.png.import
+│   │   │   │   ├── petit_cavalier
+│   │   │   │   │   ├── petit_cavalier_playing_cards_by_kurosujun-d5ggwge.jpg
+│   │   │   │   │   └── petit_cavalier_playing_cards_by_kurosujun-d5ggwge.jpg.import
 │   │   │   │   ├── russ1
 │   │   │   │   │   ├── f1e3f2f044858cb633fe968f1ef660e9.jpg
 │   │   │   │   │   └── f1e3f2f044858cb633fe968f1ef660e9.jpg.import
-│   │   │   │   └── russ2
-│   │   │   │       ├── 48bd66ee18203e993d7d895d0572e17c.jpg
-│   │   │   │       └── 48bd66ee18203e993d7d895d0572e17c.jpg.import
+│   │   │   │   ├── russ2
+│   │   │   │   │   ├── 48bd66ee18203e993d7d895d0572e17c.jpg
+│   │   │   │   │   └── 48bd66ee18203e993d7d895d0572e17c.jpg.import
+│   │   │   │   └── russian_style
+│   │   │   │       ├── 600010345843b1.jpg
+│   │   │   │       ├── 600010345843b1.jpg.import
+│   │   │   │       ├── Russian_playing_card_deck_(face_cards)_Russian_style_1911_original.jpg
+│   │   │   │       ├── Russian_playing_card_deck_(face_cards)_Russian_style_1911_original.jpg.import
+│   │   │   │       ├── king-cards-1.jpg
+│   │   │   │       ├── king-cards-1.jpg.import
+│   │   │   │       ├── russian-1134-1.jpg
+│   │   │   │       ├── russian-1134-1.jpg.import
+│   │   │   │       ├── slavic-costumes.jpg
+│   │   │   │       └── slavic-costumes.jpg.import
 │   │   │   └── fonts
-│   │   │       └── Romantica Antiqua.ttf
+│   │   │       ├── Preciosa.ttf
+│   │   │       ├── Preciosa.ttf.import
+│   │   │       ├── Romantica Antiqua.ttf
+│   │   │       └── Romantica Antiqua.ttf.import
 │   │   ├── debug_tree.gd
 │   │   ├── debug_tree.gd.uid
-│   │   ├── export
 │   │   ├── export_presets.cfg
 │   │   ├── icon.svg
 │   │   ├── icon.svg.import
+│   │   ├── main_theme.tres
 │   │   ├── project.godot
 │   │   └── scenes
 │   │       ├── PlayerStats.tscn
@@ -154,7 +172,8 @@ COSIN-K/
 │   │       ├── games
 │   │       │   ├── klondike.gd
 │   │       │   ├── klondike.gd.uid
-│   │       │   └── klondike.tscn
+│   │       │   ├── klondike.tscn
+│   │       │   └── klondike.tscn5197690571.tmp
 │   │       ├── global.gd
 │   │       ├── global.gd.uid
 │   │       ├── menu.gd
@@ -196,7 +215,6 @@ COSIN-K/
 │   │   └── stats_api.py
 │   ├── data
 │   │   ├── __init__.py
-│   │   ├── patience.db
 │   │   └── schema.py
 │   ├── database.py
 │   ├── events
@@ -213,6 +231,7 @@ COSIN-K/
 │       ├── __init__.py
 │       ├── player_identity.py
 │       └── stats_service.py
+├── stats_data
 └── view
     ├── __init__.py
     ├── base.py
