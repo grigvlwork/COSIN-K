@@ -230,6 +230,16 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             self._send_response(stats)
             return
 
+        if parsed.path == '/player/achievements':
+            player_id = query.get('player_id', [None])[0]
+            if not player_id:
+                self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
+                return
+            # Вызываем метод API, который мы видели в stats_api.py
+            achievements_data = self.stats_api.get_achievements(player_id)
+            self._send_response(achievements_data)
+            return
+
         if parsed.path == '/leaderboard':
             criterion = query.get('by', ['games_won'])[0]
             limit = int(query.get('limit', [10])[0])

@@ -144,8 +144,12 @@ visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="AchievementsList" type="ItemList" parent="MainContainer/StatsTabs/AchievementsTab"]
+[node name="AchievmentsScroll" type="ScrollContainer" parent="MainContainer/StatsTabs/AchievementsTab"]
 layout_mode = 2
+
+[node name="AchievementsContainer" type="VBoxContainer" parent="MainContainer/StatsTabs/AchievementsTab/AchievmentsScroll"]
+layout_mode = 2
+theme_override_constants/separation = 10
 
 [node name="FooterPanel" type="HBoxContainer" parent="MainContainer"]
 layout_mode = 2

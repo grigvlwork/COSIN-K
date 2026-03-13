@@ -114,7 +114,10 @@ class StatsAPI:
     def end_game(self, game_id: int, result: str, score: int = 0,
                  moves: int = 0, game_type: str = "klondike",
                  suits_completed: Optional[List[str]] = None,
-                 was_perfect: bool = False) -> Dict[str, Any]:
+                 was_perfect: bool = False,
+                 cards_moved: int = 0,      # <--- ДОБАВЛЕНО
+                 cards_flipped: int = 0     # <--- ДОБАВЛЕНО
+                 ) -> Dict[str, Any]:
 
         print(f"\n=== StatsAPI.end_game ===")
         print(f"  game_id: {game_id}, result: {result}")
@@ -122,17 +125,20 @@ class StatsAPI:
         session = self._active_games.pop(game_id, {})
         total_moves = moves or session.get('moves', 0)
 
-        # Завершаем игру через сервис (теперь он возвращает словарь)
+        # Завершаем игру через сервис
         end_result = self.stats.end_game(
             game_id=game_id,
             result=result,
             score=score,
-            suits_completed=suits_completed
+            suits_completed=suits_completed,
+            cards_moved=cards_moved,
+            cards_flipped=cards_flipped,
+            was_perfect=was_perfect
         )
 
         success = end_result.get('success', False)
         is_first_win = end_result.get('is_first_win', False)
-        unlocked_ids = end_result.get('unlocked_achievements', []) # Получаем новые достижения
+        unlocked_ids = end_result.get('unlocked_achievements', [])
 
         if success:
             player_id = session.get('player_id')
@@ -146,7 +152,7 @@ class StatsAPI:
                         'score': score,
                         'moves': total_moves,
                         'is_first_win': is_first_win,
-                        'unlocked_achievements': unlocked_ids, # Передаем клиенту
+                        'unlocked_achievements': unlocked_ids,
                         'player_stats': {
                             'games_won': stats.player.games_won,
                             'games_played': stats.player.games_started,
@@ -197,7 +203,7 @@ class StatsAPI:
             player_id=player_id,
             game_type=game_type,
             game_state=game_state,
-            seed=seed,  # Передаем сид
+            seed=seed,
             save_type=save_type,
             description=description,
             score=score,
@@ -218,7 +224,7 @@ class StatsAPI:
                 'game_id': saved.id,
                 'game_type': saved.game_type,
                 'game_state': saved.game_state,
-                'seed': saved.seed,  # Возвращаем сид
+                'seed': saved.seed,
                 'moves': saved.moves_count,
                 'time': saved.time_played_seconds,
                 'score': saved.score,
@@ -234,7 +240,7 @@ class StatsAPI:
             'id': s.id,
             'game_type': s.game_type,
             'save_type': s.save_type,
-            'seed': s.seed,  # Возвращаем сид
+            'seed': s.seed,
             'moves': s.moves_count,
             'time': s.time_played_seconds,
             'score': s.score,
@@ -266,7 +272,7 @@ class StatsAPI:
             'id': g.id,
             'game_type': g.game_type,
             'result': g.result,
-            'seed': g.seed,  # Возвращаем сид для переигровки из истории
+            'seed': g.seed,
             'score': g.score,
             'moves': g.moves_count,
             'duration': g.duration_seconds,
@@ -280,12 +286,8 @@ class StatsAPI:
         Получить список достижений игрока.
         Скрывает название/описание для секретных (не полученных) достижений.
         """
-        # Получаем все шаблоны
         all_achievements = self.stats.achievement_repo.get_all()
-        # Получаем прогресс игрока
         player_progress = self.stats.player_achievement_repo.get_by_player(player_id)
-
-        # Превращаем прогресс в словарь {ach_id: PlayerAchievement} для быстрого поиска
         progress_map = {pa.achievement_id: pa for pa in player_progress}
 
         result_list = []
@@ -302,16 +304,13 @@ class StatsAPI:
                 'target': ach.target
             }
 
-            # Если получено или НЕ скрытое — показываем данные
             if is_unlocked or not ach.is_hidden:
                 item['name'] = ach.name
                 item['description'] = ach.description
             else:
-                # Иначе скрываем
                 item['name'] = "???"
                 item['description'] = "Секретное достижение"
 
-            # Дата получения
             if is_unlocked and pa.unlocked_at:
                 item['unlocked_at'] = pa.unlocked_at.isoformat()
             else:
@@ -338,4 +337,3 @@ class StatsAPI:
                 return {'success': True}
             return {'success': False, 'error': 'Failed to delete save'}
         return {'success': True}
-

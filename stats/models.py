@@ -267,19 +267,25 @@ class Achievement:
     id: str
     name: str
     description: str
-    icon: str = "star"
+    icon: str = ""  # По умолчанию пустая строка (или None)
     category: str = "general"
     target: int = 1
     condition_type: str = ""  # 'wins', 'time_lt', 'moves_lt', 'suits', 'streak'
     is_hidden: bool = False
 
+    def __post_init__(self):
+        """Если иконка не указана явно, используем ID достижения."""
+        if not self.icon:
+            self.icon = self.id
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Achievement':
+        # При загрузке из БД берем то, что записано (или дефолт)
         return cls(
             id=data['id'],
             name=data['name'],
             description=data['description'],
-            icon=data.get('icon', 'star'),
+            icon=data.get('icon', data['id']), # Если в БД пусто, берем id
             category=data.get('category', 'general'),
             target=data.get('target', 1),
             condition_type=data.get('condition_type', ''),
@@ -297,7 +303,6 @@ class Achievement:
             'condition_type': self.condition_type,
             'is_hidden': self.is_hidden
         }
-
 
 @dataclass
 class PlayerAchievement:
