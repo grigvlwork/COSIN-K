@@ -113,18 +113,19 @@ func update_stats_display(data: Dictionary):
 	"""Обновить отображение статистики"""
 	
 	# Основная статистика
-	games_played_value.text = str(data.get("games_played", 0))
-	games_won_value.text = str(data.get("games_won", 0))
+	games_played_value.text = "%d" % data.get("games_played", 0)
+	games_won_value.text = "%d" % data.get("games_won", 0)
 	win_rate_value.text = str(data.get("win_rate", "0%"))
-	total_score_value.text = str(data.get("total_score", 0))
-	highest_score_value.text = str(data.get("highest_score", 0))
+	total_score_value.text = "%d" % data.get("total_score", 0)
+	highest_score_value.text = "%d" % data.get("highest_score", 0)
 	total_hours_value.text = str(data.get("total_hours", "0"))
 	
 	# Серии побед и поражений
-	current_win_streak_value.text = str(data.get("current_win_streak", 0))
-	max_win_streak_value.text = str(data.get("best_win_streak", 0))
-	current_loose_streak_value.text = str(data.get("current_loose_streak", 0))
-	max_loose_streak_value.text = str(data.get("best_loose_streak", 0))
+	# Используем форматирование %d для целых чисел
+	current_win_streak_value.text = "%d" % data.get("current_win_streak", 0)
+	max_win_streak_value.text = "%d" % data.get("best_win_streak", 0)
+	current_loose_streak_value.text = "%d" % data.get("current_loose_streak", 0)
+	max_loose_streak_value.text = "%d" % data.get("best_loose_streak", 0)
 	
 	# История игр
 	if data.has("recent_games"):

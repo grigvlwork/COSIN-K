@@ -21,6 +21,7 @@ var drag_source_pile = ""
 var drag_card_data = null
 var dragged_card_node = null # Ссылка на узел карты, которую тянем
 var drag_offset = Vector2()  # Смещение, чтобы карта не прыгала центром к курсору
+var drag_nodes = [] # Список всех перетаскиваемых узлов
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
@@ -186,21 +187,23 @@ func _process(delta):
 	# Опционально: Автосохранение каждые 60 секунд
 	#if game_time % 60 == 0:
 		#_auto_save()
-	# 1. Логика таймера (была)
+	# Таймер
 	if game_state and (not game_over_panel or not game_over_panel.visible) and timer_active:
 		timer += delta
 		if timer >= 1.0:
 			timer = 0
 			game_time += 1
 			update_time_display()
-
-	# 2. Логика перетаскивания (новое)
+	# Перетаскивание
 	if is_dragging and dragged_card_node:
 		var mouse_pos = get_global_mouse_position()
-		# Двигаем карту за мышкой с учетом смещения (offset)
 		dragged_card_node.global_position = mouse_pos - drag_offset
-
-
+		
+		# Двигаем хвост
+		for i in range(1, drag_nodes.size()):
+			var node = drag_nodes[i]
+			var offset_from_head = node.get_meta("drag_offset_from_head", Vector2.ZERO)
+			node.global_position = dragged_card_node.global_position + offset_from_head
 
 func update_time_display():
 	var minutes = game_time / 60
@@ -513,7 +516,15 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	
 	# Важно: Размер карты должен определяться текстурой
 	card_control.mouse_filter = Control.MOUSE_FILTER_STOP
-	
+	# === НОВОЕ: Запоминаем индекс карты в стопке ===
+	# Индекс нам нужен, чтобы знать, сколько карт "под ней" тащить
+	# Индекс можно вычислить из смещения Y (для tableau)
+	if pile_name.begins_with("tableau"):
+		# STACK_OFFSET = 30, offset.y = индекс * 30
+		var card_index = int(offset.y / STACK_OFFSET)
+		card_control.set_meta("card_index", card_index)
+	else:
+		card_control.set_meta("card_index", 0)
 	# --- ИЗМЕНЕНИЕ: Используем TextureRect вместо Sprite2D ---
 	var texture_rect = TextureRect.new()
 	texture_rect.name = "Texture"
@@ -552,7 +563,6 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if is_busy:
 				return
-
 			if pile_name == "stock":
 				print("🃏 Клик по колоде -> Взять карту")
 				var body = '{}'
@@ -560,27 +570,41 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 				last_request_type = "draw"
 				http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
 				return
-
 			if not card_data["face_up"]:
 				return
-
 			print("🖱️ Начало перетаскивания из: ", pile_name)
-			
-			# 1. Запоминаем данные
 			is_dragging = true
 			drag_source_pile = pile_name
 			drag_card_data = card_data 
-			dragged_card_node = card_node # Запоминаем узел для перемещения
+			dragged_card_node = card_node
+			# Находим все карты ниже (для стопок) ===
+			drag_nodes.clear() # Очищаем список перед использованием
+			drag_nodes.append(card_node) # Добавляем саму карту
+			# Если это tableau, ищем карты под ней в том же слое
+			if pile_name.begins_with("tableau"):
+				var card_layer = card_node.get_parent()
+				if card_layer:
+					# Получаем индекс текущей карты
+					var my_index = card_node.get_meta("card_index", 0)
+					# Проходим по всем детям слоя и добавляем те, что ниже
+					for child in card_layer.get_children():
+						if child == card_node: continue
+						if child.get_meta("card_index", -1) > my_index:
+							drag_nodes.append(child)
+			# Сортируем по индексу, чтобы они красиво летели вместе
+			drag_nodes.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
+			# Запоминаем смещения хвоста относительно головы
+			var head_pos = card_node.global_position
+			for i in range(1, drag_nodes.size()):
+				var node = drag_nodes[i]
+				# Сохраняем разницу в координатах
+				node.set_meta("drag_offset_from_head", node.global_position - head_pos)
+			# Эффекты
+			for node in drag_nodes:
+				node.z_index = 100
 			
-			# 2. Запоминаем смещение (чтобы карта не прыгала центром к курсору)
 			var mouse_pos = get_global_mouse_position()
 			drag_offset = mouse_pos - card_node.global_position
-			
-			# 3. Поднимаем карту над остальными
-			card_node.z_index = 100
-			
-			# Важно: помечаем событие как обработанное, чтобы не кликнуть "насквозь"
-			# get_viewport().set_input_as_handled() 
 			
 		# --- Правая кнопка: Авто-ход ---
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -609,39 +633,36 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 func _end_drag():
 	if not is_dragging:
 		return
-		
-	# 1. Сбрасываем визуальные эффекты
-	if dragged_card_node:
-		dragged_card_node.z_index = 0
-	
-	# 2. Определяем, над какой стопкой отпустили карту
+	# Сбрасываем Z-index
+	for node in drag_nodes:
+		node.z_index = 0
+	# Очищаем метаданные (опционально, для порядка)
+	for node in drag_nodes:
+		if node.has_meta("drag_offset_from_head"):
+			node.remove_meta("drag_offset_from_head")
 	var target_pile = _get_pile_under_mouse()
-	
-	# 3. Если отпустили над допустимой стопкой (не туда же, откуда взяли)
+	# Считаем количество карт ===
+	var move_count = drag_nodes.size()
 	if target_pile != "" and target_pile != drag_source_pile:
-		print("📂 Попытка перенести в: ", target_pile)
-		
-		# Отправляем запрос на сервер (обычный ход, не авто)
+		print("📂 Перенос ", move_count, " карт в: ", target_pile)
 		last_request_type = "move"
 		var body = JSON.new().stringify({
 			"from": drag_source_pile,
-			"to": target_pile
+			"to": target_pile,
+			"count": move_count  # <--- ОТПРАВЛЯЕМ КОЛИЧЕСТВО
 		})
 		var headers = ["Content-Type: application/json"]
 		http.request(Global.server_url + "/move", headers, HTTPClient.METHOD_POST, body)
 		
-		# Блокируем интерфейс, пока ждем ответ
 		is_busy = true
 	else:
-		print("❌ Неверная цель или отмена")
-		# Если отпустили в пустом месте или над той же стопкой — просто перерисуем
-		draw_game() 
-	
-	# 4. Сбрасываем переменные состояния
+		draw_game()
+	# Сброс переменных
 	is_dragging = false
 	drag_source_pile = ""
 	drag_card_data = null
 	dragged_card_node = null
+	drag_nodes.clear() # Очищаем список
 
 func _get_pile_under_mouse() -> String:
 	var mouse_pos = get_global_mouse_position()

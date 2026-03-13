@@ -295,8 +295,10 @@ class StatsService:
             'games_played': player.games_started,
             'games_won': player.games_won,
             'win_rate': f"{win_rate:.1f}%",
-            'current_streak': player.current_win_streak,
-            'best_streak': player.best_win_streak,
+            'current_win_streak': int(player.current_win_streak),
+            'best_win_streak': int(player.best_win_streak),
+            'current_loose_streak': int(player.current_loose_streak),
+            'best_loose_streak': int(player.best_loose_streak),
             'total_score': player.total_score,
             'highest_score': player.highest_score,
             'total_hours': f"{total_hours:.1f}",
@@ -304,7 +306,6 @@ class StatsService:
             'fastest_win': self._format_time(player.fastest_win_seconds),
             'slowest_win': self._format_time(player.slowest_win_seconds)
         }
-
     # ===== Достижения =====
 
     def check_achievements(self, player_id: str, game_result: Game) -> List[str]:
