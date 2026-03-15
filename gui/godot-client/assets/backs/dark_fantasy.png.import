@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c0bngmg73y0s3"
-path="res://.godot/imported/рубашка12.png-e96575a957eccc97c7f04312c92d45df.ctex"
+uid="uid://bufaytjvvmvk3"
+path="res://.godot/imported/dark_fantasy.png-63aaa2eec3a2fdbf0cbb3f038f01ac08.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/рубашка12.png"
-dest_files=["res://.godot/imported/рубашка12.png-e96575a957eccc97c7f04312c92d45df.ctex"]
+source_file="res://assets/backs/dark_fantasy.png"
+dest_files=["res://.godot/imported/dark_fantasy.png-63aaa2eec3a2fdbf0cbb3f038f01ac08.ctex"]
 
 [params]
 

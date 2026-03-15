@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ds2y6lbjqfaio"
-path="res://.godot/imported/рубашка2.png-9eedf6b77df26db7355d9831f515d9bd.ctex"
+uid="uid://unwxvbcxckg7"
+path="res://.godot/imported/japan.png-f27b2d23f269645de8d2159b79d3110c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/рубашка2.png"
-dest_files=["res://.godot/imported/рубашка2.png-9eedf6b77df26db7355d9831f515d9bd.ctex"]
+source_file="res://assets/backs/japan.png"
+dest_files=["res://.godot/imported/japan.png-f27b2d23f269645de8d2159b79d3110c.ctex"]
 
 [params]
 

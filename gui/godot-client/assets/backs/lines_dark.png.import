@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ehokoxjrgrjs"
-path="res://.godot/imported/рубашка7.png-d7cee679117c564d86931842b1d45283.ctex"
+uid="uid://dmk6keox7h47f"
+path="res://.godot/imported/lines_dark.png-0077a554327aa940fc29e22f86110f44.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/рубашка7.png"
-dest_files=["res://.godot/imported/рубашка7.png-d7cee679117c564d86931842b1d45283.ctex"]
+source_file="res://assets/backs/lines_dark.png"
+dest_files=["res://.godot/imported/lines_dark.png-0077a554327aa940fc29e22f86110f44.ctex"]
 
 [params]
 

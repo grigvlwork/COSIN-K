@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://da2thgxox2gn4"
-path="res://.godot/imported/рубашка.png-d84129295bd1d1e575cd98cc42753400.ctex"
+uid="uid://biolcma6hsdiw"
+path="res://.godot/imported/nature_light.png-11b02a9c0b7b226834615a14c6d98862.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/рубашка.png"
-dest_files=["res://.godot/imported/рубашка.png-d84129295bd1d1e575cd98cc42753400.ctex"]
+source_file="res://assets/backs/nature_light.png"
+dest_files=["res://.godot/imported/nature_light.png-11b02a9c0b7b226834615a14c6d98862.ctex"]
 
 [params]
 

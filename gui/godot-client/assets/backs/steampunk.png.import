@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dbdu547m0c377"
-path="res://.godot/imported/рубашка4.png-9b3f77d1afb5784ccac9f8547eb95abd.ctex"
+uid="uid://cfk1tw5dx6b1v"
+path="res://.godot/imported/steampunk.png-195421aac62e9d50280fee2cbd777f91.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/рубашка4.png"
-dest_files=["res://.godot/imported/рубашка4.png-9b3f77d1afb5784ccac9f8547eb95abd.ctex"]
+source_file="res://assets/backs/steampunk.png"
+dest_files=["res://.godot/imported/steampunk.png-195421aac62e9d50280fee2cbd777f91.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://g21ae4boj8kk"
-path="res://.godot/imported/рубашка6.png-c300cf3af354f51a5a277f3b9fffb257.ctex"
+uid="uid://bpowkrcwei5kd"
+path="res://.godot/imported/back_tally_ho_black.png-e03854cff7945f0850ee713bb8e29030.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/рубашка6.png"
-dest_files=["res://.godot/imported/рубашка6.png-c300cf3af354f51a5a277f3b9fffb257.ctex"]
+source_file="res://assets/backs/back_tally_ho_black.png"
+dest_files=["res://.godot/imported/back_tally_ho_black.png-e03854cff7945f0850ee713bb8e29030.ctex"]
 
 [params]
 

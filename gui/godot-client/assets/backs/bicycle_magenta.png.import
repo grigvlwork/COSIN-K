@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bibfm6ny62h06"
-path="res://.godot/imported/рубашка10.png-5fe73f8f330d704195310c16a97ca488.ctex"
+uid="uid://cupo5aa8nxws8"
+path="res://.godot/imported/bicycle_magenta.png-22d7a502b4ec676a84d6c7594e6be1cc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/рубашка10.png"
-dest_files=["res://.godot/imported/рубашка10.png-5fe73f8f330d704195310c16a97ca488.ctex"]
+source_file="res://assets/backs/bicycle_magenta.png"
+dest_files=["res://.godot/imported/bicycle_magenta.png-22d7a502b4ec676a84d6c7594e6be1cc.ctex"]
 
 [params]
 
