@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://cgy7udkbdl6vx"]
+[gd_scene load_steps=6 format=3 uid="uid://cgy7udkbdl6vx"]
 
 [ext_resource type="Theme" uid="uid://dbnjvx44qqhqs" path="res://main_theme.tres" id="1_cnung"]
 [ext_resource type="Script" uid="uid://cljbwv2355o4v" path="res://scenes/games/klondike.gd" id="1_u1vkt"]
 [ext_resource type="PackedScene" uid="uid://1hhgj4vbjqcn" path="res://scenes/ui/counters_container.tscn" id="2_u1vkt"]
+[ext_resource type="Texture2D" uid="uid://cbdaej6t8itii" path="res://assets/textures/green_velvet.png" id="3_a2tsk"]
 [ext_resource type="PackedScene" uid="uid://djsfhu74iej22" path="res://scenes/ui/buttons.tscn" id="3_cnung"]
 
 [node name="Klondike" type="Control"]
@@ -14,6 +15,17 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_cnung")
 script = ExtResource("1_u1vkt")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_a2tsk")
+expand_mode = 1
+stretch_mode = 1
 
 [node name="Display" type="Control" parent="."]
 layout_mode = 1
