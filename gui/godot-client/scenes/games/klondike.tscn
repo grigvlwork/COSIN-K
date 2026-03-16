@@ -51,106 +51,117 @@ theme_override_constants/separation = 10
 alignment = 1
 
 [node name="UpperRow" type="HBoxContainer" parent="Display/MainLayout"]
-custom_minimum_size = Vector2(900, 150)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
 [node name="StockSlot" type="Control" parent="Display/MainLayout/UpperRow"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/StockSlot"]
 
 [node name="WasteSlot" type="Control" parent="Display/MainLayout/UpperRow"]
-custom_minimum_size = Vector2(100, 200)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/WasteSlot"]
 
 [node name="HSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
 [node name="FoundationsGroup" type="HBoxContainer" parent="Display/MainLayout/UpperRow"]
 custom_minimum_size = Vector2(400, 150)
 layout_mode = 2
 
 [node name="Foundation0" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation0"]
 
 [node name="Foundation1" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation1"]
 
 [node name="Foundation2" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation2"]
 
 [node name="Foundation3" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation3"]
 
 [node name="LowerRow" type="HBoxContainer" parent="Display/MainLayout"]
-custom_minimum_size = Vector2(800, 350)
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Tableau_0" type="Control" parent="Display/MainLayout/LowerRow"]
-custom_minimum_size = Vector2(100, 150)
+[node name="LeftSpacer" type="Control" parent="Display/MainLayout/LowerRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Tableau_0" type="Control" parent="Display/MainLayout/LowerRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_0"]
 
 [node name="Tableau_1" type="Control" parent="Display/MainLayout/LowerRow"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_1"]
 
 [node name="Tableau_2" type="Control" parent="Display/MainLayout/LowerRow"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_2"]
 
 [node name="Tableau_3" type="Control" parent="Display/MainLayout/LowerRow"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_3"]
 
 [node name="Tableau_4" type="Control" parent="Display/MainLayout/LowerRow"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_4"]
 
 [node name="Tableau_5" type="Control" parent="Display/MainLayout/LowerRow"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_5"]
 
 [node name="Tableau_6" type="Control" parent="Display/MainLayout/LowerRow"]
-custom_minimum_size = Vector2(100, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/LowerRow/Tableau_6"]
 
-[node name="VSpacer" type="Control" parent="Display/MainLayout"]
-custom_minimum_size = Vector2(0, 200)
+[node name="RightSpacer" type="Control" parent="Display/MainLayout/LowerRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="Buttons" parent="Display/MainLayout" instance=ExtResource("3_cnung")]
 custom_minimum_size = Vector2(300, 50)
