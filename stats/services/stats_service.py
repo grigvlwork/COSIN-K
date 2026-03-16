@@ -111,9 +111,55 @@ class StatsService:
             Achievement(id="clubs_5000", name="Легенда Трефы", description="Собрать 5000 мастей Трефы", category="suits", condition_type="completed_clubs", target=5000),
 
             # --- Мастерство ---
-            Achievement(id="speed_demon", name="Молния", description="Выиграть партию менее чем за 2 минуты", category="skill", condition_type="time_lt", target=120, is_hidden=True),
-            Achievement(id="perfect_game", name="Идеально", description="Выиграть без подсказок и отмены", category="skill", condition_type="perfect", target=1),
-            Achievement(id="streak_5", name="На кураже", description="Выиграть 5 игр подряд", category="streak", condition_type="streak", target=5),
+            # Achievement(id="speed_demon", name="Молния", description="Выиграть партию менее чем за 2 минуты", category="skill", condition_type="time_lt", target=120, is_hidden=True),
+            # Achievement(id="perfect_game", name="Идеально", description="Выиграть без подсказок и отмены", category="skill", condition_type="perfect", target=1),
+            # Achievement(id="streak_5", name="На кураже", description="Выиграть 5 игр подряд", category="streak", condition_type="streak", target=5),
+
+            # --- Стойкость (Проигрыши) ---
+            Achievement(id="loss_1", name="Первый шрам", description="Проиграть первую игру", category="resilience",
+                        condition_type="losses", target=1),
+            Achievement(id="loss_10", name="Закалённый сталью", description="Проиграть 10 игр", category="resilience",
+                        condition_type="losses", target=10),
+            Achievement(id="loss_100", name="Ветеран битв", description="Проиграть 100 игр", category="resilience",
+                        condition_type="losses", target=100),
+            Achievement(id="loss_1000", name="Железная воля", description="Проиграть 1000 игр", category="resilience",
+                        condition_type="losses", target=1000),
+            Achievement(id="loss_10000", name="Неубиваемый", description="Проиграть 10000 игр", category="resilience",
+                        condition_type="losses", target=10000),
+            # --- Совершенство (Без подсказок и отмен) ---
+            Achievement(id="perfect_1", name="Чистая работа", description="Выиграть партию без подсказок и отмен",
+                        category="perfection", condition_type="perfect_wins", target=1),
+            Achievement(id="perfect_10", name="Меткость", description="Выиграть 10 идеальных партий",
+                        category="perfection", condition_type="perfect_wins", target=10),
+            Achievement(id="perfect_100", name="Снайпер", description="Выиграть 100 идеальных партий",
+                        category="perfection", condition_type="perfect_wins", target=100),
+            Achievement(id="perfect_1000", name="Виртуоз", description="Выиграть 1000 идеальных партий",
+                        category="perfection", condition_type="perfect_wins", target=1000),
+            Achievement(id="perfect_5000", name="Абсолют", description="Выиграть 5000 идеальных партий",
+                        category="perfection", condition_type="perfect_wins", target=5000),
+            # --- Скорость ---
+            Achievement(id="speed_3min", name="Быстрый как ветер", description="Выиграть партию менее чем за 3 минуты",
+                        category="speed", condition_type="time_lt", target=180),
+            Achievement(id="speed_2_5min", name="Спринтер", description="Выиграть партию менее чем за 2.5 минуты",
+                        category="speed", condition_type="time_lt", target=150),
+            Achievement(id="speed_demon", name="Молния", description="Выиграть партию менее чем за 2 минуты",
+                        category="speed", condition_type="time_lt", target=120, is_hidden=True),
+            Achievement(id="speed_90sec", name="Реактивный", description="Выиграть партию менее чем за 90 секунд",
+                        category="speed", condition_type="time_lt", target=90, is_hidden=True),
+            Achievement(id="speed_1min", name="Вне времени", description="Выиграть партию менее чем за 1 минуту",
+                        category="speed", condition_type="time_lt", target=60, is_hidden=True),
+
+            # --- Серии побед (Streak) ---
+            Achievement(id="streak_5", name="На кураже", description="Выиграть 5 игр подряд", category="streak",
+                        condition_type="streak", target=5),
+            Achievement(id="streak_10", name="Непобедимый", description="Выиграть 10 игр подряд", category="streak",
+                        condition_type="streak", target=10),
+            Achievement(id="streak_50", name="Мастер серии", description="Выиграть 50 игр подряд", category="streak",
+                        condition_type="streak", target=50, is_hidden=True),
+            Achievement(id="streak_100", name="Легенда арены", description="Выиграть 100 игр подряд", category="streak",
+                        condition_type="streak", target=100, is_hidden=True),
+            Achievement(id="streak_500", name="Бог Войны", description="Выиграть 500 игр подряд", category="streak",
+                        condition_type="streak", target=500, is_hidden=True),
         ]
 
         for ach in default_achievements:
@@ -188,7 +234,7 @@ class StatsService:
             deck_cycles=deck_cycles,
             suits_completed=suits_completed or [],
             first_suit=suits_completed[0] if suits_completed else None,
-            was_perfect=self._check_perfect_game(game_state),
+            was_perfect=was_perfect,
             hour_of_day=hour,
             day_of_week=weekday,
             is_weekend=is_weekend
@@ -201,7 +247,8 @@ class StatsService:
                 player_id, result, score, duration, is_first_win,
                 cards_moved=cards_moved,
                 cards_flipped=cards_flipped,
-                suits_completed=suits_completed
+                suits_completed=suits_completed,
+                was_perfect=was_perfect
             )
             newly_unlocked = self.check_and_update_achievements(player_id, game)
             return {
@@ -215,7 +262,8 @@ class StatsService:
                              score: int, duration: int, is_first_win: bool = False,
                              cards_moved: int = 0,
                              cards_flipped: int = 0,
-                             suits_completed: Optional[List[str]] = None):
+                             suits_completed: Optional[List[str]] = None,
+                             was_perfect: bool = False):
         """Обновить статистику игрока после завершения игры."""
 
         # 1. Результаты игры
@@ -225,6 +273,8 @@ class StatsService:
                 self.player_repo.update_streak(player_id, won=True)
                 self.player_repo.update_fastest_win(player_id, duration)
                 self.player_repo.update_slowest_win(player_id, duration)
+                if was_perfect:
+                    self.player_repo.increment_stat(player_id, 'total_perfect_wins', 1)
 
         elif result == 'lost':
             self.player_repo.increment_stat(player_id, 'games_lost')
@@ -232,6 +282,7 @@ class StatsService:
 
         elif result == 'abandoned':
             self.player_repo.increment_stat(player_id, 'games_abandoned')
+            self.player_repo.update_streak(player_id, won=False)
 
         # 2. Очки и время
         if score > 0:
@@ -316,15 +367,25 @@ class StatsService:
             elif ach.condition_type == 'time_lt':
                 if game_result.result == 'won' and game_result.duration_seconds:
                     current_progress = game_result.duration_seconds
+                    # Условие: время игры МЕНЬШЕ целевого
                     condition_met = game_result.duration_seconds < ach.target
                     if condition_met:
+                        # Для прогресс-бара заполняем полностью
                         current_progress = ach.target
 
-                        # Идеальная игра
-            elif ach.condition_type == 'perfect':
-                if game_result.result == 'won' and game_result.was_perfect:
-                    condition_met = True
-                    current_progress = 1
+            #             # Идеальная игра
+            # elif ach.condition_type == 'perfect':
+            #     if game_result.result == 'won' and game_result.was_perfect:
+            #         condition_met = True
+            #         current_progress = 1
+
+            elif ach.condition_type == 'losses':
+                current_progress = player.games_lost
+                condition_met = current_progress >= ach.target
+
+            elif ach.condition_type == 'perfect_wins':
+                current_progress = player.total_perfect_wins
+                condition_met = current_progress >= ach.target
 
             # --- Обновление статуса ---
             if condition_met and not (pa and pa.unlocked):

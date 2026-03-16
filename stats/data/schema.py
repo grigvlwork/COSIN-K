@@ -50,6 +50,9 @@ def create_tables(conn: sqlite3.Connection) -> None:
             completed_hearts INTEGER DEFAULT 0,
             completed_diamonds INTEGER DEFAULT 0,
             completed_clubs INTEGER DEFAULT 0,
+            
+            -- Счетчик идеальных побед
+            total_perfect_wins INTEGER DEFAULT 0,
 
             -- Время
             total_play_time_seconds INTEGER DEFAULT 0,

@@ -35,6 +35,9 @@ class Player:
     total_cards_moved: int = 0
     total_cards_flipped: int = 0
 
+    # Счетчик совершенных игр
+    total_perfect_wins: int = 0
+
     # Собранные масти
     completed_spades: int = 0
     completed_hearts: int = 0
