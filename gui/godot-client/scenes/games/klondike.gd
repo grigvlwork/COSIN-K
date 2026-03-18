@@ -612,13 +612,20 @@ func draw_foundations():
 	for i in 4:
 		var pile_name = "foundation_" + str(i)
 		var slot_node = slots[i]
-		
-		# Используем .has для проверки
+
 		if game_state.has("piles") and game_state["piles"].has(pile_name):
 			var pile = game_state["piles"][pile_name]
-			if pile["cards"].size() > 0:
-				var card = pile["cards"][-1]
-				draw_card(card, slot_node, pile_name)
+			var cards = pile["cards"]
+
+			# --- ИЗМЕНЕНИЕ ---
+			# Рисуем ВСЕ карты в стопке, а не только последнюю.
+			# Карты накладываются друг на друга (offset = 0).
+			# Порядок добавления (от 0 к последней) гарантирует,
+			# что верхняя карта визуально перекроет нижние.
+			for j in range(cards.size()):
+				var card = cards[j]
+				# Передаем индекс j, хотя для фундамента это не критично
+				draw_card(card, slot_node, pile_name, Vector2(0, 0), j)
 
 func draw_tableau():
 	if not game_state.has("piles"):
