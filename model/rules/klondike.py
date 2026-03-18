@@ -133,7 +133,15 @@ class KlondikeRules(RuleSet):
         if pile_type == PileType.WASTE:
             return not pile.is_empty() and count == 1
 
-        return False  # stock и foundation нельзя
+        if pile_type == PileType.FOUNDATION:
+            # Разрешаем брать верхнюю карту из дома (чтобы вернуть в табло)
+            return not pile.is_empty() and count == 1
+
+        # Запрещено брать только из stock (колоды)
+        if pile_type == PileType.STOCK:
+            return False
+
+        return False
 
     def _validate_tableau_sequence(self, state: "GameState", move: "Move") -> bool:
         """Проверка, что из tableau берётся корректная последовательность."""
