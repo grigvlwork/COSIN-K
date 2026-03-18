@@ -24,10 +24,13 @@ var drag_offset = Vector2()  # Смещение, чтобы карта не пр
 var drag_nodes = [] # Список всех перетаскиваемых узлов
 
 const CARD_ASPECT_RATIO = 1.4 
-
 const MIN_CARD_WIDTH = 80
 const MAX_CARD_WIDTH = 180
 const HORIZONTAL_MARGIN = 40
+const MIN_OFFSET_RATIO = 0.15   # Минимальный допуск отступа (15% от высоты карты)
+const TARGET_SHRINK_RATIO = 0.25 # Целевой отступ при уменьшении карты (25%)
+const SCREEN_MARGIN = 20
+const CRITICAL_OFFSET_RATIO = 0.15
 
 # Настройки отступов (в процентах от высоты карты)
 var offset_hidden_ratio = 0.15   # Закрытые карты: 15% от высоты (компактно)
@@ -114,8 +117,8 @@ func _ready():
 	update_layout()
 
 func _resized():
-	# Эта функция вызывается Godot-ом автоматически при изменении размеров узла
-	update_layout()
+	# Откладываем расчет на следующий кадр, чтобы Godot успел обновить размеры контейнеров
+	call_deferred("update_layout")
 
 # ===== УПРАВЛЕНИЕ ИГРОЙ =====
 
@@ -412,77 +415,129 @@ func _notification(what):
 # ЭТАП 3: МАСШТАБИРОВАНИЕ И РАЗМЕТКА
 # ============================================================
 
-# Функция пересчета размеров. Вызывается при старте и ресайзе.
 func update_layout():
-	# 1. Получаем доступную ширину для игрового поля (7 колонок)
-	# Используем LowerRow, так как там 7 колонок
-	var available_width = $Display/MainLayout/LowerRow.size.x
-	# === ИЗМЕНЕНИЕ: Вычитаем отступы по краям ===
-	available_width -= HORIZONTAL_MARGIN
+	# 1. РАСЧЕТ ШИРИНЫ
+	var viewport_size = get_viewport().get_visible_rect().size
+	var available_width = viewport_size.x - SCREEN_MARGIN * 2
 	
-	# Учитываем отступы между колонками (separation)
 	var separation = $Display/MainLayout/LowerRow.get_theme_constant("separation")
-	var total_separation = separation * 6 # 6 промежутков между 7 колонками
-	
-	# Ширина одной колонки (слота)
-	# Делим (Доступная ширина - Отступы) на 7 колонок
-	var calculated_width = (available_width - total_separation) / 7
-	
-	# 2. Применяем ограничения (Limits)
+	var calculated_width = (available_width - separation * 6) / 7
 	calculated_width = clamp(calculated_width, MIN_CARD_WIDTH, MAX_CARD_WIDTH)
 	
-	# Обновляем глобальные переменные размера
 	card_width = calculated_width
 	card_height = card_width * CARD_ASPECT_RATIO
 	
-	# 3. Рассчитываем "идеальные" отступы (в пикселях)
-	# Идеальные отступы до того, как мы узнаем, влезают ли они
-	var ideal_hidden = card_height * offset_hidden_ratio
-	var ideal_face_up = card_height * offset_face_up_ratio
+	# 2. РАСЧЕТ ВЫСОТЫ (Матеметически, без чтения size.y контейнеров)
+	# Это разрывает петлю обратной связи!
 	
-	# 4. Проверка на переполнение высоты (Smart Compression)
-	# Нам нужно найти самую длинную стопку и убедиться, что она влезает
-	var available_height = $Display/MainLayout/LowerRow.size.y
+	var vbox = $Display/MainLayout
+	var vbox_sep = vbox.get_theme_constant("separation")
 	
-	# Если игра уже идет (есть state), проверяем стопки
+	# Высота, которую едят интерфейсы (кроме карт)
+	var static_ui_height = $Display/MainLayout/CountersContainer.size.y + \
+						   $Display/MainLayout/Buttons.size.y + \
+						   (vbox_sep * 3) + \
+						   SCREEN_MARGIN # Запас снизу
+	
+	# Свободное место для ВЕРТИКАЛЬНОЙ ЛОГИКИ:
+	# Нам нужно вместить: 1 карту (UpperRow) + Стопку (LowerRow)
+	var available_vertical_space = viewport_size.y - static_ui_height
+	
+	# 3. АНАЛИЗ СТОПОК
+	var max_hidden = 0
+	var max_face_up = 0
+	
 	if game_state and game_state.has("piles"):
-		# Находим максимальную высоту среди всех 7 колонок
-		var max_content_height = 0
-		
 		for i in range(7):
 			var pile_name = "tableau_" + str(i)
 			if game_state["piles"].has(pile_name):
 				var pile = game_state["piles"][pile_name]
-				# Считаем высоту этой стопки при ИДЕАЛЬНЫХ отступах
-				var h = _calculate_pile_height(pile["cards"], ideal_hidden, ideal_face_up)
-				if h > max_content_height:
-					max_content_height = h
+				var composition = _get_pile_composition(pile["cards"])
+				if (composition.hidden + composition.face_up) > (max_hidden + max_face_up):
+					max_hidden = composition.hidden
+					max_face_up = composition.face_up
+	
+	# 4. ЛОГИКА МАСШТАБИРОВАНИЯ (Глобальная)
+	
+	# Считаем отступы (N-1)
+	var hidden_offsets_count = max(0, max_hidden - 1)
+	if max_hidden > 0 and max_face_up > 0:
+		hidden_offsets_count += 1
+	var face_up_offsets_count = max(0, max_face_up - 1)
+	
+	var ideal_r_h = offset_hidden_ratio
+	var ideal_r_f = offset_face_up_ratio
+	
+	# Формула общей занимаемой высоты:
+	# TotalHeight = UpperCard + LowerPile
+	# TotalHeight = card_h + (card_h + card_h*(hidden_offs*r_h + face_up_offs*r_f))
+	# TotalHeight = card_h * (2 + hidden_offs*r_h + face_up_offs*r_f)
+	
+	var total_height_factor = 2.0 + (hidden_offsets_count * ideal_r_h) + (face_up_offsets_count * ideal_r_f)
+	var ideal_total_height = card_height * total_height_factor
+	
+	# Фактор для критического режима
+	var critical_factor = 2.0 + (hidden_offsets_count * CRITICAL_OFFSET_RATIO) + (face_up_offsets_count * CRITICAL_OFFSET_RATIO)
+	
+	# --- ЭТАП 1: ИДЕАЛЬНО ---
+	if ideal_total_height <= available_vertical_space:
+		# Всё влезает, используем стандартные отступы
+		stack_offset_hidden = card_height * ideal_r_h
+		stack_offset_face_up = card_height * ideal_r_f
 		
-		# Сравниваем с доступной высотой
-		# +50 пикселей запаса снизу, чтобы не прилипало к краю
-		if max_content_height > (available_height - 50):
-			# НЕ ВЛЕЗАЕТ! Включаем сжатие.
-			# Вычисляем коэффициент сжатия
-			var scale_factor = (available_height - 50) / max_content_height
+	# --- ЭТАП 2: СЖАТИЕ ОТСТУПОВ ---
+	elif (card_height * critical_factor) <= available_vertical_space:
+		# Влезает только если сжать отступы. Карту НЕ трогаем.
+		# Нам нужно найти такие offset_r, чтобы:
+		# card_h * (2 + hid*offset + face*offset) = available_space
+		
+		var needed_height_factor = available_vertical_space / card_height
+		var available_offset_pool = needed_height_factor - 2.0 # То, что осталось на отступы
+		
+		var ideal_offset_pool = (hidden_offsets_count * ideal_r_h) + (face_up_offsets_count * ideal_r_f)
+		
+		if ideal_offset_pool > 0:
+			var scale_k = available_offset_pool / ideal_offset_pool
+			stack_offset_hidden = card_height * ideal_r_h * scale_k
+			stack_offset_face_up = card_height * ideal_r_f * scale_k
 			
-			# Уменьшаем отступы пропорционально
-			ideal_hidden *= scale_factor
-			ideal_face_up *= scale_factor
+			# Ограничитель
+			var min_abs = card_height * CRITICAL_OFFSET_RATIO
+			if stack_offset_hidden < min_abs: stack_offset_hidden = min_abs
+			if stack_offset_face_up < min_abs: stack_offset_face_up = min_abs
+		else:
+			stack_offset_hidden = 0
+			stack_offset_face_up = 0
 			
-			# Жесткий ограничитель: отступ не может быть меньше 5 пикселей
-			if ideal_hidden < 5: ideal_hidden = 5
-			if ideal_face_up < 5: ideal_face_up = 5
-	
-	# Применяем итоговые значения
-	stack_offset_hidden = ideal_hidden
-	stack_offset_face_up = ideal_face_up
-	
-	# 5. Применяем размеры к слотам (чтобы контейнеры перестроились)
+	# --- ЭТАП 3: УМЕНЬШЕНИЕ КАРТЫ ---
+	else:
+		# Не влезает даже с минимальными отступами.
+		# Считаем новый размер карты.
+		# card_h_new * critical_factor = available_space
+		
+		var new_card_height = available_vertical_space / critical_factor
+		
+		card_height = new_card_height
+		card_width = card_height / CARD_ASPECT_RATIO
+		
+		stack_offset_hidden = card_height * CRITICAL_OFFSET_RATIO
+		stack_offset_face_up = card_height * CRITICAL_OFFSET_RATIO
+
+	# 5. ПРИМЕНЕНИЕ
 	_apply_slot_sizes()
-	
-	# 6. Перерисовываем карты, если игра идет
 	if game_state:
 		draw_game()
+
+# Вспомогательная функция для подсчета состава стопки
+func _get_pile_composition(cards: Array) -> Dictionary:
+	var hidden = 0
+	var face_up = 0
+	for card in cards:
+		if card["face_up"]:
+			face_up += 1
+		else:
+			hidden += 1
+	return {"hidden": hidden, "face_up": face_up}
 
 
 # Вспомогательная функция: считает высоту стопки
@@ -568,21 +623,22 @@ func draw_stock():
 		
 	# 2. Колода пуста, но в сбросе есть карты (можно перевернуть)
 	elif waste["cards"].size() > 0:
-		# Очистка теперь происходит в draw_game -> _clear_cards...
-		# Поэтому просто создаем индикатор
 		var empty_stock = TextureRect.new()
 		empty_stock.name = "EmptyStock"
 		empty_stock.texture = DeckManager.get_back_texture()
 		empty_stock.modulate = Color(1, 1, 1, 0.3)
 		empty_stock.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		empty_stock.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		empty_stock.custom_minimum_size = Vector2(card_width, card_height)
+		
+		# === ВАЖНО: Задаем и minimum, и реальный size ===
+		var target_size = Vector2(card_width, card_height)
+		empty_stock.custom_minimum_size = target_size
+		empty_stock.size = target_size 
+		# ==============================================
+		
 		empty_stock.mouse_filter = Control.MOUSE_FILTER_STOP
 		empty_stock.gui_input.connect(_on_empty_stock_clicked)
 		stock_slot.add_child(empty_stock)
-		
-	# 3. Колода пуста И сброс пуст (всё разобрано)
-	# -> Ничего не делаем, функция _clear_cards_from_slot всё убрала
 
 func _on_empty_stock_clicked(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -603,7 +659,8 @@ func draw_waste():
 		var start_idx = max(0, cards.size() - 3)
 		for i in range(start_idx, cards.size()):
 			var card = cards[i]
-			var offset = (i - start_idx) * (card_width * 0.15)
+			# Адаптивный отступ для веера (например, 10% от ширины карты)
+			var offset = (i - start_idx) * (card_width * 0.1) 
 			var pos = Vector2(offset, 0)
 			draw_card(card, waste_slot, "waste", pos)
 
