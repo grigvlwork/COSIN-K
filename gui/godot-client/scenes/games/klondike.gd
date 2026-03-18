@@ -23,15 +23,25 @@ var dragged_card_node = null # Ссылка на узел карты, котор
 var drag_offset = Vector2()  # Смещение, чтобы карта не прыгала центром к курсору
 var drag_nodes = [] # Список всех перетаскиваемых узлов
 
-const CARD_ASPECT_RATIO = 1.4
+const CARD_ASPECT_RATIO = 1.4 
+
 const MIN_CARD_WIDTH = 80
-const MAX_CARD_WIDTH = 200
+const MAX_CARD_WIDTH = 180
+const HORIZONTAL_MARGIN = 40
+
+# Настройки отступов (в процентах от высоты карты)
+var offset_hidden_ratio = 0.15   # Закрытые карты: 15% от высоты (компактно)
+var offset_face_up_ratio = 0.25  # Открытые карты: 25% от высоты (удобно читать)
+
+# Текущие вычисленные отступы (в пикселях)
+var stack_offset_hidden = 20
+var stack_offset_face_up = 35
 
 # Текущие динамические размеры (будут меняться при ресайзе)
 var card_width = 100  # Начальное значение
 var card_height = 140
-var stack_offset_y = 30  # Смещение карт в стопке по вертикали
-var stack_offset_waste = 10 # Смещение в сбросе (веер)
+#var stack_offset_y = 30  # Смещение карт в стопке по вертикали
+#var stack_offset_waste = 10 # Смещение в сбросе (веер)
 
 # ===== ССЫЛКИ НА ЭЛЕМЕНТЫ UI =====
 @onready var score_label = $Display/MainLayout/CountersContainer/ScoreLabel
@@ -52,10 +62,10 @@ var stack_offset_waste = 10 # Смещение в сбросе (веер)
 @onready var stock_slot = $Display/MainLayout/UpperRow/StockSlot
 @onready var waste_slot = $Display/MainLayout/UpperRow/WasteSlot
 
-@onready var foundation_0 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation0
-@onready var foundation_1 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation1
-@onready var foundation_2 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation2
-@onready var foundation_3 = $Display/MainLayout/UpperRow/FoundationsGroup/Foundation3
+@onready var foundation_0 = $Display/MainLayout/UpperRow/Foundation0
+@onready var foundation_1 = $Display/MainLayout/UpperRow/Foundation1
+@onready var foundation_2 = $Display/MainLayout/UpperRow/Foundation2
+@onready var foundation_3 = $Display/MainLayout/UpperRow/Foundation3
 
 @onready var tableau_slots = [
 	$Display/MainLayout/LowerRow/Tableau_0,
@@ -101,6 +111,11 @@ func _ready():
 	else:
 		print("🆕 Запрос новой игры...")
 		start_new_game(true)
+	update_layout()
+
+func _resized():
+	# Эта функция вызывается Godot-ом автоматически при изменении размеров узла
+	update_layout()
 
 # ===== УПРАВЛЕНИЕ ИГРОЙ =====
 
@@ -137,7 +152,7 @@ func _load_from_global_state():
 	
 	update_ui()
 	update_time_display()
-	draw_game()
+	update_layout()
 	
 	var moves = game_state.get("moves_count", 0)
 	
@@ -268,7 +283,7 @@ func _on_request_completed(result, response_code, headers, body):
 						# ================================
 						
 						update_ui()
-						draw_game()
+						update_layout()
 					return
 				
 				# 2. Сдача (Abandon)
@@ -281,7 +296,7 @@ func _on_request_completed(result, response_code, headers, body):
 					var game_won = data.get("game_won", false)
 					game_state = data["state"]
 					update_ui()
-					draw_game()
+					update_layout()
 					
 					# Запуск таймера при первом ходе
 					if not first_move_made and (last_request_type == "move" or last_request_type == "draw"):
@@ -393,6 +408,123 @@ func _notification(what):
 
 # ===== ОТРИСОВКА =====
 
+# ============================================================
+# ЭТАП 3: МАСШТАБИРОВАНИЕ И РАЗМЕТКА
+# ============================================================
+
+# Функция пересчета размеров. Вызывается при старте и ресайзе.
+func update_layout():
+	# 1. Получаем доступную ширину для игрового поля (7 колонок)
+	# Используем LowerRow, так как там 7 колонок
+	var available_width = $Display/MainLayout/LowerRow.size.x
+	# === ИЗМЕНЕНИЕ: Вычитаем отступы по краям ===
+	available_width -= HORIZONTAL_MARGIN
+	
+	# Учитываем отступы между колонками (separation)
+	var separation = $Display/MainLayout/LowerRow.get_theme_constant("separation")
+	var total_separation = separation * 6 # 6 промежутков между 7 колонками
+	
+	# Ширина одной колонки (слота)
+	# Делим (Доступная ширина - Отступы) на 7 колонок
+	var calculated_width = (available_width - total_separation) / 7
+	
+	# 2. Применяем ограничения (Limits)
+	calculated_width = clamp(calculated_width, MIN_CARD_WIDTH, MAX_CARD_WIDTH)
+	
+	# Обновляем глобальные переменные размера
+	card_width = calculated_width
+	card_height = card_width * CARD_ASPECT_RATIO
+	
+	# 3. Рассчитываем "идеальные" отступы (в пикселях)
+	# Идеальные отступы до того, как мы узнаем, влезают ли они
+	var ideal_hidden = card_height * offset_hidden_ratio
+	var ideal_face_up = card_height * offset_face_up_ratio
+	
+	# 4. Проверка на переполнение высоты (Smart Compression)
+	# Нам нужно найти самую длинную стопку и убедиться, что она влезает
+	var available_height = $Display/MainLayout/LowerRow.size.y
+	
+	# Если игра уже идет (есть state), проверяем стопки
+	if game_state and game_state.has("piles"):
+		# Находим максимальную высоту среди всех 7 колонок
+		var max_content_height = 0
+		
+		for i in range(7):
+			var pile_name = "tableau_" + str(i)
+			if game_state["piles"].has(pile_name):
+				var pile = game_state["piles"][pile_name]
+				# Считаем высоту этой стопки при ИДЕАЛЬНЫХ отступах
+				var h = _calculate_pile_height(pile["cards"], ideal_hidden, ideal_face_up)
+				if h > max_content_height:
+					max_content_height = h
+		
+		# Сравниваем с доступной высотой
+		# +50 пикселей запаса снизу, чтобы не прилипало к краю
+		if max_content_height > (available_height - 50):
+			# НЕ ВЛЕЗАЕТ! Включаем сжатие.
+			# Вычисляем коэффициент сжатия
+			var scale_factor = (available_height - 50) / max_content_height
+			
+			# Уменьшаем отступы пропорционально
+			ideal_hidden *= scale_factor
+			ideal_face_up *= scale_factor
+			
+			# Жесткий ограничитель: отступ не может быть меньше 5 пикселей
+			if ideal_hidden < 5: ideal_hidden = 5
+			if ideal_face_up < 5: ideal_face_up = 5
+	
+	# Применяем итоговые значения
+	stack_offset_hidden = ideal_hidden
+	stack_offset_face_up = ideal_face_up
+	
+	# 5. Применяем размеры к слотам (чтобы контейнеры перестроились)
+	_apply_slot_sizes()
+	
+	# 6. Перерисовываем карты, если игра идет
+	if game_state:
+		draw_game()
+
+
+# Вспомогательная функция: считает высоту стопки
+# cards: массив карт
+# o_hidden: отступ для закрытых
+# o_face_up: отступ для открытых
+func _calculate_pile_height(cards: Array, o_hidden: float, o_face_up: float) -> float:
+	if cards.size() == 0:
+		return 0
+	
+	# Высота начинается с одной карты (высота последней карты)
+	var total_height = card_height
+	
+	# Проходим по всем картам, кроме последней (снизу вверх), и добавляем отступы
+	# Логика: отступ зависит от карты, которая лежит НИЖЕ (текущая в цикле)
+	for i in range(cards.size() - 1):
+		var current_card = cards[i]
+		
+		if current_card["face_up"]:
+			total_height += o_face_up
+		else:
+			total_height += o_hidden
+			
+	return total_height
+
+
+# Применение размеров к узлам-слотам
+func _apply_slot_sizes():
+	var slot_size = Vector2(card_width, card_height)
+	
+	# Верхний ряд
+	stock_slot.custom_minimum_size = slot_size
+	waste_slot.custom_minimum_size = slot_size
+	for f in foundation_slots():
+		f.custom_minimum_size = slot_size
+	
+	# Нижний ряд (Табло)
+	for t in tableau_slots:
+		t.custom_minimum_size = slot_size
+
+
+
 func draw_game():
 	_clear_cards_from_slot(stock_slot)
 	_clear_cards_from_slot(waste_slot)
@@ -444,7 +576,7 @@ func draw_stock():
 		empty_stock.modulate = Color(1, 1, 1, 0.3)
 		empty_stock.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		empty_stock.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		empty_stock.custom_minimum_size = Vector2(100, 145)
+		empty_stock.custom_minimum_size = Vector2(card_width, card_height)
 		empty_stock.mouse_filter = Control.MOUSE_FILTER_STOP
 		empty_stock.gui_input.connect(_on_empty_stock_clicked)
 		stock_slot.add_child(empty_stock)
@@ -471,8 +603,8 @@ func draw_waste():
 		var start_idx = max(0, cards.size() - 3)
 		for i in range(start_idx, cards.size()):
 			var card = cards[i]
-			var offset = (i - start_idx) * 10
-			var pos = Vector2(offset, -offset)
+			var offset = (i - start_idx) * (card_width * 0.15)
+			var pos = Vector2(offset, 0)
 			draw_card(card, waste_slot, "waste", pos)
 
 func draw_foundations():
@@ -489,7 +621,6 @@ func draw_foundations():
 				draw_card(card, slot_node, pile_name)
 
 func draw_tableau():
-	# Исправлено: проверка через has и доступ через скобки
 	if not game_state.has("piles"):
 		return
 
@@ -501,38 +632,45 @@ func draw_tableau():
 			var cards = pile["cards"]
 			var slot_node = tableau_slots[i]
 
+			# Начальная координата Y для первой карты
+			var current_y = 0.0
+
 			for j in range(cards.size()):
 				var card = cards[j]
-				var y_offset = j * STACK_OFFSET
-				var pos = Vector2(0, y_offset)
-				draw_card(card, slot_node, pile_name, pos)
+				
+				# Рисуем карту в текущей позиции
+				# Передаем j как индекс, так как вычислить его из координат теперь нельзя
+				draw_card(card, slot_node, pile_name, Vector2(0, current_y), j)
+				
+				# Вычисляем отступ для СЛЕДУЮЩЕЙ карты
+				# Логика: если текущая карта открыта, следующая сдвигается сильнее
+				if card["face_up"]:
+					current_y += stack_offset_face_up
+				else:
+					current_y += stack_offset_hidden
 
-func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vector2 = Vector2(0, 0)):
+func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vector2 = Vector2(0, 0), card_index: int = 0):
 	var card_layer = parent_slot.get_node_or_null("CardLayer")
 	if card_layer == null:
 		card_layer = Node2D.new()
 		card_layer.name = "CardLayer"
 		parent_slot.add_child(card_layer)
 	
-	# Создаем уникальное имя для карты, чтобы находить её позже
-	# (Это поможет в будущем не пересоздавать карты, а обновлять их)
 	var card_id = str(card_data.get("suit", "")) + "_" + str(card_data.get("rank", ""))
 	var card_control = Control.new()
-	card_control.name = "Card_" + card_id + "_" + str(randi()) # Уникальное имя
+	card_control.name = "Card_" + card_id + "_" + str(randi())
 	card_control.position = offset
 	
-	# Важно: Размер карты должен определяться текстурой
+	# === ИЗМЕНЕНИЕ 1: Устанавливаем размер корневого контрола ===
+	# Это нужно, чтобы область клика (mouse_filter) совпадала с визуальным размером карты
+	card_control.custom_minimum_size = Vector2(card_width, card_height)
+	card_control.size = Vector2(card_width, card_height) 
 	card_control.mouse_filter = Control.MOUSE_FILTER_STOP
+	
 	# === НОВОЕ: Запоминаем индекс карты в стопке ===
-	# Индекс нам нужен, чтобы знать, сколько карт "под ней" тащить
-	# Индекс можно вычислить из смещения Y (для tableau)
-	if pile_name.begins_with("tableau"):
-		# STACK_OFFSET = 30, offset.y = индекс * 30
-		var card_index = int(offset.y / STACK_OFFSET)
-		card_control.set_meta("card_index", card_index)
-	else:
-		card_control.set_meta("card_index", 0)
-	# --- ИЗМЕНЕНИЕ: Используем TextureRect вместо Sprite2D ---
+	card_control.set_meta("card_index", card_index)
+
+	# --- Создаем визуальную часть (текстуру) ---
 	var texture_rect = TextureRect.new()
 	texture_rect.name = "Texture"
 	
@@ -543,22 +681,22 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	if texture_rect.texture == null:
 		texture_rect.modulate = Color.RED
 	
-	# Настраиваем масштабирование
+	# === ИЗМЕНЕНИЕ 2: Настраиваем масштабирование текстуры ===
+	# Текстура должна заполнить весь card_control, сохраняя пропорции
 	texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	texture_rect.custom_minimum_size = Vector2(
-		texture_rect.texture.get_width() * CARD_SCALE,
-		texture_rect.texture.get_height() * CARD_SCALE
-	) if texture_rect.texture else Vector2(100, 145)
 	
-	card_control.add_child(texture_rect)
+	# Размер текстуры равен размеру карты
+	texture_rect.custom_minimum_size = Vector2(card_width, card_height)
+	texture_rect.size = Vector2(card_width, card_height)
 	# -------------------------------------------------------
 
-	# Подключаем сигнал. Передаем сам control, чтобы потом менять его z_index
+	card_control.add_child(texture_rect)
+
+	# Подключаем сигнал
 	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data, card_control))
 	card_layer.add_child(card_control)
 	
-	# Возвращаем ссылку на созданный контрол (может пригодиться)
 	return card_control
 
 func _on_card_clicked(event, pile_name, card_data, card_node):
@@ -693,12 +831,15 @@ func _get_pile_under_mouse() -> String:
 	# Проверяем попадание
 	for slot_info in all_slots:
 		var node = slot_info["node"]
-		# Используем get_global_rect() для проверки попадания
 		var rect = node.get_global_rect()
 		
-		# ВАЖНО: Для Tableau расширим зону захвата вниз
+		# ВАЖНО: Для Tableau расширим зону захвата вниз до конца экрана
 		if slot_info["name"].begins_with("tableau"):
-			rect.size.y = 800 # Условно на весь экран вниз
+			# Получаем высоту видимой области экрана
+			var screen_height = get_viewport().get_visible_rect().size.y
+			# Новая высота = (Низ экрана) - (Верхняя граница слота)
+			# Это гарантирует, что зона захвата продлится до самого низа окна
+			rect.size.y = screen_height - rect.position.y
 		
 		if rect.has_point(mouse_pos):
 			return slot_info["name"]

@@ -55,6 +55,10 @@ layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
+[node name="LeftSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="StockSlot" type="Control" parent="Display/MainLayout/UpperRow"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -69,43 +73,42 @@ size_flags_vertical = 0
 
 [node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/WasteSlot"]
 
-[node name="HSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
-custom_minimum_size = Vector2(50, 0)
+[node name="MiddleSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="FoundationsGroup" type="HBoxContainer" parent="Display/MainLayout/UpperRow"]
-custom_minimum_size = Vector2(400, 150)
-layout_mode = 2
-
-[node name="Foundation0" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="Foundation0" type="Control" parent="Display/MainLayout/UpperRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation0"]
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/Foundation0"]
 
-[node name="Foundation1" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="Foundation1" type="Control" parent="Display/MainLayout/UpperRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation1"]
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/Foundation1"]
 
-[node name="Foundation2" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="Foundation2" type="Control" parent="Display/MainLayout/UpperRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation2"]
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/Foundation2"]
 
-[node name="Foundation3" type="Control" parent="Display/MainLayout/UpperRow/FoundationsGroup"]
+[node name="Foundation3" type="Control" parent="Display/MainLayout/UpperRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/FoundationsGroup/Foundation3"]
+[node name="CardLayer" type="Node2D" parent="Display/MainLayout/UpperRow/Foundation3"]
+
+[node name="RightSpacer" type="Control" parent="Display/MainLayout/UpperRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="LowerRow" type="HBoxContainer" parent="Display/MainLayout"]
 layout_mode = 2

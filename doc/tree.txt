@@ -14,6 +14,132 @@ COSIN-K/
 ├── gui
 │   ├── godot-client
 │   │   ├── assets
+│   │   │   ├── achievements
+│   │   │   │   ├── 500_wins.png
+│   │   │   │   ├── 500_wins.png.import
+│   │   │   │   ├── cards_100.png
+│   │   │   │   ├── cards_100.png.import
+│   │   │   │   ├── cards_1000.png
+│   │   │   │   ├── cards_1000.png.import
+│   │   │   │   ├── cards_10000.png
+│   │   │   │   ├── cards_10000.png.import
+│   │   │   │   ├── cards_100000.png
+│   │   │   │   ├── cards_100000.png.import
+│   │   │   │   ├── cards_million.png
+│   │   │   │   ├── cards_million.png.import
+│   │   │   │   ├── clubs_10.png
+│   │   │   │   ├── clubs_10.png.import
+│   │   │   │   ├── clubs_100.png
+│   │   │   │   ├── clubs_100.png.import
+│   │   │   │   ├── clubs_1000.png
+│   │   │   │   ├── clubs_1000.png.import
+│   │   │   │   ├── clubs_500.png
+│   │   │   │   ├── clubs_500.png.import
+│   │   │   │   ├── clubs_5000.png
+│   │   │   │   ├── clubs_5000.png.import
+│   │   │   │   ├── diamonds_10.png
+│   │   │   │   ├── diamonds_10.png.import
+│   │   │   │   ├── diamonds_100.png
+│   │   │   │   ├── diamonds_100.png.import
+│   │   │   │   ├── diamonds_1000.png
+│   │   │   │   ├── diamonds_1000.png.import
+│   │   │   │   ├── diamonds_500.png
+│   │   │   │   ├── diamonds_500.png.import
+│   │   │   │   ├── diamonds_5000.png
+│   │   │   │   ├── diamonds_5000.png.import
+│   │   │   │   ├── first_win.png
+│   │   │   │   ├── first_win.png.import
+│   │   │   │   ├── flipped_100.png
+│   │   │   │   ├── flipped_100.png.import
+│   │   │   │   ├── flipped_1000.png
+│   │   │   │   ├── flipped_1000.png.import
+│   │   │   │   ├── flipped_10000.png
+│   │   │   │   ├── flipped_10000.png.import
+│   │   │   │   ├── flipped_100000.png
+│   │   │   │   ├── flipped_100000.png.import
+│   │   │   │   ├── flipped_million.png
+│   │   │   │   ├── flipped_million.png.import
+│   │   │   │   ├── hearts_10.png
+│   │   │   │   ├── hearts_10.png.import
+│   │   │   │   ├── hearts_100.png
+│   │   │   │   ├── hearts_100.png.import
+│   │   │   │   ├── hearts_1000.png
+│   │   │   │   ├── hearts_1000.png.import
+│   │   │   │   ├── hearts_500.png
+│   │   │   │   ├── hearts_500.png.import
+│   │   │   │   ├── hearts_5000.png
+│   │   │   │   ├── hearts_5000.png.import
+│   │   │   │   ├── hundred_wins.png
+│   │   │   │   ├── hundred_wins.png.import
+│   │   │   │   ├── immortal.png
+│   │   │   │   ├── immortal.png.import
+│   │   │   │   ├── perfect_1.png
+│   │   │   │   ├── perfect_1.png.import
+│   │   │   │   ├── perfect_10.png
+│   │   │   │   ├── perfect_10.png.import
+│   │   │   │   ├── perfect_100.png
+│   │   │   │   ├── perfect_100.png.import
+│   │   │   │   ├── perfect_1000.png
+│   │   │   │   ├── perfect_1000.png.import
+│   │   │   │   ├── perfect_5000.png
+│   │   │   │   ├── perfect_5000.png.import
+│   │   │   │   ├── spades_10.png
+│   │   │   │   ├── spades_10.png.import
+│   │   │   │   ├── spades_100.png
+│   │   │   │   ├── spades_100.png.import
+│   │   │   │   ├── spades_1000.png
+│   │   │   │   ├── spades_1000.png.import
+│   │   │   │   ├── spades_500.png
+│   │   │   │   ├── spades_500.png.import
+│   │   │   │   ├── spades_5000.png
+│   │   │   │   ├── spades_5000.png.import
+│   │   │   │   ├── speed_1.png
+│   │   │   │   ├── speed_1.png.import
+│   │   │   │   ├── speed_2.png
+│   │   │   │   ├── speed_2.png.import
+│   │   │   │   ├── speed_3.png
+│   │   │   │   ├── speed_3.png.import
+│   │   │   │   ├── speed_4.png
+│   │   │   │   ├── speed_4.png.import
+│   │   │   │   ├── speed_5.png
+│   │   │   │   ├── speed_5.png.import
+│   │   │   │   ├── streak_10.png
+│   │   │   │   ├── streak_10.png.import
+│   │   │   │   ├── streak_100.png
+│   │   │   │   ├── streak_100.png.import
+│   │   │   │   ├── streak_5.png
+│   │   │   │   ├── streak_5.png.import
+│   │   │   │   ├── streak_50.png
+│   │   │   │   ├── streak_50.png.import
+│   │   │   │   ├── streak_500.png
+│   │   │   │   ├── streak_500.png.import
+│   │   │   │   ├── ten_wins.png
+│   │   │   │   └── ten_wins.png.import
+│   │   │   ├── backs
+│   │   │   │   ├── back_tally_ho.png
+│   │   │   │   ├── back_tally_ho.png.import
+│   │   │   │   ├── back_tally_ho_black.png
+│   │   │   │   ├── back_tally_ho_black.png.import
+│   │   │   │   ├── back_tally_ho_nologo.png
+│   │   │   │   ├── back_tally_ho_nologo.png.import
+│   │   │   │   ├── bicycle_magenta.png
+│   │   │   │   ├── bicycle_magenta.png.import
+│   │   │   │   ├── bicycle_magenta_square.png
+│   │   │   │   ├── bicycle_magenta_square.png.import
+│   │   │   │   ├── cyberpunk.png
+│   │   │   │   ├── cyberpunk.png.import
+│   │   │   │   ├── dark_fantasy.png
+│   │   │   │   ├── dark_fantasy.png.import
+│   │   │   │   ├── japan.png
+│   │   │   │   ├── japan.png.import
+│   │   │   │   ├── lines_dark.png
+│   │   │   │   ├── lines_dark.png.import
+│   │   │   │   ├── nature_dark.png
+│   │   │   │   ├── nature_dark.png.import
+│   │   │   │   ├── nature_light.png
+│   │   │   │   ├── nature_light.png.import
+│   │   │   │   ├── steampunk.png
+│   │   │   │   └── steampunk.png.import
 │   │   │   ├── cards
 │   │   │   ├── decks
 │   │   │   │   ├── classic
@@ -147,16 +273,132 @@ COSIN-K/
 │   │   │   │       ├── russian-1134-1.jpg.import
 │   │   │   │       ├── slavic-costumes.jpg
 │   │   │   │       └── slavic-costumes.jpg.import
-│   │   │   └── fonts
-│   │   │       ├── Preciosa.ttf
-│   │   │       ├── Preciosa.ttf.import
-│   │   │       ├── Romantica Antiqua.ttf
-│   │   │       └── Romantica Antiqua.ttf.import
+│   │   │   ├── fonts
+│   │   │   │   ├── Preciosa.ttf
+│   │   │   │   ├── Preciosa.ttf.import
+│   │   │   │   ├── Romantica Antiqua.ttf
+│   │   │   │   ├── Romantica Antiqua.ttf.import
+│   │   │   │   ├── dehinted-HandveticaNeue-Regular.ttf
+│   │   │   │   └── dehinted-HandveticaNeue-Regular.ttf.import
+│   │   │   └── textures
+│   │   │       ├── green_velvet.png
+│   │   │       └── green_velvet.png.import
 │   │   ├── debug_tree.gd
 │   │   ├── debug_tree.gd.uid
 │   │   ├── export_presets.cfg
 │   │   ├── icon.svg
 │   │   ├── icon.svg.import
+│   │   ├── images
+│   │   │   ├── textures
+│   │   │   │   ├── black_leather.jpg
+│   │   │   │   ├── black_leather.jpg.import
+│   │   │   │   ├── black_leather1.jpg
+│   │   │   │   ├── black_leather1.jpg.import
+│   │   │   │   ├── black_leather2.jpg
+│   │   │   │   ├── black_leather2.jpg.import
+│   │   │   │   ├── black_leather3.jpg
+│   │   │   │   ├── black_leather3.jpg.import
+│   │   │   │   ├── black_leather4.jpg
+│   │   │   │   ├── black_leather4.jpg.import
+│   │   │   │   ├── black_leather5.jfif
+│   │   │   │   ├── black_leather6.jpg
+│   │   │   │   ├── black_leather6.jpg.import
+│   │   │   │   ├── black_leather7.jfif
+│   │   │   │   ├── blue_denim.webp
+│   │   │   │   ├── blue_denim.webp.import
+│   │   │   │   ├── blue_denim2.jpg
+│   │   │   │   ├── blue_denim2.jpg.import
+│   │   │   │   ├── blue_denim3.jpg
+│   │   │   │   ├── blue_denim3.jpg.import
+│   │   │   │   ├── blue_denim4.webp
+│   │   │   │   ├── blue_denim4.webp.import
+│   │   │   │   ├── blue_denim5.jpg
+│   │   │   │   ├── blue_denim5.jpg.import
+│   │   │   │   ├── blue_denim6.jpeg
+│   │   │   │   ├── blue_denim6.jpeg.import
+│   │   │   │   ├── blue_leather.jpg
+│   │   │   │   ├── blue_leather.jpg.import
+│   │   │   │   ├── blue_leather1.jpg
+│   │   │   │   ├── blue_leather1.jpg.import
+│   │   │   │   ├── blue_leather2.jpg
+│   │   │   │   ├── blue_leather2.jpg.import
+│   │   │   │   ├── blue_leather3.jpg
+│   │   │   │   ├── blue_leather3.jpg.import
+│   │   │   │   ├── blue_ornament.jpg
+│   │   │   │   ├── blue_ornament.jpg.import
+│   │   │   │   ├── blue_velvet.jpg
+│   │   │   │   ├── blue_velvet.jpg.import
+│   │   │   │   ├── blue_velvet2.jpg
+│   │   │   │   ├── blue_velvet2.jpg.import
+│   │   │   │   ├── blue_velvet3.jpg
+│   │   │   │   ├── blue_velvet3.jpg.import
+│   │   │   │   ├── blue_velvet4.jpg
+│   │   │   │   ├── blue_velvet4.jpg.import
+│   │   │   │   ├── blue_velvet5.jpg
+│   │   │   │   ├── blue_velvet5.jpg.import
+│   │   │   │   ├── blue_velvet6.jfif
+│   │   │   │   ├── blue_velvet7.jpg
+│   │   │   │   ├── blue_velvet7.jpg.import
+│   │   │   │   ├── bordo_concrete.jpg
+│   │   │   │   ├── bordo_concrete.jpg.import
+│   │   │   │   ├── bordo_leather.jfif
+│   │   │   │   ├── bordo_leather1.jpg
+│   │   │   │   ├── bordo_leather1.jpg.import
+│   │   │   │   ├── bordo_leather2.jfif
+│   │   │   │   ├── bordo_leather3.jfif
+│   │   │   │   ├── bordo_leather4.jfif
+│   │   │   │   ├── brown_leather.jpg
+│   │   │   │   ├── brown_leather.jpg.import
+│   │   │   │   ├── brown_leather1.jpg
+│   │   │   │   ├── brown_leather1.jpg.import
+│   │   │   │   ├── brown_leather2.jpg
+│   │   │   │   ├── brown_leather2.jpg.import
+│   │   │   │   ├── brown_leather3.jpg
+│   │   │   │   ├── brown_leather3.jpg.import
+│   │   │   │   ├── green_2.webp
+│   │   │   │   ├── green_2.webp.import
+│   │   │   │   ├── green_abstract.jpg
+│   │   │   │   ├── green_abstract.jpg.import
+│   │   │   │   ├── green_army.jfif
+│   │   │   │   ├── green_billiard.jpg
+│   │   │   │   ├── green_billiard.jpg.import
+│   │   │   │   ├── green_cards.jpeg
+│   │   │   │   ├── green_cards.jpeg.import
+│   │   │   │   ├── green_fish.jfif
+│   │   │   │   ├── green_flanel.jpg
+│   │   │   │   ├── green_flanel.jpg.import
+│   │   │   │   ├── green_leather.jpg
+│   │   │   │   ├── green_leather.jpg.import
+│   │   │   │   ├── green_montgomery.jfif
+│   │   │   │   ├── green_nefrit.jfif
+│   │   │   │   ├── green_ornament.webp
+│   │   │   │   ├── green_ornament.webp.import
+│   │   │   │   ├── green_shovel.jfif
+│   │   │   │   ├── green_velvet.jfif
+│   │   │   │   ├── old_wood.jpg
+│   │   │   │   ├── old_wood.jpg.import
+│   │   │   │   ├── old_wood1.jpg
+│   │   │   │   ├── old_wood1.jpg.import
+│   │   │   │   ├── red_leather.jpg
+│   │   │   │   ├── red_leather.jpg.import
+│   │   │   │   ├── red_leather1.jpg
+│   │   │   │   ├── red_leather1.jpg.import
+│   │   │   │   ├── red_leather2.jpg
+│   │   │   │   ├── red_leather2.jpg.import
+│   │   │   │   ├── wood.jpeg
+│   │   │   │   ├── wood.jpeg.import
+│   │   │   │   ├── wood1.jpg
+│   │   │   │   ├── wood1.jpg.import
+│   │   │   │   ├── wood2.jpg
+│   │   │   │   ├── wood2.jpg.import
+│   │   │   │   ├── wood3.jpg
+│   │   │   │   ├── wood3.jpg.import
+│   │   │   │   ├── wood4.jpg
+│   │   │   │   └── wood4.jpg.import
+│   │   │   ├── window-horizontal.png
+│   │   │   ├── window-horizontal.png.import
+│   │   │   ├── window-horizontal1.png
+│   │   │   └── window-horizontal1.png.import
 │   │   ├── main_theme.tres
 │   │   ├── project.godot
 │   │   └── scenes
@@ -215,6 +457,7 @@ COSIN-K/
 │   │   └── stats_api.py
 │   ├── data
 │   │   ├── __init__.py
+│   │   ├── patience.db
 │   │   └── schema.py
 │   ├── database.py
 │   ├── events
@@ -223,6 +466,7 @@ COSIN-K/
 │   ├── models.py
 │   ├── repositories
 │   │   ├── __init__.py
+│   │   ├── achievement_repository.py
 │   │   ├── base_repository.py
 │   │   ├── game_repository.py
 │   │   ├── player_repository.py
