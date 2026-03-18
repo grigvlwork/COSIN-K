@@ -257,6 +257,15 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             self._send_response({'success': True, 'saves': saves, 'count': len(saves)})
             return
 
+        if parsed.path == '/player/achievements/album':  # <--- Новый путь
+            player_id = query.get('player_id', [None])[0]
+            if not player_id:
+                self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
+                return
+            achievements_data = self.stats_api.get_achievements_album(player_id)
+            self._send_response(achievements_data)
+            return
+
         self._send_response({'success': False, 'error': f'Unknown path: {parsed.path}'}, 404)
 
     def do_POST(self):

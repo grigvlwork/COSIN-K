@@ -396,6 +396,84 @@ class StatsService:
                 self.player_achievement_repo.update_progress(player_id, ach.id, current_progress, False)
 
         return newly_unlocked
+
+    # ... внутри класса StatsService ...
+
+    def get_achievement_album(self, player_id: str) -> List[Dict[str, Any]]:
+        """
+        Возвращает список достижений для альбома.
+        Логика: Показывать полученные + следующую цель в каждой категории.
+        Остальные скрывать.
+        """
+        all_achievements = self.achievement_repo.get_all()
+        player_progress = self.player_achievement_repo.get_by_player(player_id)
+        progress_map = {pa.achievement_id: pa for pa in player_progress}
+
+        # Группируем по типу условия (цепочки прогресса)
+        # Используем standard библиотеку itertools
+        from itertools import groupby
+
+        # Сортируем обязательно перед группировкой: сначала по типу, потом по сложности (target)
+        all_achievements.sort(key=lambda x: (x.condition_type, x.target))
+
+        visible_achievements = []
+
+        for condition_type, group in groupby(all_achievements, key=lambda x: x.condition_type):
+            chain = list(group)  # Превращаем итератор в список
+
+            # Определяем, сколько достижений в этой цепочке мы покажем
+            # Логика: идем по цепочке, пока не встретим первое НЕ полученное.
+            # Его тоже показываем (как цель). Остальные после него скрываем.
+            found_locked_goal = False
+
+            for ach in chain:
+                pa = progress_map.get(ach.id)
+                is_unlocked = pa.unlocked if pa else False
+
+                if is_unlocked:
+                    # 1. Достижение получено -> Показываем (полноцветное)
+                    item = self._prepare_ach_item(ach, pa, is_unlocked=True, is_secret=False)
+                    visible_achievements.append(item)
+                elif not found_locked_goal:
+                    # 2. Первое не полученное в цепочке -> Показываем (как цель/заглушку)
+                    item = self._prepare_ach_item(ach, pa, is_unlocked=False, is_secret=False)
+                    visible_achievements.append(item)
+                    found_locked_goal = True  # Следующие в этой цепочке уже не показываем
+                else:
+                    # 3. Остальные (будущие уровни) -> Пропускаем (скрыты)
+                    pass
+
+        # Сортируем результат для красивого вывода (например, сначала Победы, потом Масти)
+        # Можно добавить поле 'sort_order' в Achievement, пока просто по ID или категории
+        visible_achievements.sort(key=lambda x: x.get('category', 'z'))
+
+        return visible_achievements
+
+    def _prepare_ach_item(self, ach: Achievement, pa: Optional[Any], is_unlocked: bool, is_secret: bool) -> Dict:
+        """Вспомогательный метод для формирования словаря достижения."""
+        progress_val = pa.progress if pa else 0
+
+        # Для секретных достижений скрываем название, если не получено
+        if is_secret and not is_unlocked:
+            name = "???"
+            desc = "Секретное достижение"
+        else:
+            name = ach.name
+            desc = ach.description
+
+        return {
+            'id': ach.id,
+            'name': name,
+            'description': desc,
+            'category': ach.category,
+            'condition_type': ach.condition_type,
+            'icon': ach.icon,  # Имя файла иконки
+            'target': ach.target,
+            'progress': progress_val,
+            'unlocked': is_unlocked,
+            'is_secret': is_secret
+        }
+
     # ===== Работа с сохранёнными играми =====
 
     def save_game(self, player_id: str, game_type: str,

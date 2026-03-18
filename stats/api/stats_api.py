@@ -325,6 +325,18 @@ class StatsAPI:
             'unlocked_count': sum(1 for x in result_list if x['unlocked'])
         }
 
+    def get_achievements_album(self, player_id: str) -> Dict[str, Any]:
+        """Получить достижения для режима 'Альбом' (только видимые)."""
+        visible_list = self.stats.get_achievement_album(player_id)
+
+        # Возвращаем в том же формате, что и раньше, для совместимости
+        return {
+            'success': True,
+            'achievements': visible_list,
+            'total_count': len(visible_list),
+            'unlocked_count': sum(1 for x in visible_list if x['unlocked'])
+        }
+
     # ===== АДМИНИСТРИРОВАНИЕ =====
 
     def delete_autosave(self, player_id: str, game_type: str) -> Dict[str, Any]:

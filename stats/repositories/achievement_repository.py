@@ -5,6 +5,7 @@ from typing import Optional, List, Dict, Any
 from stats.models import Achievement, PlayerAchievement
 from stats.repositories.base_repository import BaseRepository
 from stats.data import connection_context
+from datetime import datetime
 
 
 class AchievementRepository(BaseRepository[Achievement]):
@@ -129,8 +130,7 @@ class PlayerAchievementRepository(BaseRepository[PlayerAchievement]):
             'unlocked': unlocked
         }
         if unlocked:
-            from datetime import datetime
-            update_data['unlocked_at'] = datetime.now().isoformat()
+            update_data['unlocked_at'] = datetime.now()
 
         if existing:
             return self.update(existing.id, update_data)
