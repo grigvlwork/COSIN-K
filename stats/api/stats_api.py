@@ -76,23 +76,19 @@ class StatsAPI:
                    variant: str = "standard", seed: Optional[int] = None) -> Dict[str, Any]:
         """
         Начать новую игру.
-
-        Args:
-            seed: Сид генерации (если переигрываем)
         """
         if game_type == "klondike" and variant == "draw-three":
             stats_game_type = "klondike_3"
         else:
             stats_game_type = game_type
 
-        # Передаем сид в сервис
         game_id = self.stats.start_game(player_id, stats_game_type, seed=seed)
 
         if game_id:
             self._active_games[game_id] = {
                 'player_id': player_id,
                 'game_type': stats_game_type,
-                'seed': seed,  # Сохраняем сид в сессии API
+                'seed': seed,
                 'started_at': datetime.now(),
                 'moves': 0,
                 'undos': 0,
@@ -105,7 +101,7 @@ class StatsAPI:
                 'game_id': game_id,
                 'game_type': game_type,
                 'variant': variant,
-                'seed': seed,  # Возвращаем сид клиенту
+                'seed': seed,
                 'message': f'Игра {game_type} начата'
             }
 
@@ -115,8 +111,8 @@ class StatsAPI:
                  moves: int = 0, game_type: str = "klondike",
                  suits_completed: Optional[List[str]] = None,
                  was_perfect: bool = False,
-                 cards_moved: int = 0,      # <--- ДОБАВЛЕНО
-                 cards_flipped: int = 0     # <--- ДОБАВЛЕНО
+                 cards_moved: int = 0,
+                 cards_flipped: int = 0
                  ) -> Dict[str, Any]:
 
         print(f"\n=== StatsAPI.end_game ===")
@@ -125,7 +121,6 @@ class StatsAPI:
         session = self._active_games.pop(game_id, {})
         total_moves = moves or session.get('moves', 0)
 
-        # Завершаем игру через сервис
         end_result = self.stats.end_game(
             game_id=game_id,
             result=result,
@@ -187,17 +182,9 @@ class StatsAPI:
                   seed: Optional[int] = None,
                   save_type: str = 'autosave',
                   description: str = '') -> Dict[str, Any]:
-        """
-        Сохранить игру.
-
-        Args:
-            seed: Сид текущей игры
-        """
         score = game_state.get('score', 0)
         moves = game_state.get('moves_count', 0)
         time_elapsed = game_state.get('time_elapsed', 0)
-
-        print(f"📊 Сохраняем игру: score={score}, seed={seed}")
 
         saved_id = self.stats.save_game(
             player_id=player_id,
@@ -283,59 +270,54 @@ class StatsAPI:
 
     def get_achievements(self, player_id: str) -> Dict[str, Any]:
         """
-        Получить список достижений игрока.
+        Получить полный список достижений игрока (для совместимости).
         Скрывает название/описание для секретных (не полученных) достижений.
         """
-        all_achievements = self.stats.achievement_repo.get_all()
-        player_progress = self.stats.player_achievement_repo.get_by_player(player_id)
-        progress_map = {pa.achievement_id: pa for pa in player_progress}
+        # Используем старый метод сервиса для полного списка, если он нужен
+        # Или адаптируем новый. Пока оставим старую реализацию через сервис,
+        # если она там есть, или делаем заглушку/адаптер.
+        # В stats_service мы переработали логику, но для обычного списка
+        # можно использовать get_achievement_album, он фильтрует.
+        # Если нужен именно ПОЛНЫЙ список (даже скрытые), нужен другой метод.
+        # Сейчас просто вернем данные из нового метода, так как они полнее.
 
-        result_list = []
-        for ach in all_achievements:
-            pa = progress_map.get(ach.id)
-            is_unlocked = pa.unlocked if pa else False
+        # Внимание: get_achievement_album скрывает будущие достижения.
+        # Если клиенту нужен строго полный список (например, для админки),
+        # нужен отдельный метод. Но для игры обычно нужен альбом.
 
-            item = {
-                'id': ach.id,
-                'icon': ach.icon,
-                'category': ach.category,
-                'unlocked': is_unlocked,
-                'progress': pa.progress if pa else 0,
-                'target': ach.target
-            }
-
-            if is_unlocked or not ach.is_hidden:
-                item['name'] = ach.name
-                item['description'] = ach.description
-            else:
-                item['name'] = "???"
-                item['description'] = "Секретное достижение"
-
-            if is_unlocked and pa.unlocked_at:
-                item['unlocked_at'] = pa.unlocked_at.isoformat()
-            else:
-                item['unlocked_at'] = None
-
-            result_list.append(item)
-
+        # Реализуем через get_album_info для консистентности данных (tier, date)
+        data = self.stats.get_album_info(player_id)
         return {
             'success': True,
-            'achievements': result_list,
-            'total_count': len(all_achievements),
-            'unlocked_count': sum(1 for x in result_list if x['unlocked'])
+            'achievements': data.get('achievements', []),
+            'total_count': len(data.get('achievements', [])),
+            'unlocked_count': sum(1 for x in data.get('achievements', []) if x['unlocked'])
         }
 
     def get_achievements_album(self, player_id: str) -> Dict[str, Any]:
-        """Получить достижения для режима 'Альбом' (только видимые)."""
-        visible_list = self.stats.get_achievement_album(player_id)
+        """
+        Специальный метод для окна Альбома.
+        Возвращает отфильтрованный список (полученные + 1 цель),
+        доступные скины и текущий выбор.
+        """
+        return self.stats.get_album_info(player_id)
 
-        # Возвращаем в том же формате, что и раньше, для совместимости
-        return {
-            'success': True,
-            'achievements': visible_list,
-            'total_count': len(visible_list),
-            'unlocked_count': sum(1 for x in visible_list if x['unlocked'])
-        }
+    # ===== КОСМЕТИКА (НАСТРОЙКИ) =====
+
+    def get_cosmetics(self, player_id: str) -> Dict[str, Any]:
+        """Получить настройки внешнего вида игрока."""
+        return self.stats.get_cosmetics(player_id)
+
+    def set_cosmetic(self, player_id: str, key: str, value: str) -> Dict[str, Any]:
+        """
+        Установить настройку внешнего вида.
+        key: 'album_skin', 'deck_back' и т.д.
+        value: ID скина ('wood', 'classic' и т.д.)
+        """
+        success = self.stats.set_cosmetic(player_id, key, value)
+        if success:
+            return {'success': True, 'message': 'Настройка сохранена'}
+        return {'success': False, 'error': 'Ошибка сохранения'}
 
     # ===== АДМИНИСТРИРОВАНИЕ =====
 

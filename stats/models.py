@@ -49,6 +49,10 @@ class Player:
     fastest_win_seconds: Optional[int] = None
     slowest_win_seconds: Optional[int] = None
 
+    # НАСТРОЙКИ ВИДА (КОСМЕТИКА)
+    # Хранит словарь: {"deck": "classic", "back": "blue", "table": "wood", "album_skin": "classic"}
+    cosmetics: Dict[str, Any] = field(default_factory=dict)
+
     # Служебные
     version: int = 1
 
@@ -78,6 +82,9 @@ class Player:
         for key, value in self.__dict__.items():
             if isinstance(value, datetime):
                 result[key] = value.isoformat() if value else None
+            elif key == 'cosmetics' and isinstance(value, dict):
+                # Превращаем словарь косметики в JSON-строку
+                result[key] = json.dumps(value)
             else:
                 result[key] = value
         return result
@@ -90,6 +97,15 @@ class Player:
             data['created_at'] = datetime.fromisoformat(data['created_at'])
         if 'last_played' in data and isinstance(data['last_played'], str):
             data['last_played'] = datetime.fromisoformat(data['last_played']) if data['last_played'] else None
+
+        # Преобразуем JSON-строку косметики в словарь
+        if 'cosmetics' in data and isinstance(data['cosmetics'], str):
+            try:
+                data['cosmetics'] = json.loads(data['cosmetics'])
+            except json.JSONDecodeError:
+                data['cosmetics'] = {}  # Fallback if JSON is corrupt
+        elif 'cosmetics' not in data:
+            data['cosmetics'] = {}
 
         return cls(**data)
 
@@ -288,7 +304,7 @@ class Achievement:
             id=data['id'],
             name=data['name'],
             description=data['description'],
-            icon=data.get('icon', data['id']), # Если в БД пусто, берем id
+            icon=data.get('icon', data['id']),  # Если в БД пусто, берем id
             category=data.get('category', 'general'),
             target=data.get('target', 1),
             condition_type=data.get('condition_type', ''),
@@ -306,6 +322,7 @@ class Achievement:
             'condition_type': self.condition_type,
             'is_hidden': self.is_hidden
         }
+
 
 @dataclass
 class PlayerAchievement:

@@ -24,8 +24,66 @@
 </task>
 </task>
 <task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-13 09:25:39.362000" status="1" subject="Ближнее планирование">
-<task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" expandedContexts="('taskviewer',)" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-03-13 11:45:41.723000" status="1" subject="Учет достижений">
-<task actualstartdate="2026-03-13 11:43:51.170000" creationDateTime="2026-03-13 11:43:29.543000" id="2e924970-1e97-11f1-8aad-db6bae543b37" modificationDateTime="2026-03-13 11:43:51.170000" status="1" subject="БД">
+<task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" expandedContexts="('taskviewer',)" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-03-19 09:22:33.445000" status="1" subject="Учет достижений">
+<task actualstartdate="2026-03-13 11:44:19.209000" creationDateTime="2026-03-13 11:44:05.941000" id="44442e4f-1e97-11f1-995b-db6bae543b37" modificationDateTime="2026-03-19 09:18:05.608000" status="1" subject="Модели данных">
+<description>
+Нужно подготовить класс Player к работе с JSON-настройками.
+
+Задача: Добавить поле cosmetics (словарь).
+Задача: Убедиться, что методы to_dict и from_dict корректно сериализуют этот словарь в JSON-строку и обратно.
+
+</description>
+</task>
+<task actualstartdate="2026-03-13 11:44:43.788000" creationDateTime="2026-03-13 11:44:24.076000" id="4f135cc0-1e97-11f1-9971-db6bae543b37" modificationDateTime="2026-03-19 09:18:26.964000" status="1" subject="Репозитории">
+<description>
+Задача: Убедиться, что метод update может сохранять поле cosmetics в БД. Так как мы используем to_dict для генерации SQL, это должно заработать автоматически, но нужно проверить.
+</description>
+</task>
+<task actualstartdate="2026-03-19 09:21:48.748000" creationDateTime="2026-03-13 11:45:18.674000" id="6f9e5b21-1e97-11f1-97de-db6bae543b37" modificationDateTime="2026-03-19 09:22:06.029000" prerequisites="ee442f30-2339-11f1-9221-db6bae543b37" status="1" subject="API">
+<description>
+Связующее звено между сервисом и Godot.
+
+Задача 4.1: Метод get_achievements_album(player_id).
+Вызывает stats_service.get_album_info.
+Возвращает JSON для Godot.
+Задача 4.2: Методы для косметики.
+get_cosmetics(player_id)
+set_cosmetic(player_id, key, value)
+</description>
+</task>
+<task creationDateTime="2026-03-13 11:45:41.723000" id="7d5b5ab0-1e97-11f1-ae50-db6bae543b37" modificationDateTime="2026-03-13 11:45:53.844000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Клиент Godot ">
+<description>
+Финальная визуализация.
+
+Изменить структуру вкладки достижений (добавить ScrollContainer и VBoxContainer, как обсуждали).
+Написать функцию создания карточки (_create_achievement_card), которая показывает прогресс-бар и иконку.
+</description>
+</task>
+<task actualstartdate="2026-03-19 09:21:39.891000" creationDateTime="2026-03-19 09:18:34.275000" id="ee442f30-2339-11f1-9221-db6bae543b37" modificationDateTime="2026-03-19 09:21:39.890000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Сервис статистики">
+<description>
+Задача 3.1: Реализовать метод get_achievement_album(player_id).
+Получить все шаблоны достижений.
+Получить прогресс игрока.
+Группировка: Сгруппировать достижения по condition_type (цепочки).
+Сортировка: Внутри каждой группы отсортировать по target (от легкого к сложному).
+Фильтрация (Логика "Растущего альбома"):
+Если достижение получено -&gt; добавляем в список.
+Если достижение не получено, но предыдущее в цепочке получено -&gt; добавляем в список (это "Карта-цель").
+Остальные (будущие) -&gt; скрываем.
+Назначение Редкости (Tier):
+Определять tier_name ("bronze", "silver", "gold", "diamond", "cosmos") на основе порядкового номера в цепочке (индекс 0..4).
+Формирование ответа: Вернуть список словарей с полями: id, name, description, icon, progress, target, unlocked, unlocked_at, tier_name, category.
+Задача 3.2: Реализовать логику Косметики (Cosmetics).
+Добавить словарь ALBUM_SKIN_REWARDS (какие достижения дают какие скины).
+Метод get_cosmetics(player_id): Возвращает текущие настройки.
+Метод set_cosmetic(player_id, key, value): Обновляет настройку в player.cosmetics.
+Метод get_album_info(player_id): Объединяет данные достижений и доступных скинов (для окна альбома).
+</description>
+</task>
+</task>
+</task>
+<task creationDateTime="2026-03-05 13:16:51.956000" id="e690f95e-185a-11f1-8df2-ce7a14ba6107" modificationDateTime="2026-03-19 09:22:33.445000" status="1" subject="Готово">
+<task creationDateTime="2026-03-13 11:43:29.543000" id="2e924970-1e97-11f1-8aad-db6bae543b37" modificationDateTime="2026-03-13 11:43:51.170000" prerequisites="ee442f30-2339-11f1-9221-db6bae543b37" status="1" subject="БД">
 <description>
 Таблица achievements (Шаблоны достижений)
 Здесь хранятся "правила" игры. Заполняется один раз при установке.
@@ -36,59 +94,6 @@
 
 </description>
 </task>
-<task actualstartdate="2026-03-13 11:44:19.209000" creationDateTime="2026-03-13 11:44:05.941000" id="44442e4f-1e97-11f1-995b-db6bae543b37" modificationDateTime="2026-03-13 11:44:19.209000" status="1" subject="Модели данных">
-<description>
-Нужно добавить классы для работы с новыми таблицами.
-
-Класс Achievement: описывает одно достижение из шаблона.
-Класс PlayerAchievement: описывает состояние достижения (прогресс).
-</description>
-</task>
-<task actualstartdate="2026-03-13 11:44:43.788000" creationDateTime="2026-03-13 11:44:24.076000" id="4f135cc0-1e97-11f1-9971-db6bae543b37" modificationDateTime="2026-03-13 11:44:43.788000" status="1" subject="Репозитории">
-<description>
-Слой доступа к данным. Нам понадобятся методы:
-
-get_all_achievements(): Получить список всех возможных достижений.
-get_player_achievements(player_id): Получить список достижений игрока (с прогрессом).
-init_achievements(): Метод для первичного заполнения таблицы achievements (чтобы не вставлять SQL вручную).
-update_progress(player_id, achievement_id, new_progress): Обновить прогресс.
-</description>
-</task>
-<task actualstartdate="2026-03-13 11:45:10.692000" creationDateTime="2026-03-13 11:44:55.665000" id="61e7760f-1e97-11f1-adee-db6bae543b37" modificationDateTime="2026-03-13 11:45:10.691000" status="1" subject="Бизнес-логика">
-<description>
-Это самый важный этап. Нужно связать игру и достижения.
-
-Метод init_achievements_on_startup(): Вызывать при старте сервера, чтобы создать все достижения в БД, если их там нет.
-Метод check_and_update_achievements(player_id, game_result): Вызывать его в конце игры (в методе end_game).
-Логика:
-Получить все шаблоны достижений.
-Для каждого шаблона проверить условие:
-Для счетчиков (победы, игры): Брать значение из таблицы players (например, games_won) и сравнивать с target_value.
-Для разовых (скорость, ходы): Смотреть на данные конкретной партии (game_result).
-Если условие выполнено -&gt; обновить progress и выставить unlocked = True.
-Если достижение уже получено -&gt; пропускать.
-</description>
-</task>
-<task actualstartdate="2026-03-13 11:45:32.052000" creationDateTime="2026-03-13 11:45:18.674000" id="6f9e5b21-1e97-11f1-97de-db6bae543b37" modificationDateTime="2026-03-13 11:45:32.052000" status="1" subject="API">
-<description>
-Добавить точку входа для клиента.
-
-Метод get_achievements:
-Принимает player_id.
-Возвращает список достижений, где для скрытых (не полученных) достижений название и описание заменены на "???".
-</description>
-</task>
-<task actualstartdate="2026-03-13 11:45:53.845000" creationDateTime="2026-03-13 11:45:41.723000" id="7d5b5ab0-1e97-11f1-ae50-db6bae543b37" modificationDateTime="2026-03-13 11:45:53.844000" status="1" subject="Клиент Godot ">
-<description>
-Финальная визуализация.
-
-Изменить структуру вкладки достижений (добавить ScrollContainer и VBoxContainer, как обсуждали).
-Написать функцию создания карточки (_create_achievement_card), которая показывает прогресс-бар и иконку.
-</description>
-</task>
-</task>
-</task>
-<task creationDateTime="2026-03-05 13:16:51.956000" id="e690f95e-185a-11f1-8df2-ce7a14ba6107" modificationDateTime="2026-03-13 09:25:39.362000" status="1" subject="Готово">
 <task actualstartdate="2026-03-10 14:11:07.987000" completiondate="2026-03-11 10:58:46.700000" creationDateTime="2026-03-10 14:10:49.193000" id="442c9591-1c50-11f1-b4bf-ce7a14ba6107" modificationDateTime="2026-03-11 10:58:46.700000" percentageComplete="100" status="1" subject="Сохранение сида в базе" />
 <task completiondate="2026-03-13 09:25:36.183000" creationDateTime="2026-02-27 08:55:48.054000" expandedContexts="('taskviewer',)" id="6fac675e-137f-11f1-aaed-ce7a14ba6107" modificationDateTime="2026-03-13 09:25:36.182000" percentageComplete="100" status="1" subject="Перемещение карт">
 <task actualstartdate="2026-02-27 08:56:26.784000" completiondate="2026-03-13 09:25:36.183000" creationDateTime="2026-02-27 08:56:10.766000" id="7d35fae1-137f-11f1-b810-ce7a14ba6107" modificationDateTime="2026-02-27 08:56:26.783000" percentageComplete="100" status="1" subject="Drag &amp; Drop карт" />

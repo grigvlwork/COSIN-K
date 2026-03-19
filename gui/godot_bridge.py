@@ -11,7 +11,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import uuid
-import random  # <-- Добавлено для генерации сида
+import random
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -86,7 +86,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             print(f"📦 [{session_id}] Создана игра: {variant}")
 
             engine = SolitaireEngine(rules)
-            # Не вызываем new_game здесь, вызовем позже с сидом
 
             self.games[session_id] = engine
             engine._game_variant = game_variant
@@ -147,6 +146,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
         session_id = self._get_session_id()
         query = parse_qs(parsed.query)
 
+        # ===== ИДЕНТИФИКАЦИЯ =====
         if parsed.path == '/player/identity':
             player_id = query.get('player_id', [None])[0]
             if player_id:
@@ -159,6 +159,36 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             else:
                 result = self.stats_api.init_client()
                 self._send_response(result)
+            return
+
+        # ===== НОВЫЙ МАРШРУТ: АЛЬБОМ ДОСТИЖЕНИЙ =====
+        if parsed.path == '/player/achievements/album':
+            player_id = query.get('player_id', [None])[0]
+            if not player_id:
+                self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
+                return
+            data = self.stats_api.get_achievements_album(player_id)
+            self._send_response(data)
+            return
+
+        # ===== СТАРЫЙ МАРШРУТ: СПИСОК ДОСТИЖЕНИЙ (для совместимости) =====
+        if parsed.path == '/player/achievements':
+            player_id = query.get('player_id', [None])[0]
+            if not player_id:
+                self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
+                return
+            achievements_data = self.stats_api.get_achievements(player_id)
+            self._send_response(achievements_data)
+            return
+
+        # ===== НОВЫЙ МАРШРУТ: КОСМЕТИКА (GET) =====
+        if parsed.path == '/player/cosmetics':
+            player_id = query.get('player_id', [None])[0]
+            if not player_id:
+                self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
+                return
+            data = self.stats_api.get_cosmetics(player_id)
+            self._send_response(data)
             return
 
         if parsed.path == '/variants':
@@ -230,16 +260,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             self._send_response(stats)
             return
 
-        if parsed.path == '/player/achievements':
-            player_id = query.get('player_id', [None])[0]
-            if not player_id:
-                self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
-                return
-            # Вызываем метод API, который мы видели в stats_api.py
-            achievements_data = self.stats_api.get_achievements(player_id)
-            self._send_response(achievements_data)
-            return
-
         if parsed.path == '/leaderboard':
             criterion = query.get('by', ['games_won'])[0]
             limit = int(query.get('limit', [10])[0])
@@ -257,15 +277,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             self._send_response({'success': True, 'saves': saves, 'count': len(saves)})
             return
 
-        if parsed.path == '/player/achievements/album':  # <--- Новый путь
-            player_id = query.get('player_id', [None])[0]
-            if not player_id:
-                self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
-                return
-            achievements_data = self.stats_api.get_achievements_album(player_id)
-            self._send_response(achievements_data)
-            return
-
         self._send_response({'success': False, 'error': f'Unknown path: {parsed.path}'}, 404)
 
     def do_POST(self):
@@ -280,6 +291,31 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 command = json.loads(post_data.decode('utf-8'))
             except:
                 pass
+
+        # ===== НОВЫЙ МАРШРУТ: СОХРАНЕНИЕ КОСМЕТИКИ =====
+        if parsed.path == '/player/cosmetic':
+            player_id = command.get('player_id')
+            key = command.get('key')
+            value = command.get('value')
+
+            if not player_id or not key or not value:
+                self._send_response({'success': False, 'error': 'Missing data'}, 400)
+                return
+
+            result = self.stats_api.set_cosmetic(player_id, key, value)
+            self._send_response(result)
+            return
+
+        # ===== СМЕНА ИМЕНИ =====
+        if parsed.path == '/player/rename':
+            player_id = command.get('player_id')
+            new_name = command.get('new_name')
+            if not player_id or not new_name:
+                self._send_response({'success': False, 'error': 'Missing data'}, 400)
+                return
+            result = self.stats_api.rename_player(player_id, new_name)
+            self._send_response(result)
+            return
 
         # ===== СОХРАНЕНИЕ ИГРЫ =====
         if parsed.path == '/save':
@@ -296,14 +332,13 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             engine.update_play_time(time_elapsed)
             state_dict = engine.state.to_dict()
 
-            # Извлекаем сид из движка (он должен там быть)
             current_seed = getattr(engine, '_seed', None)
 
             result = self.stats_api.save_game(
                 player_id=player_id,
                 game_type=game_type,
                 game_state=state_dict,
-                seed=current_seed,  # Сохраняем сид
+                seed=current_seed,
                 save_type='autosave'
             )
             self._send_response(result)
@@ -333,10 +368,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': False, 'error': 'Failed to create engine'}, 500)
                 return
 
-            # Восстанавливаем состояние
             state_dict = save_data['game_state']
 
-            # Восстанавливаем сид в движок
             loaded_seed = save_data.get('seed')
             engine._seed = loaded_seed
 
@@ -353,7 +386,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     'moves': engine.state.moves_count,
                     'time': engine.state.time_elapsed,
                     'saved_game_id': save_id,
-                    'seed': loaded_seed  # Возвращаем сид клиенту
+                    'seed': loaded_seed
                 })
             else:
                 self._send_response({'success': False, 'error': 'Failed to restore state'}, 500)
@@ -393,7 +426,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             variant = command.get('variant', 'klondike')
             player_id = command.get('player_id')
             force_new = command.get('force_new', False)
-            request_seed = command.get('seed')  # Получаем сид (если переигровка)
+            request_seed = command.get('seed')
 
             print(f"📥 [{session_id}] Запрос /new для {variant}. Seed: {request_seed}")
 
@@ -415,12 +448,9 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             engine = self._create_engine(session_id, variant)
 
             if engine:
-                # Генерация сида
                 final_seed = request_seed if request_seed is not None else random.randint(0, 999999999)
 
-                # Инициализация игры с сидом
                 engine.new_game(seed=final_seed)
-                # Сохраняем сид внутри движка для доступа при /save
                 engine._seed = final_seed
 
                 game_id = None
@@ -436,7 +466,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     'state': engine.state,
                     'score': 0,
                     'moves': 0,
-                    'seed': final_seed  # Отправляем сид клиенту
+                    'seed': final_seed
                 }
                 if game_id:
                     response_data['game_id'] = game_id
@@ -495,16 +525,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': True, 'game_completed': True, 'result': result_str})
             return
 
-        if parsed.path == '/player/rename':
-            player_id = command.get('player_id')
-            new_name = command.get('new_name')
-            if not player_id or not new_name:
-                self._send_response({'success': False, 'error': 'Missing data'}, 400)
-                return
-            result = self.stats_api.rename_player(player_id, new_name)
-            self._send_response(result)
-            return
-
         # ===== ИГРОВЫЕ ДЕЙСТВИЯ =====
         engine = self._get_engine(session_id)
         game_id = self._get_game_id(session_id)
@@ -547,8 +567,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     game_type="klondike",
                     suits_completed=self._get_suits_completed(engine.state),
                     was_perfect=self._check_perfect_game(engine, engine.state),
-                    cards_moved = engine.cards_moved_count,
-                    cards_flipped = engine.cards_flipped_count,
+                    cards_moved=engine.cards_moved_count,
+                    cards_flipped=engine.cards_flipped_count,
                 )
             self._send_response({
                 'success': success,
@@ -682,18 +702,15 @@ def start_server(host='127.0.0.1', port=8080):
     print("🎮 Solitaire Engine Server")
     print("=" * 50)
 
-    # 1. Инициализация БД
     print("📊 База данных: Проверка...")
     init_database()
     print("✅ База данных: Готова")
 
-    # 2. Инициализация API и Статистики (ОДИН РАЗ)
     print("🏆 Достижения: Инициализация...")
     GodotBridgeHandler.stats_api = StatsAPI(storage_path="./stats_data")
     GodotBridgeHandler.stats_api.stats.init_achievements_on_startup()
     print("✅ Статистика и достижения: Готовы")
 
-    # Вывод информации
     print(f"📡 Сервер: http://{host}:{port}")
     print(f"🆔 Режим: Мультисессионный")
     print(f"🎲 Игры:   {', '.join(GameFactory.available_games())}")
@@ -715,6 +732,7 @@ def start_server(host='127.0.0.1', port=8080):
     except KeyboardInterrupt:
         print("\n👋 Сервер остановлен")
         server.server_close()
+
 
 if __name__ == "__main__":
     import argparse
