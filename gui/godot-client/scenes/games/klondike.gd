@@ -15,6 +15,10 @@ var current_game_id = null	  # ID игры от сервера
 var current_seed = 0          # Переменная для хранения сида
 var is_first_win = true	      # Переменная для хранения статуса победы
 var is_replay_mode = false
+var is_animating = false      # Флаг, что идет анимация (чтобы не кликать лишнего)
+var pending_action_context = {} # Данные о текущем действии для анимации
+var shadow_material = null # Кэшированный материал для теней
+
 # ===== DRAG AND DROP =====
 var is_dragging = false
 var drag_source_pile = ""
@@ -262,69 +266,103 @@ func _on_request_completed(result, response_code, headers, body):
 
 	if error == OK:
 		var data = json.data
+		
+		# === ПРОВЕРКА УСПЕШНОСТИ ===
 		if data.has("success"):
+			
 			if data["success"] == true:
-				# === Успешный ответ ===
-
-				# 1. Создана новая игра
-				if last_request_type == "new":
-					print("✅ Новая игра создана")
-					if data.has("state"):
-						game_state = data.state
-						current_game_id = data.get("game_id")
-						
-						# === ИСПРАВЛЕНИЕ: Поиск сида ===
-						# 1. Сначала ищем сид в корне ответа (сервера обычно шлют его тут)
-						var received_seed = data.get("seed", 0)
-						
-						# 2. Если в корне нет, ищем внутри state
-						if received_seed == 0 and game_state.has("seed"):
-							received_seed = game_state.get("seed", 0)
-						
-						current_seed = received_seed
-						print("📝 Получен сид: ", current_seed)
-						# ================================
-						
-						update_ui()
-						update_layout()
-					return
+				# --- УСПЕШНЫЙ ХОД ---
 				
-				# 2. Сдача (Abandon)
-				if last_request_type == "abandon":
-					print("🏳️ Игра сдана")
-					return
-				
-				# 3. Ход / Отмена / Взятие карты
+				# 1. Обновляем данные
 				if data.has("state") and data["state"] != null:
-					var game_won = data.get("game_won", false)
 					game_state = data["state"]
+				
+				# 2. Запуск таймера (при первом ходе)
+				if not first_move_made and (last_request_type == "draw" or last_request_type == "auto_move" or last_request_type == "manual_move"):
+					first_move_made = true
+					timer_active = true
+					is_game_active = true
+
+				# 3. Логика Победы
+				var game_won = data.get("game_won", false)
+				if game_won:
+					is_first_win = data.get("is_first_win", true)
 					update_ui()
-					update_layout()
+					draw_game() # Финальная отрисовка
+					show_win()
+					pending_action_context = {}
+					return # Выходим, дальше ничего делать не надо
+
+				# 4. Обновляем интерфейс (счет, ходы)
+				update_ui()
+				
+				# === АНИМАЦИЯ УСПЕХА (Шаг 3) ===
+				var context_type = pending_action_context.get("type", "")
+				
+				if context_type == "manual_move":
+					# Ручной ход
+					var nodes = pending_action_context.get("nodes", [])
+					var target_pile = pending_action_context.get("target_pile", "")
+					var count = pending_action_context.get("count", 1)
 					
-					# Запуск таймера при первом ходе
-					if not first_move_made and (last_request_type == "move" or last_request_type == "draw"):
-						first_move_made = true
-						timer_active = true
-						is_game_active = true
-						print("⏱️ Таймер запущен")
-					
-					# Победа
-					if game_won:
-						# Сохраняем статус победы (первая или повторная)
-						is_first_win = data.get("is_first_win", true)
-						show_win()
+					if nodes.size() > 0 and target_pile != "":
+						_animate_success_flight(nodes, target_pile, count)
+					else:
+						draw_game()
 						
+				elif context_type == "auto_move":
+					# Авто-ход: берем цель из ответа сервера
+					if data.has("move"):
+						var move_info = data["move"]
+						var target_pile = move_info["to"]
+						var count = move_info["count"]
+						var nodes = pending_action_context.get("nodes", [])
+						
+						if nodes.size() > 0:
+							_animate_success_flight(nodes, target_pile, count)
+						else:
+							draw_game()
+					else:
+						draw_game()
+						
+				elif last_request_type == "draw":
+					# Для взятия карт пока оставляем мгновенную смену
+					draw_game()
+				else:
+					# Для new, undo и т.д.
+					draw_game()
+
+				pending_action_context = {}
+				
 			else:
-				# === Ошибка логики ===
+				# --- ОШИБКА ХОДА ---
 				var err_code = data.get("error")
 				printerr("⚠️ Ошибка сервера: ", err_code)
-				# Тут можно добавить обработку ошибок (например, показать Alert)
+				
+				# РАЗБИРАЕМ КОНТЕКСТ
+				var context_type = pending_action_context.get("type", "")
+				
+				if context_type == "auto_move":
+					# Авто-ход не удался -> Трясем карту
+					# Берем первый узел из списка (карта, по которой кликнули)
+					var nodes = pending_action_context.get("nodes", [])
+					if nodes.size() > 0 and is_instance_valid(nodes[0]):
+						_animate_shake(nodes[0])
+				
+				elif context_type == "manual_move":
+					# Ручной ход не удался -> Возвращаем карты
+					var nodes = pending_action_context.get("nodes", [])
+					var positions = pending_action_context.get("start_positions", [])
+					if nodes.size() > 0:
+						_animate_return(nodes, positions)
+				
+				# Сбрасываем контекст после обработки ошибки
+				pending_action_context = {}
+				
 		else:
-			printerr("⚠️ Некорректный формат ответа")
+			printerr("⚠️ Некорректный формат ответа (нет ключа success)")
 	else:
 		printerr("❌ Ошибка парсинга JSON")
-
-
 func show_win():
 	if game_over_panel:
 		game_over_panel.show()
@@ -735,28 +773,42 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	
 	# === НОВОЕ: Запоминаем индекс карты в стопке ===
 	card_control.set_meta("card_index", card_index)
-
-	# --- Создаем визуальную часть (текстуру) ---
-	var texture_rect = TextureRect.new()
-	texture_rect.name = "Texture"
+# === 1. СОЗДАЕМ ТЕНЬ (ПОД КАРТОЙ) ===
+	var shadow_rect = TextureRect.new()
+	shadow_rect.name = "Shadow"
 	
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
-	texture_rect.texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
+	var card_texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
+	
+	shadow_rect.texture = card_texture
+	
+	# === ПРИМЕНЯЕМ ШЕЙДЕР ВМЕСТО ПРОСТОГО ОКРАШИВАНИЯ ===
+	shadow_rect.material = _get_shadow_material()
+	
+	# Смещение тени (эффект толщины карты)
+	shadow_rect.position = Vector2(3, 3) 
+	
+	shadow_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	shadow_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	shadow_rect.custom_minimum_size = Vector2(card_width, card_height)
+	shadow_rect.size = Vector2(card_width, card_height)
+	shadow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	card_control.add_child(shadow_rect)
+	# === 2. СОЗДАЕМ ВИЗУАЛЬНУЮ ЧАСТЬ (ТЕКСТУРА КАРТЫ) ===
+	var texture_rect = TextureRect.new()
+	texture_rect.name = "Texture"
+	texture_rect.texture = card_texture
 
 	if texture_rect.texture == null:
 		texture_rect.modulate = Color.RED
 	
-	# === ИЗМЕНЕНИЕ 2: Настраиваем масштабирование текстуры ===
-	# Текстура должна заполнить весь card_control, сохраняя пропорции
 	texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	
-	# Размер текстуры равен размеру карты
 	texture_rect.custom_minimum_size = Vector2(card_width, card_height)
 	texture_rect.size = Vector2(card_width, card_height)
-	# -------------------------------------------------------
-
+	
 	card_control.add_child(texture_rect)
 
 	# Подключаем сигнал
@@ -783,43 +835,52 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 				return
 			if not card_data["face_up"]:
 				return
+						# Сначала проверяем и выходим, если нельзя тянуть
+			if not card_data["face_up"]:
+				return
+			
 			print("🖱️ Начало перетаскивания из: ", pile_name)
 			is_dragging = true
 			drag_source_pile = pile_name
 			drag_card_data = card_data 
 			dragged_card_node = card_node
-			# Находим все карты ниже (для стопок) ===
-			drag_nodes.clear() # Очищаем список перед использованием
-			drag_nodes.append(card_node) # Добавляем саму карту
-			# Если это tableau, ищем карты под ней в том же слое
+			
+			# 1. ЗАПОЛНЯЕМ СПИСОК drag_nodes
+			drag_nodes.clear() 
+			drag_nodes.append(card_node) 
+			
 			if pile_name.begins_with("tableau"):
 				var card_layer = card_node.get_parent()
 				if card_layer:
-					# Получаем индекс текущей карты
 					var my_index = card_node.get_meta("card_index", 0)
-					# Проходим по всем детям слоя и добавляем те, что ниже
 					for child in card_layer.get_children():
 						if child == card_node: continue
 						if child.get_meta("card_index", -1) > my_index:
 							drag_nodes.append(child)
-			# Сортируем по индексу, чтобы они красиво летели вместе
+			
 			drag_nodes.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
-			# Запоминаем смещения хвоста относительно головы
+			
+			# 2. Запоминаем смещения хвоста
 			var head_pos = card_node.global_position
 			for i in range(1, drag_nodes.size()):
 				var node = drag_nodes[i]
-				# Сохраняем разницу в координатах
 				node.set_meta("drag_offset_from_head", node.global_position - head_pos)
-			# Эффекты
+			
+			# 3. ПРИМЕНЯЕМ ЭФФЕКТЫ (Z-index и ТЕНЬ) - ТЕПЕРЬ СПИСОК ПОЛОН
 			for node in drag_nodes:
 				node.z_index = 100
+				# === УВЕЛИЧИВАЕМ ТЕНЬ ===
+				var shadow = node.get_node_or_null("Shadow")
+				if shadow:
+					shadow.modulate = Color(1, 1, 1, 0.7) # Делаем тень чуть ярче поверх шейдера
+					shadow.position = Vector2(10, 10)     # Смещаем тень (эффект подъема)
 			
 			var mouse_pos = get_global_mouse_position()
 			drag_offset = mouse_pos - card_node.global_position
 			
-		# --- Правая кнопка: Авто-ход ---
+# --- Правая кнопка: Авто-ход ---
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			if is_busy:
+			if is_busy or is_animating:
 				return
 			
 			if pile_name == "stock":
@@ -829,7 +890,37 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 				return
 
 			print("🃏 Авто-ход (ПКМ) из: ", pile_name)
-			last_request_type = "move"
+			
+			# === ИЗМЕНЕНИЕ: Собираем стек карт, как при перетаскивании ===
+			var nodes_stack = [card_node] # Начинаем с той, на которую нажали
+			
+			# Если это tableau, ищем карты под ней (хвост)
+			if pile_name.begins_with("tableau"):
+				var card_layer = card_node.get_parent()
+				if card_layer:
+					var my_index = card_node.get_meta("card_index", 0)
+					# Собираем все карты, у которых индекс больше нашего
+					for child in card_layer.get_children():
+						if child == card_node: continue
+						if child.get_meta("card_index", -1) > my_index:
+							nodes_stack.append(child)
+			
+			# Сортируем и запоминаем смещения (чтобы красиво летели кучей)
+			nodes_stack.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
+			
+			# Запоминаем взаимное расположение (чтобы "хвост" летел за "головой")
+			# Это полезно, если анимация полета будет сложной, 
+			# но для простого полета достаточно передать список узлов.
+			
+			# Сохраняем контекст
+			pending_action_context = {
+				"type": "auto_move",
+				"source_pile": pile_name,
+				"nodes": nodes_stack,  # <--- ТЕПЕРЬ ЭТО МАССИВ УЗЛОВ
+				"count": nodes_stack.size()
+			}
+			last_request_type = "auto_move"
+			
 			var body = JSON.new().stringify({"from": pile_name})
 			var headers = ["Content-Type: application/json"]
 			http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
@@ -844,36 +935,61 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 func _end_drag():
 	if not is_dragging:
 		return
+		
+	# === ИЗМЕНЕНИЕ: Сохраняем всё, что нужно для анимации, ПЕРЕД сбросом переменных ===
+	# Копируем список узлов, так как drag_nodes очистится
+	var nodes_to_animate = drag_nodes.duplicate()
+	
+	# Запоминаем стартовые позиции (на случай возврата)
+	var start_positions = []
+	for node in nodes_to_animate:
+		start_positions.append(node.global_position)
+	
 	# Сбрасываем Z-index
-	for node in drag_nodes:
+	for node in nodes_to_animate:
 		node.z_index = 0
-	# Очищаем метаданные (опционально, для порядка)
-	for node in drag_nodes:
+	
+	# Очищаем метаданные
+	for node in nodes_to_animate:
 		if node.has_meta("drag_offset_from_head"):
 			node.remove_meta("drag_offset_from_head")
+			
 	var target_pile = _get_pile_under_mouse()
-	# Считаем количество карт ===
-	var move_count = drag_nodes.size()
+	var move_count = nodes_to_animate.size()
+	
 	if target_pile != "" and target_pile != drag_source_pile:
 		print("📂 Перенос ", move_count, " карт в: ", target_pile)
-		last_request_type = "move"
+		
+		# === СОХРАНЯЕМ КОНТЕКСТ ДЛЯ РУЧНОГО ХОДА ===
+		pending_action_context = {
+			"type": "manual_move",
+			"nodes": nodes_to_animate,
+			"start_positions": start_positions,
+			"source_pile": drag_source_pile,
+			"target_pile": target_pile,
+			"count": move_count # <--- Добавить это
+		}
+		
+		last_request_type = "manual_move"
 		var body = JSON.new().stringify({
 			"from": drag_source_pile,
 			"to": target_pile,
-			"count": move_count  # <--- ОТПРАВЛЯЕМ КОЛИЧЕСТВО
+			"count": move_count
 		})
 		var headers = ["Content-Type: application/json"]
 		http.request(Global.server_url + "/move", headers, HTTPClient.METHOD_POST, body)
 		
 		is_busy = true
 	else:
+		# Если отпустили в пустом месте или в той же стопке — просто возвращаем на место
 		draw_game()
-	# Сброс переменных
+	
+	# Сброс переменных перетаскивания
 	is_dragging = false
 	drag_source_pile = ""
 	drag_card_data = null
 	dragged_card_node = null
-	drag_nodes.clear() # Очищаем список
+	drag_nodes.clear()
 
 func _get_pile_under_mouse() -> String:
 	var mouse_pos = get_global_mouse_position()
@@ -911,3 +1027,242 @@ func _get_pile_under_mouse() -> String:
 			return slot_info["name"]
 			
 	return ""
+
+# ===== АНИМАЦИИ =====
+
+func _animate_success_flight(nodes: Array, target_pile: String, move_count: int):
+	"""Запускает анимацию полета карт к целевой стопке"""
+	is_animating = true
+	
+	# 1. Создаем слой для полета (поверх всего)
+	var flying_layer = Control.new()
+	flying_layer.name = "FlyingLayer"
+	flying_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Добавляем в $Display, чтобы координаты совпадали
+	$Display.add_child(flying_layer)
+	
+	# 2. Создаем "призраков" (копии летящих карт)
+	var ghosts = []
+	for i in range(nodes.size()):
+		var original_node = nodes[i]
+		if not is_instance_valid(original_node): continue
+		
+		var ghost = Control.new()
+		ghost.size = original_node.size
+		ghost.global_position = original_node.global_position
+		
+		# === ДОБАВЛЯЕМ ТЕНЬ К ПРИЗРАКУ ===
+		var ghost_shadow = TextureRect.new()
+		ghost_shadow.texture = original_node.get_node("Texture").texture
+		
+		# Применяем тот же шейдер размытия, что и у обычных карт
+		ghost_shadow.material = _get_shadow_material() 
+		
+		ghost_shadow.position = Vector2(10, 10)  # Сильное смещение
+		ghost_shadow.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		ghost_shadow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ghost_shadow.size = original_node.size
+		ghost_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ghost.add_child(ghost_shadow)
+		
+		# Копируем текстуру самой карты
+		var tex_rect = TextureRect.new()
+		tex_rect.texture = original_node.get_node("Texture").texture
+		tex_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.size = original_node.size
+		ghost.add_child(tex_rect) # Потом карта
+		
+		flying_layer.add_child(ghost)
+		ghosts.append(ghost)
+		
+		original_node.hide()
+	
+	# 3. Рисуем новое состояние (карты появятся в новых местах)
+	draw_game()
+	
+	# 4. Вычисляем, где оказались карты (и прячем их, чтобы показать призраков)
+	# Нам нужно знать индексы в НОВОЙ стопке.
+	# Карты добавляются в конец стопки.
+	var pile_data = null
+	if target_pile.begins_with("tableau"):
+		pile_data = game_state["piles"][target_pile]
+	elif target_pile.begins_with("foundation"):
+		pile_data = game_state["piles"][target_pile]
+	elif target_pile == "waste":
+		pile_data = game_state["waste"]
+		
+	var targets = []
+	if pile_data:
+		var total_cards = pile_data["cards"].size()
+		# Индекс первой летящей карты
+		var start_idx = total_cards - move_count
+		
+		for i in range(move_count):
+			var idx = start_idx + i
+			var pos = _get_card_global_position(target_pile, idx)
+			targets.append(pos)
+			
+			# Находим реальный узел в слоте и прячем его
+			var slot = null
+			if target_pile.begins_with("tableau"):
+				var t_idx = int(target_pile.split("_")[1])
+				slot = tableau_slots[t_idx]
+			elif target_pile.begins_with("foundation"):
+				var f_idx = int(target_pile.split("_")[1])
+				slot = foundation_slots()[f_idx]
+			elif target_pile == "waste":
+				slot = waste_slot
+			
+			if slot:
+				var card_layer = slot.get_node_or_null("CardLayer")
+				if card_layer and card_layer.get_child_count() > idx:
+					# Прячем реальную карту в конечной точке
+					card_layer.get_child(idx).hide()
+	
+	# 5. Анимация Tween
+	var tween = create_tween()
+	tween.set_parallel(true)
+	
+	for i in range(ghosts.size()):
+		if targets.size() > i:
+			tween.tween_property(ghosts[i], "global_position", targets[i], 0.25).set_ease(Tween.EASE_OUT)
+		else:
+			ghosts[i].hide() # Если цель не найдена, просто исчезаем
+			
+	# Ждем окончания
+	tween.set_parallel(false)
+	tween.tween_interval(0.3)
+	
+	tween.tween_callback(func():
+		flying_layer.queue_free() # Удаляем призраков
+		draw_game() # Перерисовываем, чтобы реальные карты стали видимыми
+		is_animating = false
+	)
+
+func _animate_shake(control_node: Control):
+	"""Анимация тряски карты (отказ при авто-ходе)"""
+	if not is_instance_valid(control_node): return
+	is_animating = true
+	
+	var tween = create_tween()
+	var start_pos = control_node.position
+	var shake_amount = 10 # Амплитуда тряски
+	var duration = 0.05
+	
+	# Трясем влево-вправо 3 раза
+	tween.tween_property(control_node, "position", start_pos + Vector2(shake_amount, 0), duration)
+	tween.tween_property(control_node, "position", start_pos + Vector2(-shake_amount, 0), duration)
+	tween.tween_property(control_node, "position", start_pos + Vector2(shake_amount, 0), duration)
+	tween.tween_property(control_node, "position", start_pos + Vector2(-shake_amount, 0), duration)
+	tween.tween_property(control_node, "position", start_pos, duration)
+	
+	tween.tween_callback(func(): is_animating = false)
+
+func _animate_return(nodes: Array, positions: Array):
+	"""Анимация возврата карт на исходную позицию (ошибка перетаскивания)"""
+	is_animating = true
+	var tween = create_tween()
+	tween.set_parallel(true) # Двигаем все карты одновременно
+	
+	for i in range(nodes.size()):
+		var node = nodes[i]
+		if is_instance_valid(node):
+			# Поднимаем Z_index, чтобы карты летели поверх остальных
+			node.z_index = 100 
+			tween.tween_property(node, "global_position", positions[i], 0.2).set_ease(Tween.EASE_OUT)
+	
+	# В конце сбрасываем флаг и Z_index
+	tween.set_parallel(false)
+	tween.tween_callback(func():
+		is_animating = false
+		for node in nodes:
+			if is_instance_valid(node):
+				node.z_index = 0
+		# Перерисовываем, чтобы карточки "встали" в слоты корректно
+		draw_game() 
+	)
+
+func _get_card_global_position(pile_name: String, card_index: int) -> Vector2:
+	"""Вычисляет глобальную позицию карты на основе состояния игры"""
+	var slot_node = null
+	var y_offset = 0.0
+	
+	# 1. Определяем узел слота и базовые смещения
+	if pile_name == "waste":
+		slot_node = waste_slot
+		# Логика веера для waste (как в draw_waste)
+		var cards = game_state["waste"]["cards"]
+		var start_idx = max(0, cards.size() - 3)
+		if card_index >= start_idx:
+			y_offset = (card_index - start_idx) * (card_width * 0.15)
+		else:
+			# Если карта ушла в "тень" или не в веере, берем последнюю позицию веера
+			y_offset = 2 * (card_width * 0.15) 
+
+	elif pile_name.begins_with("foundation"):
+		var idx = int(pile_name.split("_")[1])
+		slot_node = foundation_slots()[idx]
+		# В foundation смещения нет (карты лежат ровно)
+		y_offset = 0
+		
+	elif pile_name.begins_with("tableau"):
+		var idx = int(pile_name.split("_")[1])
+		slot_node = tableau_slots[idx]
+		# Для tableau суммируем отступы всех карт ВЫШЕ искомой
+		var pile_data = game_state["piles"][pile_name]
+		for i in range(card_index):
+			if i < pile_data["cards"].size():
+				var c = pile_data["cards"][i]
+				if c["face_up"]:
+					y_offset += stack_offset_face_up
+				else:
+					y_offset += stack_offset_hidden
+	else:
+		return Vector2.ZERO
+
+	if not slot_node:
+		return Vector2.ZERO
+		
+	# Глобальная позиция = Позиция слота + смещение внутри
+	return slot_node.global_position + Vector2(0, y_offset)
+	
+func _get_shadow_material():
+	# Если уже создавали, возвращаем готовый
+	if shadow_material:
+		return shadow_material
+		
+	# Создаем код шейдера
+	var shader_code = """
+	shader_type canvas_item;
+	render_mode blend_mix; // Обычное смешивание
+
+	void fragment() {
+		// Простой эффект размытия краев (Box Blur 3x3)
+		vec2 pixel_size = TEXTURE_PIXEL_SIZE;
+		vec4 color = vec4(0.0); // Черный цвет
+
+		float alpha_sum = 0.0;
+
+		// Сэмплируем 9 точек вокруг для размытия
+		for (int x = -1; x <= 1; x++) {
+			for (int y = -1; y <= 1; y++) {
+			    alpha_sum += texture(TEXTURE, UV + vec2(float(x), float(y)) * pixel_size * 2.0).a;
+			}
+		}
+        
+		// Усредняем и применяем прозрачность
+		float avg_alpha = alpha_sum / 9.0;
+
+		// Затемняем и делаем полупрозрачным
+		COLOR = vec4(0.0, 0.0, 0.0, avg_alpha * 0.5); 
+	}
+	"""
+	
+	var shader = Shader.new()
+	shader.code = shader_code
+	
+	shadow_material = ShaderMaterial.new()
+	shadow_material.shader = shader
+	
+	return shadow_material
