@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://3o3qn4y0sh6r"]
+
+[ext_resource type="Script" uid="uid://ddhjoad3ati0l" path="res://scenes/card.gd" id="1_yiag5"]
+
+[node name="Card" type="Control" unique_id=2111445403]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_yiag5")
+
+[node name="Shadow" type="ColorRect" parent="." unique_id=149721826]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 6.0
+offset_bottom = 6.0
+mouse_filter = 2
+
+[node name="Texture" type="TextureRect" parent="." unique_id=1674932702]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5

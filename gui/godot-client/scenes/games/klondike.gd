@@ -477,6 +477,15 @@ func update_layout():
 						   (vbox_sep * 3) + \
 						   SCREEN_MARGIN # Запас снизу
 	
+	# Устанавливаем отступы в зависимости от размеров карт
+	var horizontal_sep = max(10, card_width * 0.1)
+	var vertical_sep = max(10, card_height * 0.15)
+
+	# Применяем к контейнерам
+	$Display/MainLayout.add_theme_constant_override("separation", vertical_sep)
+	$Display/MainLayout/UpperRow.add_theme_constant_override("separation", horizontal_sep)
+	$Display/MainLayout/LowerRow.add_theme_constant_override("separation", horizontal_sep)
+	
 	# Свободное место для ВЕРТИКАЛЬНОЙ ЛОГИКИ:
 	# Нам нужно вместить: 1 карту (UpperRow) + Стопку (LowerRow)
 	var available_vertical_space = viewport_size.y - static_ui_height
@@ -632,19 +641,8 @@ func draw_game():
 	draw_tableau()
 
 func _clear_cards_from_slot(slot: Control):
-	# 1. Очищаем слой карт (CardLayer)
-	var card_layer = slot.get_node_or_null("CardLayer")
-	if card_layer:
-		for child in card_layer.get_children():
-			child.queue_free() # Удаляем карты из памяти
-			
-	# 2. Очищаем всё, что лежит прямо в слоте (EmptyStock или "потерянные" карты)
 	for child in slot.get_children():
-		# Проверяем имя. CardLayer мы пропускаем, его удалять не надо, он часть слота.
-		if child.name != "CardLayer":
-			child.hide()              # 1. Скрываем визуально
-			slot.remove_child(child)  # 2. ВЫБРАСЫВАЕМ из дерева (решает проблему призраков)
-			child.queue_free()        # 3. Удаляем из памяти
+		child.queue_free()
 
 func foundation_slots():
 	return [foundation_0, foundation_1, foundation_2, foundation_3]
@@ -754,83 +752,23 @@ func draw_tableau():
 					current_y += stack_offset_hidden
 
 func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vector2 = Vector2(0, 0), card_index: int = 0):
-	var card_layer = parent_slot.get_node_or_null("CardLayer")
-	if card_layer == null:
-		card_layer = Node2D.new()
-		card_layer.name = "CardLayer"
-		parent_slot.add_child(card_layer)
+	var card_scene = preload("res://scenes/Card.tscn")
+	var card_control = card_scene.instantiate()
 	
-	var card_id = str(card_data.get("suit", "")) + "_" + str(card_data.get("rank", ""))
-	var card_control = Control.new()
-	card_control.name = "Card_" + card_id + "_" + str(randi())
+	# Сначала добавляем узел в дерево (чтобы @onready инициализировались)
+	parent_slot.add_child(card_control)
+
+	# Потом настраиваем карту
+	card_control.setup(
+		card_data,
+		pile_name,
+		card_index,
+		Vector2(card_width, card_height)
+	)
+
 	card_control.position = offset
+	card_control.card_clicked.connect(_on_card_clicked)
 	
-	# Размер корневого контейнера
-	card_control.custom_minimum_size = Vector2(card_width, card_height)
-	card_control.size = Vector2(card_width, card_height) 
-	card_control.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	card_control.set_meta("card_index", card_index)
-
-	# Получаем текстуру
-	var suit = card_data["suit"]
-	var rank = int(card_data["rank"])
-	var card_texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
-	
-	# === ОТЛАДКА (Посмотрите в консоль вывода) ===
-	print("📏 Draw Card: Slot Size=", card_width, "x", card_height, " Texture Size=", card_texture.get_size())
-	# ============================================
-
-		# === 1. ТЕНЬ ===
-	# === 1. ТЕНЬ ===
-	var shadow_rect = TextureRect.new()
-	shadow_rect.name = "Shadow"
-	shadow_rect.texture = card_texture
-	
-	# --- ИСПРАВЛЕНИЕ ---
-	# Делаем тень черной и полупрозрачной (черный цвет, 40% прозрачности)
-	shadow_rect.modulate = Color(0, 0, 0, 0.4) 
-	# Тень не должна ловить мышь, иначе она перекроет карту на краях
-	shadow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE 
-	# -------------------
-	
-	# Сначала настройки отображения
-	shadow_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	shadow_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	shadow_rect.position = Vector2(3, 3)
-	
-	# ВАЖНО: Установка размеров ДО добавления в дерево
-	shadow_rect.custom_minimum_size = Vector2(card_width, card_height)
-	shadow_rect.size = Vector2(card_width, card_height)
-	
-	# Добавляем в дерево
-	card_control.add_child(shadow_rect)
-	
-	# И ПРИНУДИТЕЛЬНО фиксируем размер после добавления (перебьем любой автосайз)
-	shadow_rect.set_deferred("size", Vector2(card_width, card_height))
-	# === 2. КАРТА ===
-	var texture_rect = TextureRect.new()
-	texture_rect.name = "Texture"
-	texture_rect.texture = card_texture
-
-	if texture_rect.texture == null:
-		texture_rect.modulate = Color.RED
-	
-	# ПРИНУДИТЕЛЬНЫЙ РАЗМЕР
-	# IGNORE_SIZE говорит Godot: "Не смотри на размер текстуры, используй мой size"
-	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	# KEEP_ASPECT_CENTERED вписывает картинку внутрь прямоугольника
-	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	
-	texture_rect.custom_minimum_size = Vector2(card_width, card_height)
-	texture_rect.size = Vector2(card_width, card_height)
-	
-	card_control.add_child(texture_rect)
-
-	# Подключаем сигнал
-	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data, card_control))
-	card_layer.add_child(card_control)
-	print("Shadow Node Size: ", shadow_rect.size, " | Card Node Size: ", texture_rect.size)
 	return card_control
 
 func _on_card_clicked(event, pile_name, card_data, card_node):
@@ -863,10 +801,10 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 			drag_nodes.append(card_node) 
 			
 			if pile_name.begins_with("tableau"):
-				var card_layer = card_node.get_parent()
-				if card_layer:
+				var slot = card_node.get_parent()
+				if slot:
 					var my_index = card_node.get_meta("card_index", 0)
-					for child in card_layer.get_children():
+					for child in slot.get_children():
 						if child == card_node: continue
 						if child.get_meta("card_index", -1) > my_index:
 							drag_nodes.append(child)
@@ -882,11 +820,11 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 			# 3. ПРИМЕНЯЕМ ЭФФЕКТЫ (Z-index и ТЕНЬ) - ТЕПЕРЬ СПИСОК ПОЛОН
 			for node in drag_nodes:
 				node.z_index = 100
-				# === УВЕЛИЧИВАЕМ ТЕНЬ ===
-				var shadow = node.get_node_or_null("Shadow")
-				if shadow:
-					shadow.modulate = Color(1, 1, 1, 0.7) # Делаем тень чуть ярче поверх шейдера
-					shadow.position = Vector2(10, 10)     # Смещаем тень (эффект подъема)
+				## === УВЕЛИЧИВАЕМ ТЕНЬ ===
+				#var shadow = node.get_node_or_null("Shadow")
+				#if shadow:
+					#shadow.modulate = Color(1, 1, 1, 0.7) # Делаем тень чуть ярче поверх шейдера
+					#shadow.position = Vector2(10, 10)     # Смещаем тень (эффект подъема)
 			
 			var mouse_pos = get_global_mouse_position()
 			drag_offset = mouse_pos - card_node.global_position
@@ -909,11 +847,11 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 			
 			# Если это tableau, ищем карты под ней (хвост)
 			if pile_name.begins_with("tableau"):
-				var card_layer = card_node.get_parent()
-				if card_layer:
+				var slot = card_node.get_parent()
+				if slot:
 					var my_index = card_node.get_meta("card_index", 0)
 					# Собираем все карты, у которых индекс больше нашего
-					for child in card_layer.get_children():
+					for child in slot.get_children():
 						if child == card_node: continue
 						if child.get_meta("card_index", -1) > my_index:
 							nodes_stack.append(child)
@@ -1047,52 +985,39 @@ func _animate_success_flight(nodes: Array, target_pile: String, move_count: int)
 	"""Запускает анимацию полета карт к целевой стопке"""
 	is_animating = true
 	
-	# 1. Создаем слой для полета (поверх всего)
 	var flying_layer = Control.new()
 	flying_layer.name = "FlyingLayer"
 	flying_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Добавляем в $Display, чтобы координаты совпадали
 	$Display.add_child(flying_layer)
 	
-	# 2. Создаем "призраков" (копии летящих карт)
 	var ghosts = []
 	for i in range(nodes.size()):
 		var original_node = nodes[i]
 		if not is_instance_valid(original_node): continue
 		
+		# Создаём контейнер для призрака
 		var ghost = Control.new()
 		ghost.size = original_node.size
 		ghost.global_position = original_node.global_position
 		
-				# === ДОБАВЛЯЕМ ТЕНЬ К ПРИЗРАКУ ===
-		var ghost_shadow = TextureRect.new()
-		ghost_shadow.texture = original_node.get_node("Texture").texture
+		# === ТЕНЬ: просто чёрный прямоугольник с размытием через шейдер ===
+		var shadow = ColorRect.new()
+		shadow.color = Color(0, 0, 0, 0.4)
+		shadow.size = original_node.size
+		shadow.position = Vector2(8, 8)
+		shadow.material = _get_shadow_material()  # шейдер с размытием
+		ghost.add_child(shadow)
 		
-		# Применяем тот же шейдер размытия
-		ghost_shadow.material = _get_shadow_material() 
-		
-		ghost_shadow.position = Vector2(10, 10)  # Сильное смещение
-		
-		# === ИСПРАВЛЕНИЕ РАЗМЕРА ===
-		ghost_shadow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		ghost_shadow.stretch_mode = TextureRect.STRETCH_SCALE
-		
-		ghost_shadow.custom_minimum_size = original_node.size
-		ghost_shadow.size = original_node.size
-		ghost_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ghost.add_child(ghost_shadow)
-		
-		# Копируем текстуру самой карты
+		# === КАРТИНКА: используем уже отмасштабированную текстуру ===
 		var tex_rect = TextureRect.new()
 		tex_rect.texture = original_node.get_node("Texture").texture
 		tex_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tex_rect.size = original_node.size
-		ghost.add_child(tex_rect) # Потом карта
+		ghost.add_child(tex_rect)
 		
 		flying_layer.add_child(ghost)
 		ghosts.append(ghost)
-		
 		original_node.hide()
 	
 	# 3. Рисуем новое состояние (карты появятся в новых местах)
@@ -1132,10 +1057,8 @@ func _animate_success_flight(nodes: Array, target_pile: String, move_count: int)
 				slot = waste_slot
 			
 			if slot:
-				var card_layer = slot.get_node_or_null("CardLayer")
-				if card_layer and card_layer.get_child_count() > idx:
-					# Прячем реальную карту в конечной точке
-					card_layer.get_child(idx).hide()
+				if slot.get_child_count() > idx:
+					slot.get_child(idx).hide()
 	
 	# 5. Анимация Tween
 	var tween = create_tween()
