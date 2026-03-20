@@ -1,2 +1,3 @@
 *.tmp
 /stats_data/player.identity
+/stats/data/patience.db
