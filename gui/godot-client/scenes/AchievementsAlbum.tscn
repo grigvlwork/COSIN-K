@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=3 uid="uid://bfimynrdptiql"]
+
+[ext_resource type="Script" uid="uid://cxkju2jwicxwv" path="res://scenes/achievements_album.gd" id="1_8a7v3"]
+
+[node name="AchievementsAlbum" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_8a7v3")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Cover" type="ColorRect" parent="Background"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+
+[node name="SettingsBtn" type="Button" parent="MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+
+[node name="Footer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="BtnPrev" type="Button" parent="MarginContainer/Footer"]
+layout_mode = 2
+text = "<"
+
+[node name="PageLabel" type="Label" parent="MarginContainer/Footer"]
+layout_mode = 2
+text = "1 / 5"
+
+[node name="Spacer" type="Control" parent="MarginContainer/Footer"]
+layout_mode = 2
+
+[node name="BtnMenu" type="Button" parent="MarginContainer/Footer"]
+layout_mode = 2
+text = "В меню"
+
+[node name="BtnNext" type="Button" parent="MarginContainer/Footer"]
+layout_mode = 2
+text = ">"
+
+[node name="HTTPRequest" type="HTTPRequest" parent="."]

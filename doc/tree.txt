@@ -17,6 +17,28 @@ COSIN-K/
 │   │   │   ├── achievements
 │   │   │   │   ├── 500_wins.png
 │   │   │   │   ├── 500_wins.png.import
+│   │   │   │   ├── album
+│   │   │   │   │   ├── beige.png
+│   │   │   │   │   ├── beige.png.import
+│   │   │   │   │   ├── cosmos.png
+│   │   │   │   │   ├── cosmos.png.import
+│   │   │   │   │   ├── cyberpunk.png
+│   │   │   │   │   ├── cyberpunk.png.import
+│   │   │   │   │   ├── old_style.png
+│   │   │   │   │   ├── old_style.png.import
+│   │   │   │   │   ├── royal.png
+│   │   │   │   │   └── royal.png.import
+│   │   │   │   ├── backgrounds
+│   │   │   │   │   ├── blue_velvet.png
+│   │   │   │   │   ├── blue_velvet.png.import
+│   │   │   │   │   ├── cosmos.png
+│   │   │   │   │   ├── cosmos.png.import
+│   │   │   │   │   ├── green_stone.png
+│   │   │   │   │   ├── green_stone.png.import
+│   │   │   │   │   ├── purple.png
+│   │   │   │   │   ├── purple.png.import
+│   │   │   │   │   ├── wood.png
+│   │   │   │   │   └── wood.png.import
 │   │   │   │   ├── cards_100.png
 │   │   │   │   ├── cards_100.png.import
 │   │   │   │   ├── cards_1000.png
@@ -59,6 +81,27 @@ COSIN-K/
 │   │   │   │   ├── flipped_100000.png.import
 │   │   │   │   ├── flipped_million.png
 │   │   │   │   ├── flipped_million.png.import
+│   │   │   │   ├── frames
+│   │   │   │   │   ├── frame_bronze.png
+│   │   │   │   │   ├── frame_bronze.png.import
+│   │   │   │   │   ├── frame_bronze_.png
+│   │   │   │   │   ├── frame_bronze_.png.import
+│   │   │   │   │   ├── frame_cosmos.png
+│   │   │   │   │   ├── frame_cosmos.png.import
+│   │   │   │   │   ├── frame_cosmos_.png
+│   │   │   │   │   ├── frame_cosmos_.png.import
+│   │   │   │   │   ├── frame_diamond.png
+│   │   │   │   │   ├── frame_diamond.png.import
+│   │   │   │   │   ├── frame_diamond_.png
+│   │   │   │   │   ├── frame_diamond_.png.import
+│   │   │   │   │   ├── frame_gold.png
+│   │   │   │   │   ├── frame_gold.png.import
+│   │   │   │   │   ├── frame_gold_.png
+│   │   │   │   │   ├── frame_gold_.png.import
+│   │   │   │   │   ├── frame_silver.png
+│   │   │   │   │   ├── frame_silver.png.import
+│   │   │   │   │   ├── frame_silver_.png
+│   │   │   │   │   └── frame_silver_.png.import
 │   │   │   │   ├── hearts_10.png
 │   │   │   │   ├── hearts_10.png.import
 │   │   │   │   ├── hearts_100.png
@@ -83,6 +126,25 @@ COSIN-K/
 │   │   │   │   ├── perfect_1000.png.import
 │   │   │   │   ├── perfect_5000.png
 │   │   │   │   ├── perfect_5000.png.import
+│   │   │   │   ├── placeholders
+│   │   │   │   │   ├── cards.png
+│   │   │   │   │   ├── cards.png.import
+│   │   │   │   │   ├── clubs.png
+│   │   │   │   │   ├── clubs.png.import
+│   │   │   │   │   ├── diamonds.png
+│   │   │   │   │   ├── diamonds.png.import
+│   │   │   │   │   ├── hearts.png
+│   │   │   │   │   ├── hearts.png.import
+│   │   │   │   │   ├── loss.png
+│   │   │   │   │   ├── loss.png.import
+│   │   │   │   │   ├── perfect.png
+│   │   │   │   │   ├── perfect.png.import
+│   │   │   │   │   ├── speed.png
+│   │   │   │   │   ├── speed.png.import
+│   │   │   │   │   ├── streak.png
+│   │   │   │   │   ├── streak.png.import
+│   │   │   │   │   ├── wins.png
+│   │   │   │   │   └── wins.png.import
 │   │   │   │   ├── spades_10.png
 │   │   │   │   ├── spades_10.png.import
 │   │   │   │   ├── spades_100.png
@@ -140,7 +202,6 @@ COSIN-K/
 │   │   │   │   ├── nature_light.png.import
 │   │   │   │   ├── steampunk.png
 │   │   │   │   └── steampunk.png.import
-│   │   │   ├── cards
 │   │   │   ├── decks
 │   │   │   │   ├── classic
 │   │   │   │   │   ├── 10_of_clubs.png
@@ -281,6 +342,8 @@ COSIN-K/
 │   │   │   │   ├── dehinted-HandveticaNeue-Regular.ttf
 │   │   │   │   └── dehinted-HandveticaNeue-Regular.ttf.import
 │   │   │   └── textures
+│   │   │       ├── green_nefrit.png
+│   │   │       ├── green_nefrit.png.import
 │   │   │       ├── green_velvet.png
 │   │   │       └── green_velvet.png.import
 │   │   ├── debug_tree.gd
@@ -289,6 +352,10 @@ COSIN-K/
 │   │   ├── icon.svg
 │   │   ├── icon.svg.import
 │   │   ├── images
+│   │   │   ├── mtg-amonkhet-cards.png
+│   │   │   ├── mtg-amonkhet-cards.png.import
+│   │   │   ├── mtg_card_example1.png
+│   │   │   ├── mtg_card_example1.png.import
 │   │   │   ├── textures
 │   │   │   │   ├── black_leather.jpg
 │   │   │   │   ├── black_leather.jpg.import
@@ -402,6 +469,7 @@ COSIN-K/
 │   │   ├── main_theme.tres
 │   │   ├── project.godot
 │   │   └── scenes
+│   │       ├── AchievementCard.tscn
 │   │       ├── PlayerStats.tscn
 │   │       ├── card_test.gd
 │   │       ├── card_test.gd.uid
@@ -414,8 +482,7 @@ COSIN-K/
 │   │       ├── games
 │   │       │   ├── klondike.gd
 │   │       │   ├── klondike.gd.uid
-│   │       │   ├── klondike.tscn
-│   │       │   └── klondike.tscn5197690571.tmp
+│   │       │   └── klondike.tscn
 │   │       ├── global.gd
 │   │       ├── global.gd.uid
 │   │       ├── menu.gd
@@ -457,7 +524,6 @@ COSIN-K/
 │   │   └── stats_api.py
 │   ├── data
 │   │   ├── __init__.py
-│   │   ├── patience.db
 │   │   └── schema.py
 │   ├── database.py
 │   ├── events
@@ -475,7 +541,6 @@ COSIN-K/
 │       ├── __init__.py
 │       ├── player_identity.py
 │       └── stats_service.py
-├── stats_data
 └── view
     ├── __init__.py
     ├── base.py
