@@ -40,25 +40,25 @@ layout_mode = 2
 [node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
 layout_mode = 2
 
-[node name="Footer" type="HBoxContainer" parent="MarginContainer"]
+[node name="Footer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="BtnPrev" type="Button" parent="MarginContainer/Footer"]
+[node name="BtnPrev" type="Button" parent="MarginContainer/VBoxContainer/Footer"]
 layout_mode = 2
 text = "<"
 
-[node name="PageLabel" type="Label" parent="MarginContainer/Footer"]
+[node name="PageLabel" type="Label" parent="MarginContainer/VBoxContainer/Footer"]
 layout_mode = 2
 text = "1 / 5"
 
-[node name="Spacer" type="Control" parent="MarginContainer/Footer"]
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/Footer"]
 layout_mode = 2
 
-[node name="BtnMenu" type="Button" parent="MarginContainer/Footer"]
+[node name="BtnMenu" type="Button" parent="MarginContainer/VBoxContainer/Footer"]
 layout_mode = 2
 text = "В меню"
 
-[node name="BtnNext" type="Button" parent="MarginContainer/Footer"]
+[node name="BtnNext" type="Button" parent="MarginContainer/VBoxContainer/Footer"]
 layout_mode = 2
 text = ">"
 

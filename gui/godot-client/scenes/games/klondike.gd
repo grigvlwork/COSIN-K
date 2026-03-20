@@ -765,38 +765,50 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	card_control.name = "Card_" + card_id + "_" + str(randi())
 	card_control.position = offset
 	
-	# === ИЗМЕНЕНИЕ 1: Устанавливаем размер корневого контрола ===
-	# Это нужно, чтобы область клика (mouse_filter) совпадала с визуальным размером карты
+	# Размер корневого контейнера
 	card_control.custom_minimum_size = Vector2(card_width, card_height)
 	card_control.size = Vector2(card_width, card_height) 
 	card_control.mouse_filter = Control.MOUSE_FILTER_STOP
 	
-	# === НОВОЕ: Запоминаем индекс карты в стопке ===
 	card_control.set_meta("card_index", card_index)
-# === 1. СОЗДАЕМ ТЕНЬ (ПОД КАРТОЙ) ===
-	var shadow_rect = TextureRect.new()
-	shadow_rect.name = "Shadow"
-	
+
+	# Получаем текстуру
 	var suit = card_data["suit"]
 	var rank = int(card_data["rank"])
 	var card_texture = DeckManager.get_card_texture(suit, rank, card_data["face_up"])
 	
+	# === ОТЛАДКА (Посмотрите в консоль вывода) ===
+	print("📏 Draw Card: Slot Size=", card_width, "x", card_height, " Texture Size=", card_texture.get_size())
+	# ============================================
+
+		# === 1. ТЕНЬ ===
+	# === 1. ТЕНЬ ===
+	var shadow_rect = TextureRect.new()
+	shadow_rect.name = "Shadow"
 	shadow_rect.texture = card_texture
 	
-	# === ПРИМЕНЯЕМ ШЕЙДЕР ВМЕСТО ПРОСТОГО ОКРАШИВАНИЯ ===
-	shadow_rect.material = _get_shadow_material()
+	# --- ИСПРАВЛЕНИЕ ---
+	# Делаем тень черной и полупрозрачной (черный цвет, 40% прозрачности)
+	shadow_rect.modulate = Color(0, 0, 0, 0.4) 
+	# Тень не должна ловить мышь, иначе она перекроет карту на краях
+	shadow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE 
+	# -------------------
 	
-	# Смещение тени (эффект толщины карты)
-	shadow_rect.position = Vector2(3, 3) 
+	# Сначала настройки отображения
+	shadow_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shadow_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	shadow_rect.position = Vector2(3, 3)
 	
-	shadow_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	shadow_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# ВАЖНО: Установка размеров ДО добавления в дерево
 	shadow_rect.custom_minimum_size = Vector2(card_width, card_height)
 	shadow_rect.size = Vector2(card_width, card_height)
-	shadow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
+	# Добавляем в дерево
 	card_control.add_child(shadow_rect)
-	# === 2. СОЗДАЕМ ВИЗУАЛЬНУЮ ЧАСТЬ (ТЕКСТУРА КАРТЫ) ===
+	
+	# И ПРИНУДИТЕЛЬНО фиксируем размер после добавления (перебьем любой автосайз)
+	shadow_rect.set_deferred("size", Vector2(card_width, card_height))
+	# === 2. КАРТА ===
 	var texture_rect = TextureRect.new()
 	texture_rect.name = "Texture"
 	texture_rect.texture = card_texture
@@ -804,8 +816,12 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	if texture_rect.texture == null:
 		texture_rect.modulate = Color.RED
 	
-	texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	# ПРИНУДИТЕЛЬНЫЙ РАЗМЕР
+	# IGNORE_SIZE говорит Godot: "Не смотри на размер текстуры, используй мой size"
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	# KEEP_ASPECT_CENTERED вписывает картинку внутрь прямоугольника
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	
 	texture_rect.custom_minimum_size = Vector2(card_width, card_height)
 	texture_rect.size = Vector2(card_width, card_height)
 	
@@ -814,7 +830,7 @@ func draw_card(card_data, parent_slot: Control, pile_name: String, offset: Vecto
 	# Подключаем сигнал
 	card_control.gui_input.connect(_on_card_clicked.bind(pile_name, card_data, card_control))
 	card_layer.add_child(card_control)
-	
+	print("Shadow Node Size: ", shadow_rect.size, " | Card Node Size: ", texture_rect.size)
 	return card_control
 
 func _on_card_clicked(event, pile_name, card_data, card_node):
@@ -833,9 +849,6 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 				last_request_type = "draw"
 				http.request(Global.server_url + "/draw", headers, HTTPClient.METHOD_POST, body)
 				return
-			if not card_data["face_up"]:
-				return
-						# Сначала проверяем и выходим, если нельзя тянуть
 			if not card_data["face_up"]:
 				return
 			
@@ -1051,16 +1064,20 @@ func _animate_success_flight(nodes: Array, target_pile: String, move_count: int)
 		ghost.size = original_node.size
 		ghost.global_position = original_node.global_position
 		
-		# === ДОБАВЛЯЕМ ТЕНЬ К ПРИЗРАКУ ===
+				# === ДОБАВЛЯЕМ ТЕНЬ К ПРИЗРАКУ ===
 		var ghost_shadow = TextureRect.new()
 		ghost_shadow.texture = original_node.get_node("Texture").texture
 		
-		# Применяем тот же шейдер размытия, что и у обычных карт
+		# Применяем тот же шейдер размытия
 		ghost_shadow.material = _get_shadow_material() 
 		
 		ghost_shadow.position = Vector2(10, 10)  # Сильное смещение
-		ghost_shadow.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		ghost_shadow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		
+		# === ИСПРАВЛЕНИЕ РАЗМЕРА ===
+		ghost_shadow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ghost_shadow.stretch_mode = TextureRect.STRETCH_SCALE
+		
+		ghost_shadow.custom_minimum_size = original_node.size
 		ghost_shadow.size = original_node.size
 		ghost_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ghost.add_child(ghost_shadow)

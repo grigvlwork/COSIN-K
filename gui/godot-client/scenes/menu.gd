@@ -19,7 +19,7 @@ var http: HTTPRequest
 var games = ["Клондайк"]
 var current_game_index = 0
 const STATS_SCENE = "res://scenes/PlayerStats.tscn"
-const ACHIEVEMENTS_SCENE = "res://scenes/achievements_album.tscn"
+const ACHIEVEMENTS_SCENE = "res://scenes/AchievementsAlbum.tscn"
 
 var pending_action = ""
 

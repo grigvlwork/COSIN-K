@@ -1,7 +1,7 @@
 extends Control
 
 # --- Константы и Пути ---
-const CARD_SCENE = preload("res://scenes/ui/achievement_card.tscn") # Укажите ваш путь к сцене карты
+const CARD_SCENE = preload("res://scenes/AchievementCard.tscn") # Укажите ваш путь к сцене карты
 const ALBUM_BG_PATH = "res://assets/achievements/album/"
 
 const CARDS_PER_PAGE = 10 # 2 ряда по 5 карт
