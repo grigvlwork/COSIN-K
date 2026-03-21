@@ -23,9 +23,13 @@
 <task actualstartdate="2026-02-27 09:00:34.913000" creationDateTime="2026-02-27 09:00:30.184000" id="17d60680-1380-11f1-88e0-ce7a14ba6107" modificationDateTime="2026-02-27 09:00:34.912000" status="1" subject="Сброс прогресса" />
 </task>
 </task>
-<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-13 09:25:39.362000" status="1" subject="Ближнее планирование">
+<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-21 22:48:04.492000" status="1" subject="Ближнее планирование">
+<task creationDateTime="2026-03-21 22:47:14.795000" id="3b937bb0-253d-11f1-8821-50ebf62d0dab" modificationDateTime="2026-03-21 22:47:17.283000" status="1" subject="Hover эффект карты" />
+<task creationDateTime="2026-03-21 22:47:27.600000" id="43355f00-253d-11f1-8bab-50ebf62d0dab" modificationDateTime="2026-03-21 22:47:35.163000" status="1" subject="Подсветка валидного дропа" />
+<task creationDateTime="2026-03-21 22:47:48.223000" id="4f8030f0-253d-11f1-80bf-50ebf62d0dab" modificationDateTime="2026-03-21 22:47:54.278000" status="1" subject="Анимация переворота карты" />
+<task creationDateTime="2026-03-21 22:48:04.492000" id="5932a4c0-253d-11f1-8b4a-50ebf62d0dab" modificationDateTime="2026-03-21 22:48:07.440000" status="1" subject="Кэширование Card.tscn (preload один раз)" />
 <task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" expandedContexts="('taskviewer',)" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-03-19 09:22:33.445000" status="1" subject="Учет достижений">
-<task actualstartdate="2026-03-13 11:44:19.209000" creationDateTime="2026-03-13 11:44:05.941000" id="44442e4f-1e97-11f1-995b-db6bae543b37" modificationDateTime="2026-03-19 09:18:05.608000" status="1" subject="Модели данных">
+<task actualstartdate="2026-03-13 11:44:19.209000" completiondate="2026-03-21 22:48:24.816000" creationDateTime="2026-03-13 11:44:05.941000" id="44442e4f-1e97-11f1-995b-db6bae543b37" modificationDateTime="2026-03-21 22:48:24.816000" percentageComplete="100" status="1" subject="Модели данных">
 <description>
 Нужно подготовить класс Player к работе с JSON-настройками.
 
@@ -34,12 +38,12 @@
 
 </description>
 </task>
-<task actualstartdate="2026-03-13 11:44:43.788000" creationDateTime="2026-03-13 11:44:24.076000" id="4f135cc0-1e97-11f1-9971-db6bae543b37" modificationDateTime="2026-03-19 09:18:26.964000" status="1" subject="Репозитории">
+<task actualstartdate="2026-03-13 11:44:43.788000" completiondate="2026-03-21 22:48:21.327000" creationDateTime="2026-03-13 11:44:24.076000" id="4f135cc0-1e97-11f1-9971-db6bae543b37" modificationDateTime="2026-03-21 22:48:21.327000" percentageComplete="100" status="1" subject="Репозитории">
 <description>
 Задача: Убедиться, что метод update может сохранять поле cosmetics в БД. Так как мы используем to_dict для генерации SQL, это должно заработать автоматически, но нужно проверить.
 </description>
 </task>
-<task actualstartdate="2026-03-19 09:21:48.748000" creationDateTime="2026-03-13 11:45:18.674000" id="6f9e5b21-1e97-11f1-97de-db6bae543b37" modificationDateTime="2026-03-19 09:22:06.029000" prerequisites="ee442f30-2339-11f1-9221-db6bae543b37" status="1" subject="API">
+<task creationDateTime="2026-03-13 11:45:18.674000" id="6f9e5b21-1e97-11f1-97de-db6bae543b37" modificationDateTime="2026-03-19 09:22:06.029000" prerequisites="ee442f30-2339-11f1-9221-db6bae543b37" status="1" subject="API">
 <description>
 Связующее звено между сервисом и Godot.
 
@@ -59,7 +63,7 @@ set_cosmetic(player_id, key, value)
 Написать функцию создания карточки (_create_achievement_card), которая показывает прогресс-бар и иконку.
 </description>
 </task>
-<task actualstartdate="2026-03-19 09:21:39.891000" creationDateTime="2026-03-19 09:18:34.275000" id="ee442f30-2339-11f1-9221-db6bae543b37" modificationDateTime="2026-03-19 09:21:39.890000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Сервис статистики">
+<task creationDateTime="2026-03-19 09:18:34.275000" id="ee442f30-2339-11f1-9221-db6bae543b37" modificationDateTime="2026-03-19 09:21:39.890000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Сервис статистики">
 <description>
 Задача 3.1: Реализовать метод get_achievement_album(player_id).
 Получить все шаблоны достижений.
