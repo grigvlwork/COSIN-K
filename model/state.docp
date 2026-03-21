@@ -1,0 +1,18 @@
+# Документация для: state.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\state.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: GameState
+  Методы:
+    - __post_init__()
+    - get_pile()
+    - set_pile()
+    - all_piles()
+    - copy()
+    - to_dict()
+    - from_dict()
+    - __repr__()

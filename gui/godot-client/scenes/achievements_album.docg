@@ -1,0 +1,14 @@
+# Документация для: achievements_album.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\achievements_album.gd
+==================================================
+
+## Функции:
+  - _ready()
+  - request_album_data()
+  - _on_http_request_request_completed()
+  - apply_skin()
+  - calculate_pages()
+  - render_page()
+  - _on_prev_pressed()
+  - _on_next_pressed()
+  - _on_menu_pressed()

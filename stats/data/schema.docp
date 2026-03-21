@@ -1,0 +1,10 @@
+# Документация для: schema.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\data\schema.py
+==================================================
+
+## Функции:
+  - get_db_path()
+  - create_tables()
+  - init_database()
+
+## Классы: (нет)

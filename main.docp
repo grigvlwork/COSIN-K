@@ -1,0 +1,11 @@
+# Документация для: main.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\main.py
+==================================================
+
+## Функции:
+  - parse_args()
+  - quick_start()
+  - interactive_menu()
+  - main()
+
+## Классы: (нет)

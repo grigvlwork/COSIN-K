@@ -1,0 +1,29 @@
+# Документация для: stats_api.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\api\stats_api.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: StatsAPI
+  Методы:
+    - __init__()
+    - init_client()
+    - connect()
+    - get_or_create_player()
+    - rename_player()
+    - start_game()
+    - end_game()
+    - update_game_progress()
+    - save_game()
+    - load_saved_game()
+    - get_player_saves()
+    - get_player_stats_summary()
+    - get_leaderboard()
+    - get_game_history()
+    - get_achievements()
+    - get_achievements_album()
+    - get_cosmetics()
+    - set_cosmetic()
+    - delete_autosave()

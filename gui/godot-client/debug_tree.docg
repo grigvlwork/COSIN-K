@@ -1,0 +1,8 @@
+# Документация для: debug_tree.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\debug_tree.gd
+==================================================
+
+## Функции:
+  - _ready()
+  - print_scene_tree()
+  - find_node_by_name()

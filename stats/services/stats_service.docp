@@ -1,0 +1,32 @@
+# Документация для: stats_service.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\services\stats_service.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: StatsService
+  Методы:
+    - __init__()
+    - start_game()
+    - init_achievements_on_startup()
+    - end_game()
+    - _update_player_stats()
+    - update_game_progress()
+    - check_and_update_achievements()
+    - get_achievement_album()
+    - _prepare_ach_item()
+    - get_cosmetics()
+    - set_cosmetic()
+    - get_album_info()
+    - save_game()
+    - load_saved_game()
+    - get_player_saves()
+    - delete_saved_game()
+    - get_player_stats()
+    - get_leaderboard()
+    - get_game_history()
+    - get_statistics_summary()
+    - _format_time()
+    - reset_player_stats()

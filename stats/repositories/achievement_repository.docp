@@ -1,0 +1,27 @@
+# Документация для: achievement_repository.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\repositories\achievement_repository.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: AchievementRepository
+  Методы:
+    - __init__()
+    - get()
+    - get_all()
+    - create()
+    - update()
+    - delete()
+
+### Класс: PlayerAchievementRepository
+  Методы:
+    - __init__()
+    - get()
+    - get_by_player()
+    - get_player_achievement()
+    - create()
+    - update()
+    - delete()
+    - update_progress()

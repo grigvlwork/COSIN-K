@@ -1,0 +1,8 @@
+# Документация для: splash.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\splash.gd
+==================================================
+
+## Функции:
+  - _ready()
+  - _on_timer_timeout()
+  - _input()

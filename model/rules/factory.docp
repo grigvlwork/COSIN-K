@@ -1,0 +1,22 @@
+# Документация для: factory.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\rules\factory.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: GameVariant
+  Методы: (нет)
+
+### Класс: GameFactory
+  Методы:
+    - _initialize()
+    - create()
+    - available_games()
+    - is_available()
+    - get_variant_info()
+    - register_variant()
+    - create_default()
+    - list_variants()
+    - get_base_game()

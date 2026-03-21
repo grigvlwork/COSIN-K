@@ -1,0 +1,12 @@
+# Документация для: achievement_card.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\achievement_card.gd
+==================================================
+
+## Функции:
+  - setup()
+  - setup_unlocked_view()
+  - setup_locked_view()
+  - setup_header_style()
+  - load_background()
+  - load_icon()
+  - load_placeholder()

@@ -1,0 +1,35 @@
+# Документация для: game_controller.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\controller\game_controller.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: GameController
+  Методы:
+    - __init__()
+    - _setup_engine_listeners()
+    - _on_engine_event()
+    - _on_game_started()
+    - _on_move_made()
+    - _on_draw()
+    - _on_recycle()
+    - _on_game_won()
+    - _on_undo()
+    - _on_redo()
+    - _parse_pile_name()
+    - update_view()
+    - handle_command()
+    - _cmd_select()
+    - _cmd_move()
+    - _cmd_draw()
+    - _cmd_undo()
+    - _cmd_redo()
+    - _cmd_new()
+    - _cmd_quit()
+    - _cmd_quick_move()
+    - _cmd_quick_waste()
+    - _cmd_help()
+    - _cmd_unknown()
+    - _clear_selection()

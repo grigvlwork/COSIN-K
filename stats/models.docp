@@ -1,0 +1,45 @@
+# Документация для: models.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\models.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: Player
+  Методы:
+    - win_rate()
+    - total_hours()
+    - avg_game_time()
+    - to_dict()
+    - from_dict()
+
+### Класс: Game
+  Методы:
+    - __post_init__()
+    - is_win()
+    - is_loss()
+    - to_dict()
+    - from_dict()
+
+### Класс: SavedGame
+  Методы:
+    - to_dict()
+    - from_dict()
+
+### Класс: PlayerStats
+  Методы:
+    - games_today()
+    - win_streak_status()
+    - favorite_suit()
+
+### Класс: Achievement
+  Методы:
+    - __post_init__()
+    - from_dict()
+    - to_dict()
+
+### Класс: PlayerAchievement
+  Методы:
+    - from_dict()
+    - to_dict()

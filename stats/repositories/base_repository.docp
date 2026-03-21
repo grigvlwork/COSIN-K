@@ -1,0 +1,16 @@
+# Документация для: base_repository.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\repositories\base_repository.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: BaseRepository
+  Методы:
+    - __init__()
+    - get()
+    - create()
+    - update()
+    - delete()
+    - _execute()

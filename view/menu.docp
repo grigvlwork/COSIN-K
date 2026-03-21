@@ -1,0 +1,24 @@
+# Документация для: menu.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\view\menu.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: MenuChoice
+  Методы: (нет)
+
+### Класс: GameMenu
+  Методы:
+    - __init__()
+    - show_welcome()
+    - select_player()
+    - _create_player()
+    - select_game()
+    - select_seed()
+    - show_player_stats()
+    - confirm_start()
+    - run()
+    - _ask_input()
+    - _ask_confirm()

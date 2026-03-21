@@ -1,0 +1,15 @@
+# Документация для: move.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\move.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: Move
+  Методы:
+    - __post_init__()
+    - card_count()
+    - is_single_card()
+    - is_multiple_cards()
+    - __repr__()

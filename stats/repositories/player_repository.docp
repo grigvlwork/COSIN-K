@@ -1,0 +1,25 @@
+# Документация для: player_repository.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\repositories\player_repository.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: PlayerRepository
+  Методы:
+    - __init__()
+    - get()
+    - get_by_name()
+    - create()
+    - update()
+    - delete()
+    - update_last_played()
+    - increment_stat()
+    - update_streak()
+    - update_score()
+    - update_play_time()
+    - update_fastest_win()
+    - update_slowest_win()
+    - get_all_players()
+    - get_top_players()

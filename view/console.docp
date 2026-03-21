@@ -1,0 +1,24 @@
+# Документация для: console.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\view\console.py
+==================================================
+
+## Функции:
+  - visible_length()
+
+## Классы:
+
+### Класс: ConsoleView
+  Методы:
+    - __init__()
+    - _color()
+    - _reset()
+    - card_to_str()
+    - _show_mini_help()
+    - display_state()
+    - clear()
+    - get_input()
+    - show_message()
+    - ask_confirm()
+    - ask_choice()
+    - run()
+    - stop()

@@ -1,0 +1,34 @@
+# Документация для: base.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\rules\base.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: PileType
+  Методы: (нет)
+
+### Класс: RuleSet
+  Методы:
+    - __init__()
+    - deal()
+    - check_win()
+    - get_pile_type()
+    - can_move()
+    - _validate_basic()
+    - can_draw()
+    - get_draw_count()
+    - can_take()
+    - can_drop()
+    - get_flipped_cards()
+    - calculate_score()
+    - score_move()
+    - score_draw()
+    - score_recycle()
+    - get_hint()
+    - get_help_text()
+    - get_game_help()
+    - get_shortcuts_text()
+    - get_quick_moves_text()
+    - __repr__()

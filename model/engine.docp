@@ -1,0 +1,28 @@
+# Документация для: engine.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\engine.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: SolitaireEngine
+  Методы:
+    - __init__()
+    - state()
+    - is_game_active()
+    - new_game()
+    - restore_state()
+    - update_play_time()
+    - _create_shuffled_deck()
+    - draw()
+    - move()
+    - _execute_move()
+    - undo()
+    - redo()
+    - check_win()
+    - get_hint()
+    - _recycle_stock()
+    - add_listener()
+    - remove_listener()
+    - _notify()

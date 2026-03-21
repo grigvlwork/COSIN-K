@@ -1,0 +1,11 @@
+# Документация для: deck_manager.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\deck_manager.gd
+==================================================
+
+## Функции:
+  - _ready()
+  - load_settings()
+  - save_settings()
+  - set_deck()
+  - get_card_texture()
+  - get_back_texture()

@@ -1,0 +1,24 @@
+# Документация для: game.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\game.gd
+==================================================
+
+## Функции:
+  - _ready()
+  - start_new_game()
+  - _process()
+  - update_time_display()
+  - get_game_state()
+  - _on_request_completed()
+  - update_ui()
+  - show_win()
+  - _on_stock_clicked()
+  - _on_new_game_pressed()
+  - _on_undo_pressed()
+  - _on_menu_pressed()
+  - draw_game()
+  - draw_stock()
+  - draw_waste()
+  - draw_foundations()
+  - draw_tableau()
+  - draw_card()
+  - _on_card_clicked()

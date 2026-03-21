@@ -1,0 +1,32 @@
+# Документация для: history.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\history.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: HistoryEntry
+  Методы: (нет)
+
+### Класс: HistoryManager
+  Методы:
+    - __init__()
+    - push()
+    - undo()
+    - redo()
+    - can_undo()
+    - can_redo()
+    - current_index()
+    - total_states()
+    - get_move_history()
+    - get_current_state()
+    - go_to()
+    - truncate_future()
+    - to_dict()
+    - add_listener()
+    - remove_listener()
+    - _notify_change()
+    - clear()
+    - __len__()
+    - __repr__()

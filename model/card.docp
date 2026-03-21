@@ -1,0 +1,30 @@
+# Документация для: card.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\card.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: Suit
+  Методы: (нет)
+
+### Класс: Rank
+  Методы: (нет)
+
+### Класс: Card
+  Методы:
+    - flip()
+    - make_face_up()
+    - make_face_down()
+    - to_dict()
+    - from_dict()
+    - from_str()
+    - color()
+    - is_red()
+    - is_black()
+    - is_opposite_color()
+    - is_same_suit()
+    - rank_difference()
+    - __str__()
+    - __repr__()

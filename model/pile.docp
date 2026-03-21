@@ -1,0 +1,32 @@
+# Документация для: pile.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\pile.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: Pile
+  Методы:
+    - __init__()
+    - peek()
+    - top()
+    - bottom()
+    - take()
+    - take_from()
+    - add()
+    - put()
+    - is_empty()
+    - size()
+    - face_up_count()
+    - all_face_up()
+    - all_face_down()
+    - flip_top()
+    - flip_all()
+    - face_up_cards()
+    - face_down_cards()
+    - copy()
+    - to_dict()
+    - from_dict()
+    - __repr__()
+    - __str__()

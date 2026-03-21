@@ -1,0 +1,9 @@
+# Документация для: card.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\card.gd
+==================================================
+
+## Функции:
+  - setup()
+  - _apply_shadow_shader()
+  - _gui_input()
+  - set_dragging()

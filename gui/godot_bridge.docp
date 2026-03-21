@@ -1,0 +1,26 @@
+# Документация для: godot_bridge.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot_bridge.py
+==================================================
+
+## Функции:
+  - start_server()
+
+## Классы:
+
+### Класс: GameStateEncoder
+  Методы:
+    - default()
+
+### Класс: GodotBridgeHandler
+  Методы:
+    - _get_session_id()
+    - _get_engine()
+    - _get_game_id()
+    - _create_engine()
+    - _get_suits_completed()
+    - _check_perfect_game()
+    - _send_response()
+    - do_OPTIONS()
+    - do_GET()
+    - do_POST()
+    - log_message()

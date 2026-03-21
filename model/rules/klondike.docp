@@ -1,0 +1,33 @@
+# Документация для: klondike.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\rules\klondike.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: KlondikeRules
+  Методы:
+    - __init__()
+    - check_win()
+    - get_pile_type()
+    - deal()
+    - _can_build_tableau()
+    - _can_build_foundation()
+    - can_draw()
+    - can_take()
+    - _validate_tableau_sequence()
+    - score_move()
+    - score_draw()
+    - score_recycle()
+    - get_draw_count()
+    - get_flipped_cards()
+    - _check_all_foundations_full()
+    - get_available_moves()
+    - _is_valid_sequence()
+    - get_hint()
+    - get_game_help()
+    - get_shortcuts_text()
+    - get_quick_moves_text()
+    - validate_shortcut()
+    - __repr__()

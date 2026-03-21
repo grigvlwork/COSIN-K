@@ -1,0 +1,11 @@
+# Документация для: __init__.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\data\__init__.py
+==================================================
+
+## Функции:
+  - get_connection()
+  - connection_context()
+  - get_db()
+  - check_db()
+
+## Классы: (нет)

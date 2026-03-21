@@ -1,0 +1,15 @@
+# Документация для: global.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\global.gd
+==================================================
+
+## Функции:
+  - _ready()
+  - set_pending_save()
+  - clear_pending_save()
+  - has_pending_save()
+  - load_player_identity()
+  - save_player_identity()
+  - get_player_headers()
+  - get_player_data()
+  - get_current_game_name()
+  - set_game()

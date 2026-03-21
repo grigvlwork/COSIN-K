@@ -1,0 +1,12 @@
+# Документация для: doc_generator.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\doc_generator.py
+==================================================
+
+## Функции:
+  - extract_python_info()
+  - extract_gdscript_info()
+  - create_python_doc()
+  - create_gdscript_doc()
+  - process_directory()
+
+## Классы: (нет)

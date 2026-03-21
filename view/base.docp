@@ -1,0 +1,23 @@
+# Документация для: base.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\view\base.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: GameView
+  Методы:
+    - __init__()
+    - controller()
+    - controller()
+    - display_state()
+    - clear()
+    - get_input()
+    - show_message()
+    - ask_confirm()
+    - ask_choice()
+    - run()
+    - stop()
+    - update()
+    - handle()

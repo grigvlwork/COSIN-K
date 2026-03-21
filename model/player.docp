@@ -1,0 +1,30 @@
+# Документация для: player.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\model\player.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: GameStats
+  Методы:
+    - win_rate()
+    - update()
+
+### Класс: Player
+  Методы:
+    - get_stats()
+    - finish_game()
+    - games_played()
+    - win_rate()
+
+### Класс: PlayerManager
+  Методы:
+    - __init__()
+    - _load()
+    - _save()
+    - create_player()
+    - get_player()
+    - delete_player()
+    - rename_player()
+    - __repr__()

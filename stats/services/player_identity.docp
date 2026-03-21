@@ -1,0 +1,25 @@
+# Документация для: player_identity.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\services\player_identity.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: PlayerIdentity
+  Методы:
+    - __init__()
+    - get_or_create_client_identity()
+    - save_client_identity()
+    - clear_client_identity()
+    - authenticate()
+    - get_or_create_server_player()
+    - rename_player()
+    - get_player()
+    - _create_new_identity()
+    - _generate_default_name()
+    - _validate_uuid()
+    - _validate_name()
+    - get_current_player()
+    - logout()
+    - generate_uuid()

@@ -1,0 +1,17 @@
+# Документация для: player_stats.gd
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\player_stats.gd
+==================================================
+
+## Функции:
+  - _ready()
+  - load_stats()
+  - load_achievements()
+  - show_offline_message()
+  - _on_stats_completed()
+  - _on_achievements_completed()
+  - update_stats_display()
+  - render_achievements()
+  - _create_achievement_card()
+  - _on_edit_name_pressed()
+  - change_player_name()
+  - _on_close_pressed()

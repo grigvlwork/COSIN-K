@@ -1,0 +1,26 @@
+# Документация для: saved_game_repository.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\repositories\saved_game_repository.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: SavedGameRepository
+  Методы:
+    - __init__()
+    - get()
+    - create()
+    - update()
+    - delete()
+    - update_last_played()
+    - get_autosave()
+    - save_autosave()
+    - get_by_player()
+    - get_manual_saves()
+    - get_checkpoints()
+    - toggle_favorite()
+    - get_favorites()
+    - update_preview()
+    - delete_old_autosaves()
+    - delete_by_player()

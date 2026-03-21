@@ -1,0 +1,27 @@
+# Документация для: game_repository.py
+Путь: C:\Users\user\Documents\py_prog\COSIN-K\stats\repositories\game_repository.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: GameRepository
+  Методы:
+    - __init__()
+    - get()
+    - create()
+    - update()
+    - delete()
+    - get_by_player()
+    - get_recent_games()
+    - get_wins()
+    - get_losses()
+    - get_stats_summary()
+    - get_game_type_stats()
+    - get_time_stats()
+    - get_leaderboard()
+    - get_perfect_games()
+    - get_suits_completed_stats()
+    - delete_old_games()
+    - has_won_seed()
