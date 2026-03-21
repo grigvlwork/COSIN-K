@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://lm1rc8mr7au5"]
+[gd_scene format=3 uid="uid://lm1rc8mr7au5"]
 
 [ext_resource type="Theme" uid="uid://dbnjvx44qqhqs" path="res://main_theme.tres" id="1_vjb58"]
 [ext_resource type="Script" uid="uid://bd6mydithxl4g" path="res://scenes/menu.gd" id="1_yqeox"]
 
-[node name="Menu" type="Control"]
+[node name="Menu" type="Control" unique_id=115717317]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,7 +13,7 @@ grow_vertical = 2
 theme = ExtResource("1_vjb58")
 script = ExtResource("1_yqeox")
 
-[node name="MainContainer" type="VBoxContainer" parent="."]
+[node name="MainContainer" type="VBoxContainer" parent="." unique_id=1135688249]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -28,60 +28,60 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 20
 
-[node name="TitleLabel" type="Label" parent="MainContainer"]
+[node name="TitleLabel" type="Label" parent="MainContainer" unique_id=835730162]
 layout_mode = 2
 theme_override_font_sizes/font_size = 64
 text = "Пасьянс"
 horizontal_alignment = 1
 
-[node name="TopPanel" type="HBoxContainer" parent="MainContainer"]
+[node name="TopPanel" type="HBoxContainer" parent="MainContainer" unique_id=1882411318]
 layout_mode = 2
 
-[node name="Spacer1" type="Control" parent="MainContainer/TopPanel"]
+[node name="Spacer1" type="Control" parent="MainContainer/TopPanel" unique_id=426932959]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="PlayerNameLabel" type="Label" parent="MainContainer/TopPanel"]
+[node name="PlayerNameLabel" type="Label" parent="MainContainer/TopPanel" unique_id=562918922]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "👤 Загрузка..."
 
-[node name="EditNameButton" type="Button" parent="MainContainer/TopPanel"]
+[node name="EditNameButton" type="Button" parent="MainContainer/TopPanel" unique_id=1735833532]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 text = "✏️"
 
-[node name="Spacer2" type="Control" parent="MainContainer/TopPanel"]
+[node name="Spacer2" type="Control" parent="MainContainer/TopPanel" unique_id=1193412154]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Spacer1" type="Control" parent="MainContainer"]
+[node name="Spacer1" type="Control" parent="MainContainer" unique_id=2078782285]
 layout_mode = 2
 
-[node name="GameSelectButton" type="Button" parent="MainContainer"]
+[node name="GameSelectButton" type="Button" parent="MainContainer" unique_id=64006803]
 layout_mode = 2
 text = "📦 Клондайк"
 
-[node name="StartButton" type="Button" parent="MainContainer"]
+[node name="StartButton" type="Button" parent="MainContainer" unique_id=1970324464]
 layout_mode = 2
 text = "▶ Начать игру"
 
-[node name="StatsButton" type="Button" parent="MainContainer"]
+[node name="StatsButton" type="Button" parent="MainContainer" unique_id=1648966530]
 layout_mode = 2
-text = "Статистика"
+text = "📈 Статистика"
 
-[node name="AchievementsButton" type="Button" parent="MainContainer"]
+[node name="AchievementsButton" type="Button" parent="MainContainer" unique_id=1019905466]
 layout_mode = 2
 text = "🏆 Достижения"
 
-[node name="QuitButton" type="Button" parent="MainContainer"]
+[node name="QuitButton" type="Button" parent="MainContainer" unique_id=22365895]
 layout_mode = 2
 text = "✕ Выход"
 
-[node name="Spacer2" type="Control" parent="MainContainer"]
+[node name="Spacer2" type="Control" parent="MainContainer" unique_id=785748330]
 layout_mode = 2
 
-[node name="RestoreDialog" type="ConfirmationDialog" parent="."]
+[node name="RestoreDialog" type="ConfirmationDialog" parent="." unique_id=1989006020]
 oversampling_override = 1.0
 title = "Есть сохраненная игра"
 initial_position = 2

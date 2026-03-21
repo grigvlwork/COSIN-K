@@ -324,7 +324,6 @@ class StatsAPI:
     def delete_autosave(self, player_id: str, game_type: str) -> Dict[str, Any]:
         saves = self.stats.get_player_saves(player_id, game_type)
         autosave = next((s for s in saves if s.save_type == 'autosave'), None)
-
         if autosave:
             success = self.stats.delete_saved_game(autosave.id)
             if success:

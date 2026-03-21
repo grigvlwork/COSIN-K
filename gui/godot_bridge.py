@@ -541,6 +541,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             from_pile = command.get('from')
             to_pile = command.get('to')
             count = command.get('count', 1)
+            player_id = command.get('player_id')
 
             if not from_pile or not to_pile:
                 self._send_response({'success': False, 'error': 'Missing from or to pile'}, 400)
@@ -570,6 +571,12 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     cards_moved=engine.cards_moved_count,
                     cards_flipped=engine.cards_flipped_count,
                 )
+                self.stats_api.delete_autosave(player_id, "klondike")
+
+                if session_id in self.games:
+                    del self.games[session_id]
+                if session_id in self.game_ids:
+                    del self.game_ids[session_id]
             self._send_response({
                 'success': success,
                 'state': engine.state if success else None,
@@ -619,6 +626,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == '/auto_move':
             from_pile = command.get('from')
+            player_id = command.get('player_id')
+            game_type = command.get('game_type')
             if not from_pile:
                 self._send_response({'success': False, 'error': 'Missing from pile'}, 400)
                 return
@@ -659,6 +668,12 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                             cards_moved=engine.cards_moved_count,
                             cards_flipped=engine.cards_flipped_count,
                         )
+                        self.stats_api.delete_autosave(player_id, game_type)
+
+                        if session_id in self.games:
+                            del self.games[session_id]
+                        if session_id in self.game_ids:
+                            del self.game_ids[session_id]
                 self._send_response({
                     'success': success,
                     'move': {'from': selected_move.from_pile, 'to': selected_move.to_pile,

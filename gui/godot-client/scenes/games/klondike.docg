@@ -1,5 +1,5 @@
 # Документация для: klondike.gd
-Путь: C:\Users\user\Documents\py_prog\COSIN-K\gui\godot-client\scenes\games\klondike.gd
+Путь: ./COSIN-K\gui\godot-client\scenes\games\klondike.gd
 ==================================================
 
 ## Функции:
@@ -41,3 +41,14 @@
   - _animate_return()
   - _get_card_global_position()
   - _get_shadow_material()
+  - _calculate_target_position()
+  - _hide_target_cards()
+  - _mark_cards_as_animating()
+  - _create_ghost_card()
+  - _get_waste_card_position()
+  - _mark_card_animating()
+  - _unmark_card_animating()
+  - _clear_animating_marks()
+  - _is_card_animating()
+  - _create_card_node()
+  - _get_card_textures()

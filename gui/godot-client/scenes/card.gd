@@ -21,18 +21,20 @@ func setup(data: Dictionary, pile: String, index: int, size: Vector2):
 	card_data = data
 	pile_name = pile
 	card_index = index
+	
+	set_meta("card_index", index) # ← ВОТ ЭТОГО НЕ ХВАТАЛО
+	
 	self.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	# Размер карты
 	self.size = size
 	self.custom_minimum_size = size
-		# Текстура карты
+	
 	var tex = DeckManager.get_card_texture(
 		data["suit"],
 		int(data["rank"]),
 		data["face_up"]
 	)
 	texture_rect.texture = tex
-	# === НАСТРОЙКА ШЕЙДЕРА ТЕНИ ===
+	
 	_apply_shadow_shader(tex)
 
 # ============================================================

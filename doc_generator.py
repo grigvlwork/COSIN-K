@@ -2,6 +2,25 @@ import os
 import re
 from pathlib import Path
 
+# Сохраняем директорию запуска и её имя
+BASE_DIR = Path.cwd()
+BASE_FOLDER_NAME = BASE_DIR.name
+
+
+def get_relative_path(file_path):
+    """Возвращает путь относительно родителя директории запуска (сохраняя имя папки запуска)."""
+    try:
+        # Получаем путь относительно родителя BASE_DIR
+        rel_path = Path(file_path).relative_to(BASE_DIR.parent)
+        return f"./{rel_path}"
+    except ValueError:
+        # Если файл вне родителя BASE_DIR, возвращаем относительно BASE_DIR с именем папки
+        try:
+            rel_path = Path(file_path).relative_to(BASE_DIR)
+            return f"./{BASE_FOLDER_NAME}/{rel_path}"
+        except ValueError:
+            return str(file_path)
+
 
 def extract_python_info(file_path):
     """Извлекает функции и классы с методами из Python файла."""
@@ -11,25 +30,19 @@ def extract_python_info(file_path):
     functions = []
     classes = []
 
-    # Регулярные выражения для Python
-    # Функции (не методы классов)
     func_pattern = re.compile(r'^def\s+(\w+)\s*\(', re.MULTILINE)
 
-    # Классы и их методы
     class_pattern = re.compile(
         r'^class\s+(\w+)(?:\([^)]*\))?\s*:\s*(.*?)(?=^class\s|\Z)',
         re.MULTILINE | re.DOTALL
     )
     method_pattern = re.compile(r'^\s{4}def\s+(\w+)\s*\(', re.MULTILINE)
 
-    # Находим все функции
     for match in func_pattern.finditer(content):
-        # Проверяем, что это не метод (нет отступа в начале строки)
         line_start = content.rfind('\n', 0, match.start()) + 1
         if content[line_start:match.start()].strip() == '':
             functions.append(match.group(1))
 
-    # Находим все классы и их методы
     for match in class_pattern.finditer(content):
         class_name = match.group(1)
         class_body = match.group(2)
@@ -52,9 +65,6 @@ def extract_gdscript_info(file_path):
         content = f.read()
 
     functions = []
-
-    # Регулярное выражение для func в GDScript
-    # func имя(параметры):
     func_pattern = re.compile(r'^func\s+(\w+)\s*\(', re.MULTILINE)
 
     for match in func_pattern.finditer(content):
@@ -66,13 +76,13 @@ def extract_gdscript_info(file_path):
 def create_python_doc(file_path, info):
     """Создает .docp файл для Python."""
     doc_path = file_path.with_suffix('.docp')
+    display_path = get_relative_path(file_path)
 
     lines = []
     lines.append(f"# Документация для: {file_path.name}\n")
-    lines.append(f"Путь: {file_path}\n")
+    lines.append(f"Путь: {display_path}\n")
     lines.append("=" * 50 + "\n")
 
-    # Функции
     if info['functions']:
         lines.append("\n## Функции:\n")
         for func in info['functions']:
@@ -80,7 +90,6 @@ def create_python_doc(file_path, info):
     else:
         lines.append("\n## Функции: (нет)\n")
 
-    # Классы
     if info['classes']:
         lines.append("\n## Классы:\n")
         for cls in info['classes']:
@@ -97,16 +106,17 @@ def create_python_doc(file_path, info):
     with open(doc_path, 'w', encoding='utf-8') as f:
         f.writelines(lines)
 
-    print(f"  Создан: {doc_path}")
+    print(f"  Создан: {get_relative_path(doc_path)}")
 
 
 def create_gdscript_doc(file_path, functions):
     """Создает .docg файл для GDScript."""
     doc_path = file_path.with_suffix('.docg')
+    display_path = get_relative_path(file_path)
 
     lines = []
     lines.append(f"# Документация для: {file_path.name}\n")
-    lines.append(f"Путь: {file_path}\n")
+    lines.append(f"Путь: {display_path}\n")
     lines.append("=" * 50 + "\n")
 
     if functions:
@@ -119,14 +129,16 @@ def create_gdscript_doc(file_path, functions):
     with open(doc_path, 'w', encoding='utf-8') as f:
         f.writelines(lines)
 
-    print(f"  Создан: {doc_path}")
+    print(f"  Создан: {get_relative_path(doc_path)}")
 
 
 def process_directory(start_path='.'):
     """Рекурсивно обрабатывает директорию."""
     start_path = Path(start_path).resolve()
 
-    print(f"Начинаю обработку с: {start_path}\n")
+    display_start = get_relative_path(start_path)
+    print(f"Начинаю обработку с: {display_start}\n")
+    print(f"Базовая директория: {BASE_DIR}\n")
 
     for root, dirs, files in os.walk(start_path):
         root_path = Path(root)
@@ -135,7 +147,7 @@ def process_directory(start_path='.'):
             file_path = root_path / file
 
             if file.endswith('.py'):
-                print(f"Обработка Python: {file_path}")
+                print(f"Обработка Python: {get_relative_path(file_path)}")
                 try:
                     info = extract_python_info(file_path)
                     create_python_doc(file_path, info)
@@ -143,7 +155,7 @@ def process_directory(start_path='.'):
                     print(f"  Ошибка: {e}")
 
             elif file.endswith('.gd'):
-                print(f"Обработка GDScript: {file_path}")
+                print(f"Обработка GDScript: {get_relative_path(file_path)}")
                 try:
                     functions = extract_gdscript_info(file_path)
                     create_gdscript_doc(file_path, functions)
@@ -152,6 +164,5 @@ def process_directory(start_path='.'):
 
 
 if __name__ == '__main__':
-    # Запуск с текущей директории
     process_directory('.')
     print("\nГотово!")
