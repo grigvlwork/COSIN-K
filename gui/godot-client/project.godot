@@ -26,7 +26,7 @@ DeckManager="*res://scenes/deck_manager.gd"
 
 [display]
 
-window/size/viewport_width=1400
+window/size/viewport_width=1100
 window/size/viewport_height=900
 
 [rendering]

@@ -57,7 +57,6 @@ alignment = 1
 
 [node name="LeftSpacer" type="Control" parent="Display/MainLayout/UpperRow" unique_id=304352247]
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="StockSlot" type="Control" parent="Display/MainLayout/UpperRow" unique_id=9196758]
 layout_mode = 2
@@ -99,7 +98,6 @@ alignment = 1
 
 [node name="LeftSpacer" type="Control" parent="Display/MainLayout/LowerRow" unique_id=1903411250]
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="Tableau_0" type="Control" parent="Display/MainLayout/LowerRow" unique_id=887796667]
 layout_mode = 2
@@ -124,7 +122,6 @@ layout_mode = 2
 
 [node name="RightSpacer" type="Control" parent="Display/MainLayout/LowerRow" unique_id=1931384328]
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="Buttons" parent="Display/MainLayout" unique_id=1628640919 instance=ExtResource("3_cnung")]
 custom_minimum_size = Vector2(300, 50)

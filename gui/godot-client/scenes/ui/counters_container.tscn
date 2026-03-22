@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://1hhgj4vbjqcn"]
 
-[node name="CountersContainer" type="HBoxContainer"]
+[node name="CountersContainer" type="HBoxContainer" unique_id=1331730832]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -9,21 +9,22 @@ offset_right = 140.5
 offset_bottom = 40.0
 grow_horizontal = 2
 
-[node name="ScoreLabel" type="Label" parent="."]
+[node name="ScoreLabel" type="Label" parent="." unique_id=1011541801]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "Счет: 0"
 
-[node name="MovesLabel" type="Label" parent="."]
+[node name="MovesLabel" type="Label" parent="." unique_id=1556582140]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "Ходы: 0"
 
-[node name="TimeLabel" type="Label" parent="."]
+[node name="TimeLabel" type="Label" parent="." unique_id=1274489644]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "Время: 00:00"
 
-[node name="SeedLabel" type="Label" parent="."]
+[node name="SeedLabel" type="Label" parent="." unique_id=759737047]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Сид: 0"
