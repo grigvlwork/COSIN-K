@@ -55,7 +55,7 @@ get_cosmetics(player_id)
 set_cosmetic(player_id, key, value)
 </description>
 </task>
-<task creationDateTime="2026-03-13 11:45:41.723000" id="7d5b5ab0-1e97-11f1-ae50-db6bae543b37" modificationDateTime="2026-03-13 11:45:53.844000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Клиент Godot ">
+<task actualstartdate="2026-03-23 10:51:51.123000" creationDateTime="2026-03-13 11:45:41.723000" id="7d5b5ab0-1e97-11f1-ae50-db6bae543b37" modificationDateTime="2026-03-23 10:51:51.122000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Клиент Godot ">
 <description>
 Финальная визуализация.
 
