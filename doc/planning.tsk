@@ -23,11 +23,12 @@
 <task actualstartdate="2026-02-27 09:00:34.913000" creationDateTime="2026-02-27 09:00:30.184000" id="17d60680-1380-11f1-88e0-ce7a14ba6107" modificationDateTime="2026-02-27 09:00:34.912000" status="1" subject="Сброс прогресса" />
 </task>
 </task>
-<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-21 22:48:04.492000" status="1" subject="Ближнее планирование">
+<task actualstartdate="2026-02-27 09:05:45.040000" creationDateTime="2026-02-27 09:05:34.442000" expandedContexts="('taskviewer',)" id="cd301c9e-1380-11f1-81a3-ce7a14ba6107" modificationDateTime="2026-03-24 13:52:08.637000" status="1" subject="Ближнее планирование">
 <task creationDateTime="2026-03-21 22:47:14.795000" id="3b937bb0-253d-11f1-8821-50ebf62d0dab" modificationDateTime="2026-03-21 22:47:17.283000" status="1" subject="Hover эффект карты" />
 <task creationDateTime="2026-03-21 22:47:27.600000" id="43355f00-253d-11f1-8bab-50ebf62d0dab" modificationDateTime="2026-03-21 22:47:35.163000" status="1" subject="Подсветка валидного дропа" />
 <task creationDateTime="2026-03-21 22:47:48.223000" id="4f8030f0-253d-11f1-80bf-50ebf62d0dab" modificationDateTime="2026-03-21 22:47:54.278000" status="1" subject="Анимация переворота карты" />
 <task creationDateTime="2026-03-21 22:48:04.492000" id="5932a4c0-253d-11f1-8b4a-50ebf62d0dab" modificationDateTime="2026-03-21 22:48:07.440000" status="1" subject="Кэширование Card.tscn (preload один раз)" />
+<task actualstartdate="2026-03-24 13:52:22.832000" creationDateTime="2026-03-24 13:52:08.637000" id="fa0dced1-274d-11f1-817b-d2b1bbe9b32b" modificationDateTime="2026-03-24 13:52:22.831000" status="1" subject="Сбор оставшейся колоды" />
 <task actualstartdate="2026-02-27 09:07:04.592000" creationDateTime="2026-02-27 09:06:49.935000" expandedContexts="('taskviewer',)" id="fa2f6df0-1380-11f1-82db-ce7a14ba6107" modificationDateTime="2026-03-19 09:22:33.445000" status="1" subject="Учет достижений">
 <task actualstartdate="2026-03-13 11:44:19.209000" completiondate="2026-03-21 22:48:24.816000" creationDateTime="2026-03-13 11:44:05.941000" id="44442e4f-1e97-11f1-995b-db6bae543b37" modificationDateTime="2026-03-21 22:48:24.816000" percentageComplete="100" status="1" subject="Модели данных">
 <description>
@@ -55,7 +56,7 @@ get_cosmetics(player_id)
 set_cosmetic(player_id, key, value)
 </description>
 </task>
-<task actualstartdate="2026-03-23 10:51:51.123000" creationDateTime="2026-03-13 11:45:41.723000" id="7d5b5ab0-1e97-11f1-ae50-db6bae543b37" modificationDateTime="2026-03-23 10:51:51.122000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Клиент Godot ">
+<task creationDateTime="2026-03-13 11:45:41.723000" id="7d5b5ab0-1e97-11f1-ae50-db6bae543b37" modificationDateTime="2026-03-23 10:51:51.122000" prerequisites="4f135cc0-1e97-11f1-9971-db6bae543b37" status="1" subject="Клиент Godot ">
 <description>
 Финальная визуализация.
 
