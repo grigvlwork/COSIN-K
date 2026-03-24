@@ -58,6 +58,7 @@ var stack_offset_face_up = 35
 # Текущие динамические размеры (будут меняться при ресайзе)
 var card_width = 100  # Начальное значение
 var card_height = 140
+var tableau_available_height: float = 0.0
 #var stack_offset_y = 30  # Смещение карт в стопке по вертикали
 #var stack_offset_waste = 10 # Смещение в сбросе (веер)
 
@@ -478,113 +479,36 @@ func update_layout():
 	card_width = calculated_width
 	card_height = card_width * CARD_ASPECT_RATIO
 	
-	# 2. РАСЧЕТ ВЫСОТЫ (Матеметически, без чтения size.y контейнеров)
-	# Это разрывает петлю обратной связи!
-	
-	var vbox = $Display/MainLayout
-	var vbox_sep = vbox.get_theme_constant("separation")
-	
-	# Высота, которую едят интерфейсы (кроме карт)
-	var static_ui_height = $Display/MainLayout/CountersContainer.size.y + \
-						   $Display/MainLayout/Buttons.size.y + \
-						   (vbox_sep * 3) + \
-						   SCREEN_MARGIN # Запас снизу
-	
-	# Устанавливаем отступы в зависимости от размеров карт
+	# 2. РАСЧЕТ ОТСТУПОВ (только базовые, без scaling)
 	var horizontal_sep = max(10, card_width * 0.1)
 	var vertical_sep = max(10, card_height * 0.15)
 
-	# Применяем к контейнерам
 	$Display/MainLayout.add_theme_constant_override("separation", vertical_sep)
 	$Display/MainLayout/UpperRow.add_theme_constant_override("separation", horizontal_sep)
 	$Display/MainLayout/LowerRow.add_theme_constant_override("separation", horizontal_sep)
 	
-	# Свободное место для ВЕРТИКАЛЬНОЙ ЛОГИКИ:
-	# Нам нужно вместить: 1 карту (UpperRow) + Стопку (LowerRow)
+	# БАЗОВЫЕ offsets (идеальные)
+	stack_offset_hidden = card_height * offset_hidden_ratio
+	stack_offset_face_up = card_height * offset_face_up_ratio
+	
+	# 3. РАСЧЕТ ДОСТУПНОЙ ВЫСОТЫ ДЛЯ ТАБЛО
+	var vbox = $Display/MainLayout
+	var vbox_sep = vbox.get_theme_constant("separation")
+	
+	var static_ui_height = $Display/MainLayout/CountersContainer.size.y + \
+						   $Display/MainLayout/Buttons.size.y + \
+						   (vbox_sep * 3) + \
+						   SCREEN_MARGIN
+	
 	var available_vertical_space = viewport_size.y - static_ui_height
 	
-	# 3. АНАЛИЗ СТОПОК
-	var max_hidden = 0
-	var max_face_up = 0
+	# сколько остаётся под стопки (минус верхний ряд)
+	tableau_available_height = available_vertical_space - card_height
 	
-	if game_state and game_state.has("piles"):
-		for i in range(7):
-			var pile_name = "tableau_" + str(i)
-			if game_state["piles"].has(pile_name):
-				var pile = game_state["piles"][pile_name]
-				var composition = _get_pile_composition(pile["cards"])
-				if (composition.hidden + composition.face_up) > (max_hidden + max_face_up):
-					max_hidden = composition.hidden
-					max_face_up = composition.face_up
-	
-	# 4. ЛОГИКА МАСШТАБИРОВАНИЯ (Глобальная)
-	
-	# Считаем отступы (N-1)
-	var hidden_offsets_count = max(0, max_hidden - 1)
-	if max_hidden > 0 and max_face_up > 0:
-		hidden_offsets_count += 1
-	var face_up_offsets_count = max(0, max_face_up - 1)
-	
-	var ideal_r_h = offset_hidden_ratio
-	var ideal_r_f = offset_face_up_ratio
-	
-	# Формула общей занимаемой высоты:
-	# TotalHeight = UpperCard + LowerPile
-	# TotalHeight = card_h + (card_h + card_h*(hidden_offs*r_h + face_up_offs*r_f))
-	# TotalHeight = card_h * (2 + hidden_offs*r_h + face_up_offs*r_f)
-	
-	var total_height_factor = 2.0 + (hidden_offsets_count * ideal_r_h) + (face_up_offsets_count * ideal_r_f)
-	var ideal_total_height = card_height * total_height_factor
-	
-	# Фактор для критического режима
-	var critical_factor = 2.0 + (hidden_offsets_count * CRITICAL_OFFSET_RATIO) + (face_up_offsets_count * CRITICAL_OFFSET_RATIO)
-	
-	# --- ЭТАП 1: ИДЕАЛЬНО ---
-	if ideal_total_height <= available_vertical_space:
-		# Всё влезает, используем стандартные отступы
-		stack_offset_hidden = card_height * ideal_r_h
-		stack_offset_face_up = card_height * ideal_r_f
-		
-	# --- ЭТАП 2: СЖАТИЕ ОТСТУПОВ ---
-	elif (card_height * critical_factor) <= available_vertical_space:
-		# Влезает только если сжать отступы. Карту НЕ трогаем.
-		# Нам нужно найти такие offset_r, чтобы:
-		# card_h * (2 + hid*offset + face*offset) = available_space
-		
-		var needed_height_factor = available_vertical_space / card_height
-		var available_offset_pool = needed_height_factor - 2.0 # То, что осталось на отступы
-		
-		var ideal_offset_pool = (hidden_offsets_count * ideal_r_h) + (face_up_offsets_count * ideal_r_f)
-		
-		if ideal_offset_pool > 0:
-			var scale_k = available_offset_pool / ideal_offset_pool
-			stack_offset_hidden = card_height * ideal_r_h * scale_k
-			stack_offset_face_up = card_height * ideal_r_f * scale_k
-			
-			# Ограничитель
-			var min_abs = card_height * CRITICAL_OFFSET_RATIO
-			if stack_offset_hidden < min_abs: stack_offset_hidden = min_abs
-			if stack_offset_face_up < min_abs: stack_offset_face_up = min_abs
-		else:
-			stack_offset_hidden = 0
-			stack_offset_face_up = 0
-			
-	# --- ЭТАП 3: УМЕНЬШЕНИЕ КАРТЫ ---
-	else:
-		# Не влезает даже с минимальными отступами.
-		# Считаем новый размер карты.
-		# card_h_new * critical_factor = available_space
-		
-		var new_card_height = available_vertical_space / critical_factor
-		
-		card_height = new_card_height
-		card_width = card_height / CARD_ASPECT_RATIO
-		
-		stack_offset_hidden = card_height * CRITICAL_OFFSET_RATIO
-		stack_offset_face_up = card_height * CRITICAL_OFFSET_RATIO
-
-	# 5. ПРИМЕНЕНИЕ
+	# 4. ПРИМЕНЕНИЕ
 	_apply_slot_sizes()
+	
+	# 5. ПЕРЕРИСОВКА
 	if game_state:
 		draw_game()
 
@@ -750,24 +674,34 @@ func draw_tableau():
 			var slot_node = tableau_slots[i]
 			var current_y = 0.0
 
+			# 🔥 НОВОЕ: считаем реальную высоту стопки
+			var pile_height = _calculate_pile_height(cards, stack_offset_hidden, stack_offset_face_up)
+
+			var local_hidden = stack_offset_hidden
+			var local_face = stack_offset_face_up
+
+			# 🔥 если не помещается — сжимаем
+			if pile_height > tableau_available_height and pile_height > 0:
+				var k = tableau_available_height / pile_height
+				local_hidden *= k
+				local_face *= k
+
 			for j in range(cards.size()):
 				var card = cards[j]
 				
-				# Проверяем анимацию
 				if _is_card_animating(pile_name, j):
-					# Пропускаем отрисовку, но учитываем высоту для смещения!
 					if card["face_up"]:
-						current_y += stack_offset_face_up
+						current_y += local_face
 					else:
-						current_y += stack_offset_hidden
+						current_y += local_hidden
 					continue
 				
 				draw_card(card, slot_node, pile_name, Vector2(0, current_y), j)
 				
 				if card["face_up"]:
-					current_y += stack_offset_face_up
+					current_y += local_face
 				else:
-					current_y += stack_offset_hidden
+					current_y += local_hidden
 
 func draw_card(card_data, parent_slot: Control, pile_name: String, 
 			   offset: Vector2 = Vector2(0, 0), card_index: int = 0) -> Control:
