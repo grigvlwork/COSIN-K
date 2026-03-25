@@ -3,7 +3,7 @@ extends Node
 
 # === НАСТРОЙКИ ПО УМОЛЧАНИЮ ===
 # Папка с базовой колодой (та, что у тебя сейчас в assets/cards)
-const DEFAULT_DECK_PATH = "res://assets/decks/classic"
+const DEFAULT_DECK_PATH = "res://assets/decks/russian_style"
 
 # Ключи для файла конфигурации
 const SETTINGS_FILE = "user://settings.cfg"
