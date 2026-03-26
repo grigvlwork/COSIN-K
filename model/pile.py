@@ -140,9 +140,10 @@ class Pile(List[Card]):
     # === Копирование ===
 
     def copy(self) -> "Pile":
-        """Глубокая копия стопки."""
+        """Глубокая копия стопки с сохранением id карт."""
         new_pile = Pile(self.name)
-        new_pile.extend([Card(c.suit, c.rank, c.face_up) for c in self])
+        # Используем существующие объекты Card, а не создаём новые
+        new_pile.extend(self[:])
         return new_pile
 
     # === Сериализация ===

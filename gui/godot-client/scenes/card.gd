@@ -32,12 +32,14 @@ func _ready():
 	if texture_rect:
 		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-func setup(data: Dictionary, pile: String, index: int, size: Vector2):
+func setup(data: Dictionary, pile: String, index: int, size: Vector2, card_id: Variant = null):
 	card_data = data
 	pile_name = pile
 	card_index = index
 	
-	set_meta("card_index", index) # ← ВОТ ЭТОГО НЕ ХВАТАЛО
+	set_meta("card_index", index)
+	set_meta("pile_name", pile_name)
+	set_meta("card_id", card_id if card_id != null else data.get("id", index))
 	
 	self.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	self.size = size

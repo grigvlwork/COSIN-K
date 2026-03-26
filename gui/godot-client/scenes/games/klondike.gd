@@ -315,10 +315,9 @@ func _on_request_completed(result, response_code, headers, body):
 					# Ручной ход
 					var nodes = pending_action_context.get("nodes", [])
 					var target_pile = pending_action_context.get("target_pile", "")
-					var count = pending_action_context.get("count", 1)
 					
 					if nodes.size() > 0 and target_pile != "":
-						_animate_success_flight(nodes, target_pile, count)
+						_animate_success_flight(nodes, target_pile)
 					else:
 						draw_game()
 						
@@ -327,11 +326,10 @@ func _on_request_completed(result, response_code, headers, body):
 					if data.has("move"):
 						var move_info = data["move"]
 						var target_pile = move_info["to"]
-						var count = move_info["count"]
 						var nodes = pending_action_context.get("nodes", [])
 						
 						if nodes.size() > 0:
-							_animate_success_flight(nodes, target_pile, count)
+							_animate_success_flight(nodes, target_pile)
 						else:
 							draw_game()
 					else:
@@ -579,6 +577,9 @@ func draw_game():
 
 func _clear_cards_from_slot(slot: Control):
 	for child in slot.get_children():
+		# Проверяем, есть ли у карты id и не находится ли она в анимации
+		if child.has_meta("card_id") and _is_card_animating(child.get_meta("card_id")):
+			continue  # Не трогаем "летящую" карту
 		child.queue_free()
 
 func foundation_slots():
@@ -630,19 +631,21 @@ func draw_waste():
 		return
 	
 	var waste = game_state["waste"]
-	if waste["cards"].size() > 0:
-		var cards = waste["cards"]
-		var start_idx = max(0, cards.size() - 3)
+	var cards = waste["cards"]
+	if cards.size() == 0:
+		return
+	
+	var start_idx = max(0, cards.size() - 3)
+	
+	for i in range(start_idx, cards.size()):
+		var card = cards[i]
+		var offset = (i - start_idx) * (card_width * 0.15)
 		
-		for i in range(start_idx, cards.size()):
-			var card = cards[i]
-			var offset = (i - start_idx) * (card_width * 0.15)
-			
-			# Проверяем, не в анимации ли эта карта
-			if _is_card_animating("waste", i):
-				continue  # Пропускаем — её заменяет призрак
-			
-			draw_card(card, waste_slot, "waste", Vector2(offset, 0), i)
+		# Проверяем, не в анимации ли эта карта (по уникальному id)
+		if _is_card_animating(card.get("id", null)):
+			continue  # Пропускаем — её заменяет призрак
+		
+		draw_card(card, waste_slot, "waste", Vector2(offset, 0), i)
 
 func draw_foundations():
 	var slots = foundation_slots()
@@ -655,11 +658,14 @@ func draw_foundations():
 			var cards = pile["cards"]
 
 			for j in range(cards.size()):
-				# Проверяем анимацию
-				if _is_card_animating(pile_name, j):
+				var card = cards[j]
+				var card_id = card.get("id", j)
+
+				# Проверяем анимацию по id
+				if _is_card_animating(card_id):
 					continue
 				
-				draw_card(cards[j], slot_node, pile_name, Vector2(0, 0), j)
+				draw_card(card, slot_node, pile_name, Vector2(0, 0), j)
 
 func draw_tableau():
 	if not game_state.has("piles"):
@@ -674,7 +680,7 @@ func draw_tableau():
 			var slot_node = tableau_slots[i]
 			var current_y = 0.0
 
-			# 🔥 НОВОЕ: считаем реальную высоту стопки
+			# 🔥 считаем реальную высоту стопки
 			var pile_height = _calculate_pile_height(cards, stack_offset_hidden, stack_offset_face_up)
 
 			var local_hidden = stack_offset_hidden
@@ -689,7 +695,8 @@ func draw_tableau():
 			for j in range(cards.size()):
 				var card = cards[j]
 				
-				if _is_card_animating(pile_name, j):
+				# 🔥 проверяем анимацию по уникальному id карты
+				if _is_card_animating(card.get("id", null)):
 					if card["face_up"]:
 						current_y += local_face
 					else:
@@ -703,18 +710,39 @@ func draw_tableau():
 				else:
 					current_y += local_hidden
 
-func draw_card(card_data, parent_slot: Control, pile_name: String, 
+func draw_card(card_data: Dictionary, parent_slot: Control, pile_name: String, 
 			   offset: Vector2 = Vector2(0, 0), card_index: int = 0) -> Control:
+	"""
+	Создает визуальный узел карты и добавляет его в слот.
+	Поддерживает уникальный id карты для безопасного сопоставления с game_state.
+	"""
 	
-	# ПРОВЕРКА: если карта в анимации — не рисуем её
-	if _is_card_animating(pile_name, card_index):
+	# ПРОВЕРКА: если карта уже в анимации — не рисуем её
+	var card_id = card_data.get("id", card_index)
+	if _is_card_animating(card_id):
 		return null  # Или создаём невидимый placeholder
-	
+
+	# Загружаем сцену карты
 	var card_scene = preload("res://scenes/Card.tscn")
 	var card_control = card_scene.instantiate()
-	
+
+	# Добавляем в родителя
 	parent_slot.add_child(card_control)
-	card_control.setup(card_data, pile_name, card_index, Vector2(card_width, card_height))
+	
+	# Настраиваем узел карты
+	# Передаем: данные карты, имя стопки, индекс в стопке, размер, id
+	card_control.setup(
+		card_data, 
+		pile_name, 
+		card_index, 
+		Vector2(card_width, card_height),
+		card_id  # уникальный идентификатор карты
+	)
+	
+	# Сохраняем id в meta для удобного доступа
+	card_control.set_meta("card_id", card_id)
+	
+	# Устанавливаем позицию и подключаем сигнал клика
 	card_control.position = offset
 	card_control.card_clicked.connect(_on_card_clicked)
 	
@@ -932,57 +960,62 @@ func _get_pile_under_mouse() -> String:
 
 # ===== АНИМАЦИИ =====
 
-func _animate_success_flight(nodes: Array, target_pile: String, move_count: int):
+func _animate_success_flight(nodes: Array, target_pile: String):
 	"""Запускает анимацию полета карт к целевой стопке"""
 	is_animating = true
-	
+
 	# 1. Сохраняем глобальные позиции ПЕРЕД любой перерисовкой
 	var start_positions = []
 	for node in nodes:
 		start_positions.append(node.global_position)
-	
+
 	# 2. Создаем призраков на основе оригиналов (еще до draw_game)
 	var flying_layer = Control.new()
 	flying_layer.name = "FlyingLayer"
 	flying_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flying_layer.z_index = 300
 	$Display.add_child(flying_layer)
-	
+
 	var ghosts = []
 	for i in range(nodes.size()):
 		var original_node = nodes[i]
-		if not is_instance_valid(original_node): continue
-		
+		if not is_instance_valid(original_node):
+			continue
 		var ghost = _create_ghost_card(original_node)
-		ghost.global_position = start_positions[i]  # Используем сохранённую позицию
+		ghost.global_position = start_positions[i]
 		flying_layer.add_child(ghost)
 		ghosts.append(ghost)
-	
+
 	# 3. ВЫЧИСЛЯЕМ целевые позиции из game_state
 	var targets = []
-	for i in range(move_count):
-		targets.append(_calculate_target_position(target_pile, i, move_count))
-	
+	for i in range(nodes.size()):
+		targets.append(_calculate_target_position(target_pile, i, nodes.size()))
+
 	# 4. Помечаем карты для исключения из отрисовки
-	_mark_cards_as_animating(nodes, target_pile, move_count)
+	_mark_cards_as_animating(nodes)
 	
-	# 5. ТЕПЕРЬ перерисовываем — перемещённые карты будут пропущены
+	for node in nodes:
+		if is_instance_valid(node):
+			node.visible = false
+
+	# 5. Перерисовываем — перемещённые карты будут пропущены
 	draw_game()
-	
+
 	# 6. Запускаем анимацию
 	var tween = create_tween()
 	tween.set_parallel(true)
-	
 	for i in range(ghosts.size()):
-		if i < targets.size():
-			tween.tween_property(ghosts[i], "global_position", targets[i], 0.25)\
-				 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	
+		tween.tween_property(ghosts[i], "global_position", targets[i], 0.25)\
+			 .set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+
 	tween.set_parallel(false)
 	tween.tween_interval(0.3)
-	
+
 	tween.tween_callback(func():
 		flying_layer.queue_free()
+		for node in nodes:
+			if is_instance_valid(node):
+				node.visible = true
 		_clear_animating_marks()  # Снимаем пометки
 		draw_game()  # Полная перерисовка
 		is_animating = false
@@ -1192,28 +1225,13 @@ func _hide_target_cards(pile_name: String, count: int):
 		if card_index >= start_idx and card_index < total_cards:
 			child.hide()
 
-func _mark_cards_as_animating(nodes: Array, target_pile: String, count: int):
-	"""Помечает карты, которые не должны рисоваться в draw_game"""
+func _mark_cards_as_animating(nodes: Array) -> void:
+	"""Помечает переданные узлы как находящиеся в анимации по их card_id"""
 	_animating_cards.clear()
-	
-	# Исходные карты (откуда летим)
 	for node in nodes:
-		var key = node.get_meta("pile_name", "") + "_" + str(node.get_meta("card_index", -1))
-		_animating_cards[key] = true
-	
-	# Целевые карты (куда летим) — тоже не рисуем, их заменяют призраки
-	var pile_data = null
-	if target_pile == "waste":
-		pile_data = game_state["waste"]
-	elif game_state["piles"].has(target_pile):
-		pile_data = game_state["piles"][target_pile]
-	
-	if pile_data:
-		var total = pile_data["cards"].size()
-		var start_idx = total - count
-		for i in range(start_idx, total):
-			var key = target_pile + "_" + str(i)
-			_animating_cards[key] = true
+		if node.has_meta("card_id"):
+			var card_id = node.get_meta("card_id")
+			_animating_cards[str(card_id)] = true
 
 
 func _create_ghost_card(original_node: Control) -> Control:
@@ -1264,16 +1282,18 @@ func _get_waste_card_position(card_index: int, total_cards: int) -> Vector2:
 	
 	return Vector2(x_offset, 0)
 
-func _mark_card_animating(pile_name: String, card_index: int):
+func _mark_card_animating(card_id: int):
 	"""Помечает карту как находящуюся в анимации (не рисовать в draw_game)"""
-	var key = pile_name + "_" + str(card_index)
-	_animating_cards[key] = true
+	if card_id == null:
+		return
+	_animating_cards[str(card_id)] = true
 
 
-func _unmark_card_animating(pile_name: String, card_index: int):
+func _unmark_card_animating(card_id: int):
 	"""Снимает пометку анимации"""
-	var key = pile_name + "_" + str(card_index)
-	_animating_cards.erase(key)
+	if card_id == null:
+		return
+	_animating_cards.erase(str(card_id))
 
 
 func _clear_animating_marks():
@@ -1281,10 +1301,9 @@ func _clear_animating_marks():
 	_animating_cards.clear()
 
 
-func _is_card_animating(pile_name: String, card_index: int) -> bool:
-	"""Проверяет, находится ли карта в анимации"""
-	var key = pile_name + "_" + str(card_index)
-	return _animating_cards.has(key)
+func _is_card_animating(card_id) -> bool:
+	# card_id может быть int или String (UUID)
+	return _animating_cards.has(str(card_id))
 
 func _create_card_node(texture: Texture2D, size: Vector2) -> Control:
 	"""

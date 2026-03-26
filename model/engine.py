@@ -122,14 +122,21 @@ class SolitaireEngine:
         if self._state:
             self._state.time_elapsed = seconds
 
-    def _create_shuffled_deck(self, seed: Optional[int]) -> List[Card]:
-        """Создать перемешанную колоду."""
-        rng = random.Random(seed)
-        cards = [Card(suit, rank, face_up=False)
-                 for suit in Suit
-                 for rank in Rank]
-        rng.shuffle(cards)
-        return cards
+    def _create_shuffled_deck(self, seed: Optional[int] = None) -> List[Card]:
+        """
+        Создает новую перемешанную колоду из 52 уникальных карт.
+        Каждая карта получает уникальный id.
+        seed — для воспроизводимого перемешивания.
+        """
+        rng = random.Random(seed)  # Локальный генератор для воспроизводимости
+
+        # Создаём карты
+        deck = [Card(suit=suit, rank=rank, face_up=False) for suit in Suit for rank in Rank]
+
+        # Перемешиваем с использованием локального генератора
+        rng.shuffle(deck)
+
+        return deck
 
     # === Ходы ===
 
