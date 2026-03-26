@@ -809,57 +809,58 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			if is_busy or is_animating:
 				return
-			
+
 			if pile_name == "stock":
 				return 
 
 			if not card_data["face_up"]:
 				return
 
-			print("🃏 Авто-ход (ПКМ) из: ", pile_name)
-			
-			# === ИЗМЕНЕНИЕ: Собираем стек карт, как при перетаскивании ===
+			print("🃏 Авто-ход (ПКМ) из карты id: ", card_data["id"])
+
+			# === Собираем стек карт для анимации ===
 			var nodes_stack = [card_node] # Начинаем с той, на которую нажали
-			
-			# Если это tableau, ищем карты под ней (хвост)
+
 			if pile_name.begins_with("tableau"):
 				var slot = card_node.get_parent()
 				if slot:
 					var my_index = card_node.get_meta("card_index", 0)
-					# Собираем все карты, у которых индекс больше нашего
 					for child in slot.get_children():
-						if child == card_node: continue
-						if child.card_index > my_index:
+						if child == card_node:
+							continue
+						if child.get_meta("card_index", 0) > my_index:
 							nodes_stack.append(child)
-			
-			# Сортируем и запоминаем смещения (чтобы красиво летели кучей)
-			nodes_stack.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
-			
-			# Запоминаем взаимное расположение (чтобы "хвост" летел за "головой")
-			# Это полезно, если анимация полета будет сложной, 
-			# но для простого полета достаточно передать список узлов.
-			
-			# Сохраняем контекст
+
+			# Сортируем хвост
+			nodes_stack.sort_custom(func(a, b):
+				return a.get_meta("card_index", 0) < b.get_meta("card_index", 0)
+			)
+
+			# Сохраняем контекст для анимации
 			pending_action_context = {
 				"type": "auto_move",
-				"source_pile": pile_name,
-				"nodes": nodes_stack,  # <--- ТЕПЕРЬ ЭТО МАССИВ УЗЛОВ
-				"count": nodes_stack.size()
+				"nodes": nodes_stack,  # Список узлов, чтобы анимация летела за головой
+				"count": nodes_stack.size(),
+				"card_id": card_data["id"],  # передаем id верхней карты
 			}
 			last_request_type = "auto_move"
-			
-			var body = JSON.new().stringify({"from": pile_name, 
+
+			# --- Отправка запроса на сервер ---
+			var body_dict = {
+				"card_id": card_data["id"],
 				"player_id": Global.player_id,
-				"game_type": "klondike",})
+				"game_type": "klondike"
+			}
 			var headers = ["Content-Type: application/json"]
-			http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body)
-	
-	# === Обработка отпускания ===
-	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if is_dragging:
-			print("🏁 Отпускание карты")
-			# Здесь будет логика сброса карты
-			_end_drag() 
+			var body_json = JSON.stringify(body_dict)  
+			http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body_json)
+			
+			# === Обработка отпускания ===
+		elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			if is_dragging:
+				print("🏁 Отпускание карты")
+				# Здесь будет логика сброса карты
+				_end_drag() 
 			
 func _end_drag():
 	if not is_dragging:

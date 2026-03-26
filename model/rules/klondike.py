@@ -398,6 +398,66 @@ class KlondikeRules(RuleSet):
 
         return unique_moves
 
+    def get_moves_from_card_id(self, state: "GameState", card_id: str) -> list["Move"]:
+        """
+        Все возможные ходы для последовательности, начинающейся с карты с указанным id.
+        Ищет карту по id в любом стеке (tableau/foundation/waste).
+        """
+        from model import Move
+
+        moves = []
+
+        # 1. Найти карту в стопках
+        found = False
+        for pile_name, pile in state.piles.items():
+            for idx, card in enumerate(pile.cards):
+                if card.id == card_id:
+                    card_index = idx
+                    found = True
+                    break
+            if found:
+                break
+
+        if not found:
+            # Карта не найдена
+            return []
+
+        # 2. Получаем последовательность от карты
+        sequence = pile.cards[card_index:]
+        if not self._is_valid_sequence(sequence):
+            return []
+
+        # 3. Ходы на tableau
+        if pile_name.startswith("tableau") or pile_name.startswith("foundation") or pile_name.startswith("waste"):
+            for target_col in range(7):
+                target_name = f"tableau_{target_col}"
+                if target_name == pile_name:
+                    continue
+
+                move = Move(
+                    from_pile=pile_name,
+                    to_pile=target_name,
+                    cards=sequence,
+                    from_index=card_index
+                )
+                if self.can_move(state, move):
+                    moves.append(move)
+
+        # 4. Ходы на foundation (только одиночная карта)
+        if len(sequence) == 1 and sequence[0].face_up:
+            for i in range(4):
+                target_name = f"foundation_{i}"
+                move = Move(
+                    from_pile=pile_name,
+                    to_pile=target_name,
+                    cards=sequence,
+                    from_index=card_index
+                )
+                if self.can_move(state, move):
+                    moves.append(move)
+
+        return moves
+
     def _is_valid_sequence(self, cards: List["Card"]) -> bool:
         """Проверка, что карты образуют правильную последовательность для перемещения."""
         if len(cards) <= 1:
