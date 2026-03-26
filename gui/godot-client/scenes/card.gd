@@ -12,6 +12,7 @@ var card_index: int
 @onready var shadow: ColorRect = $Shadow
 
 var shadow_material: ShaderMaterial
+var outline_material: ShaderMaterial
 
 # ============================================================
 # ИНИЦИАЛИЗАЦИЯ
@@ -36,6 +37,7 @@ func setup(data: Dictionary, pile: String, index: int, size: Vector2):
 	texture_rect.texture = tex
 	
 	_apply_shadow_shader(tex)
+	_apply_outline_shader(tex)
 
 # ============================================================
 # ШЕЙДЕР ТЕНИ
@@ -51,6 +53,39 @@ func _apply_shadow_shader(tex: Texture2D):
 	
 	# Передаем текстуру карты в шейдер
 	shadow_material.set_shader_parameter("TEXTURE", tex)
+
+# ============================================================
+# ШЕЙДЕР КОНТУРА 
+# ============================================================
+
+func _apply_outline_shader(tex: Texture2D):
+	# Создаем материал один раз
+	if outline_material == null:
+		var shader = load("res://shaders/card_outline.gdshader")
+		outline_material = ShaderMaterial.new()
+		outline_material.shader = shader
+		
+		# Устанавливаем черный цвет по умолчанию
+		outline_material.set_shader_parameter("outline_color", Color.BLACK)
+		outline_material.set_shader_parameter("outline_width", 1.0)
+	
+	# Применяем материал к текстуре карты
+	texture_rect.material = outline_material
+
+# ============================================================
+# УПРАВЛЕНИЕ ЦВЕТОМ ПОДСВЕТКИ
+# ============================================================
+
+# Вызовите эту функцию извне (например, из klondike.gd), чтобы покрасить контур
+# color = null вернет черный цвет по умолчанию
+func set_highlight(color: Variant = null):
+	if outline_material:
+		if color is Color:
+			# Меняем цвет на указанный (зеленый, синий и т.д.)
+			outline_material.set_shader_parameter("outline_color", color)
+		else:
+			# Возвращаем черный цвет
+			outline_material.set_shader_parameter("outline_color", Color.BLACK)
 
 # ============================================================
 # ВЗАИМОДЕЙСТВИЕ
@@ -82,3 +117,18 @@ func set_dragging(active: bool):
 		shadow.offset_right = -6
 		shadow.offset_bottom = -6
 		shadow.modulate = Color(1, 1, 1, 0.5)
+		
+# ============================================================
+# ОБРАБОТКА НАВЕДЕНИЯ МЫШИ (АВТОПОДСВЕТКА)
+# ============================================================
+
+func _on_mouse_entered():
+	# При наведении делаем контур зеленым
+	# Если карта "лицом вниз", возможно, подсвечивать не нужно, добавьте проверку:
+	# if not card_data.get("face_up", true): return 
+	
+	set_highlight(Color.GREEN) # Или Color(0, 1, 0.5) для более приятного оттенка
+
+func _on_mouse_exited():
+	# Когда мышь уходит, возвращаем черный
+	set_highlight()
