@@ -81,7 +81,7 @@ func _apply_outline_shader(tex: Texture2D):
 		
 		# Устанавливаем черный цвет по умолчанию
 		outline_material.set_shader_parameter("outline_color", Color.BLACK)
-		outline_material.set_shader_parameter("outline_width", 2.0)
+		outline_material.set_shader_parameter("outline_width", 5.0)
 	
 	# Применяем материал к текстуре карты
 	texture_rect.material = outline_material

@@ -4,7 +4,7 @@ import os
 # --- НАСТРОЙКИ ---
 input_folder = "./cards_original"  # Папка с исходными картинками
 output_folder = "./cards_padded"  # Куда сохранить результат
-padding = 3  # Сколько пикселей добавить по краям
+padding = 6  # Сколько пикселей добавить по краям
 # -----------------
 
 # Создаем выходную папку, если её нет
@@ -33,7 +33,7 @@ def process_image(filename):
 print("Начинаем обработку...")
 count = 0
 for filename in os.listdir(input_folder):
-    if filename.lower().endswith((".png", ".jpg", ".jpeg")):  # Можно оставить только .png
+    if filename.lower().endswith((".png")):  # Можно оставить только .png
         process_image(filename)
         count += 1
 
