@@ -1,58 +1,79 @@
-У меня есть проект пасьянс Косынка, сервер на Python, клиент на Godot 4.6.1
-Сейчас я работаю над адаптивным масштабированием. Оно раньше работало. Но после того как я немного поменял структуру сцены, оно перестало работать
-Структура файла
-# Документация для: klondike.gd
-Путь: ./COSIN-K\gui\godot-client\scenes\games\klondike.gd
-==================================================
+📌 Шаг 4. Изменить обработку POST в bridge
 
-## Функции:
-  - _ready()
-  - _resized()
-  - _load_from_global_state()
-  - update_ui()
-  - start_new_game()
-  - _process()
-  - update_time_display()
-  - _auto_save()
-  - _on_request_completed()
-  - show_win()
-  - _on_new_game_pressed()
-  - _on_undo_pressed()
-  - _on_menu_pressed()
-  - _on_surrender_pressed()
-  - _on_replay_pressed()
-  - _confirm_surrender()
-  - _notification()
-  - update_layout()
-  - _get_pile_composition()
-  - _calculate_pile_height()
-  - _apply_slot_sizes()
-  - draw_game()
-  - _clear_cards_from_slot()
-  - foundation_slots()
-  - draw_stock()
-  - _on_empty_stock_clicked()
-  - draw_waste()
-  - draw_foundations()
-  - draw_tableau()
-  - draw_card()
-  - _on_card_clicked()
-  - _end_drag()
-  - _get_pile_under_mouse()
-  - _animate_success_flight()
-  - _animate_shake()
-  - _animate_return()
-  - _get_card_global_position()
-  - _get_shadow_material()
-  - _calculate_target_position()
-  - _hide_target_cards()
-  - _mark_cards_as_animating()
-  - _create_ghost_card()
-  - _get_waste_card_position()
-  - _mark_card_animating()
-  - _unmark_card_animating()
-  - _clear_animating_marks()
-  - _is_card_animating()
-  - _create_card_node()
-  - _get_card_textures()
-Помоги разобраться, почему теперь не происходит изменения отступов между картами в стопке на табло, когда количество карт в ней становится таким что они не помещаются в экран, раньше это работало, если тебе нужен код каких-то функций напиши я пришлю
+📍 GodotBridgeHandler.do_POST()
+
+Добавь новый action:
+
+elif action == "auto_complete":
+    moves = engine.auto_complete_sequence()
+
+    self._send_response({
+        "moves": moves,
+        "final_state": engine.state()
+    })
+📌 Шаг 5. Клиент — обработка ответа
+
+📍 klondike.gd
+
+В _on_request_completed():
+
+if response.has("moves"):
+    await play_auto_complete(response.moves)
+    _load_from_global_state(response.final_state)
+    update_ui()
+    return
+📌 Шаг 6. Реализовать проигрывание анимации
+func play_auto_complete(moves):
+    for move in moves:
+        await animate_auto_move(move)
+📌 Шаг 7. Анимация одного хода
+func animate_auto_move(move):
+    var card_node = _find_card_node(move.card)
+
+    if card_node == null:
+        return
+
+    var target_pos = _calculate_target_position(move.to)
+
+    await _animate_success_flight(card_node, target_pos)
+📌 Шаг 8. Найти карту на сцене
+
+👉 если нет — добавь helper
+
+func _find_card_node(card_data):
+    for node in get_tree().get_nodes_in_group("cards"):
+        if node.card_id == card_data.id:
+            return node
+    return null
+
+(или по suit+rank, если нет id)
+
+📌 Шаг 9. Управление скоростью
+
+Добавь коэффициент:
+
+var AUTO_SPEED = 1.5
+
+И в анимации:
+
+await _animate_success_flight(card_node, target_pos, 0.2 / AUTO_SPEED)
+📌 Шаг 10. Заблокировать ввод во время автосбора
+var is_auto_playing = false
+func play_auto_complete(moves):
+    is_auto_playing = true
+
+    for move in moves:
+        await animate_auto_move(move)
+
+    is_auto_playing = false
+
+И в кликах:
+
+if is_auto_playing:
+    return
+📌 Шаг 11. Кнопка
+$AutoCompleteButton.visible = game_state.can_auto_complete
+func _on_auto_complete_pressed():
+    _send_request({
+        "action": "auto_complete"
+    })

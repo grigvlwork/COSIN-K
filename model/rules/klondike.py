@@ -42,6 +42,34 @@ class KlondikeRules(RuleSet):
         """Проверить, выиграна ли игра."""
         return self._check_all_foundations_full(state)
 
+    def can_auto_complete(self, state: "GameState") -> bool:
+        """
+        Проверка, можно ли выполнить автосбор:
+        - stock пуст
+        - waste пуст
+        - все карты в tableau открыты
+        """
+
+        # 1. Колода должна быть пустой
+        if not state.stock.is_empty():
+            return False
+
+        # 2. Сброс должен быть пустым
+        if not state.waste.is_empty():
+            return False
+
+        # 3. Все карты в tableau должны быть открыты
+        for i in range(7):
+            pile = state.piles.get(f"tableau_{i}")
+            if not pile:
+                continue
+
+            # Если есть хотя бы одна закрытая карта — нельзя
+            if pile.face_up_count() != len(pile):
+                return False
+
+        return True
+
     def get_pile_type(self, pile_name: str) -> PileType:
         """Определить тип стопки."""
         if pile_name.startswith("tableau_"):

@@ -300,6 +300,76 @@ class SolitaireEngine:
 
         return new_state, move
 
+    def auto_complete_sequence(self) -> List[Move]:
+        """
+        Выполнить автосбор и вернуть последовательность ходов (Move).
+        НЕ пишет в history, НЕ вызывает notify.
+        Используется для анимации на клиенте.
+        """
+        if not self._state:
+            return []
+
+        if not hasattr(self.rules, "can_auto_complete"):
+            return []
+
+        if not self.rules.can_auto_complete(self._state):
+            return []
+
+        moves: List[Move] = []
+
+        # Ограничение от зацикливания
+        for _ in range(100):
+            move = self._find_auto_move()
+            if not move:
+                break
+
+            # Выполняем ход
+            new_state, executed_move = self._execute_move(
+                move.from_pile,
+                move.to_pile,
+                len(move.cards)
+            )
+
+            # Сохраняем move (ВАЖНО: уже с flipped_cards и score)
+            moves.append(executed_move)
+
+            # Применяем состояние
+            self._state = new_state
+
+        return moves
+
+    def _find_auto_move(self) -> Optional[Move]:
+        """
+        Найти следующий ход для автосбора (только tableau → foundation)
+        """
+        if not self._state:
+            return None
+
+        state = self._state
+
+        for col in range(7):
+            from_name = f"tableau_{col}"
+            pile = state.get_pile(from_name)
+
+            if not pile or pile.is_empty():
+                continue
+
+            card = pile.top()
+
+            for i in range(4):
+                to_name = f"foundation_{i}"
+
+                move = Move(
+                    from_pile=from_name,
+                    to_pile=to_name,
+                    cards=[card],
+                    from_index=len(pile) - 1
+                )
+
+                if self.rules.can_move(state, move):
+                    return move
+
+        return None
     # === Отмена/повтор ===
 
     def undo(self) -> bool:
