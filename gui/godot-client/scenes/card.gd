@@ -17,6 +17,20 @@ var outline_material: ShaderMaterial
 # ============================================================
 # ИНИЦИАЛИЗАЦИЯ
 # ============================================================
+func _ready():
+	# 1. ПОДКЛЮЧАЕМ СИГНАЛЫ НАВЕДЕНИЯ
+	# Это критически важная часть, без этого функции ниже не вызовутся
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+	
+	# 2. НАСТРАИВАЕМ ФИЛЬТРЫ МЫШИ
+	# Корневой узел карты должен "ловить" мышь (STOP)
+	self.mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	# Внутренняя текстура должна быть "прозрачной" для мыши (IGNORE),
+	# иначе она может перехватывать наведение и блокировать сигнал корневому узлу
+	if texture_rect:
+		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func setup(data: Dictionary, pile: String, index: int, size: Vector2):
 	card_data = data
@@ -67,7 +81,7 @@ func _apply_outline_shader(tex: Texture2D):
 		
 		# Устанавливаем черный цвет по умолчанию
 		outline_material.set_shader_parameter("outline_color", Color.BLACK)
-		outline_material.set_shader_parameter("outline_width", 1.0)
+		outline_material.set_shader_parameter("outline_width", 2.0)
 	
 	# Применяем материал к текстуре карты
 	texture_rect.material = outline_material
