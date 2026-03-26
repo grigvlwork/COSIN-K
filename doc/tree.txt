@@ -5,498 +5,45 @@ COSIN-K/
 │   ├── __init__.py
 │   └── game_controller.py
 ├── doc
-│   ├── DB.txt
-│   ├── card_design.txt
-│   ├── planning.tsk
-│   ├── planning.tsk.delta
-│   ├── planning.txt
-│   └── tree.txt
+├── doc_generator.py
 ├── gui
 │   ├── godot-client
 │   │   ├── assets
-│   │   │   ├── achievements
-│   │   │   │   ├── 500_wins.png
-│   │   │   │   ├── 500_wins.png.import
-│   │   │   │   ├── album
-│   │   │   │   │   ├── beige.png
-│   │   │   │   │   ├── beige.png.import
-│   │   │   │   │   ├── cosmos.png
-│   │   │   │   │   ├── cosmos.png.import
-│   │   │   │   │   ├── cyberpunk.png
-│   │   │   │   │   ├── cyberpunk.png.import
-│   │   │   │   │   ├── old_style.png
-│   │   │   │   │   ├── old_style.png.import
-│   │   │   │   │   ├── royal.png
-│   │   │   │   │   └── royal.png.import
-│   │   │   │   ├── backgrounds
-│   │   │   │   │   ├── blue_velvet.png
-│   │   │   │   │   ├── blue_velvet.png.import
-│   │   │   │   │   ├── cosmos.png
-│   │   │   │   │   ├── cosmos.png.import
-│   │   │   │   │   ├── green_stone.png
-│   │   │   │   │   ├── green_stone.png.import
-│   │   │   │   │   ├── purple.png
-│   │   │   │   │   ├── purple.png.import
-│   │   │   │   │   ├── wood.png
-│   │   │   │   │   └── wood.png.import
-│   │   │   │   ├── cards_100.png
-│   │   │   │   ├── cards_100.png.import
-│   │   │   │   ├── cards_1000.png
-│   │   │   │   ├── cards_1000.png.import
-│   │   │   │   ├── cards_10000.png
-│   │   │   │   ├── cards_10000.png.import
-│   │   │   │   ├── cards_100000.png
-│   │   │   │   ├── cards_100000.png.import
-│   │   │   │   ├── cards_million.png
-│   │   │   │   ├── cards_million.png.import
-│   │   │   │   ├── clubs_10.png
-│   │   │   │   ├── clubs_10.png.import
-│   │   │   │   ├── clubs_100.png
-│   │   │   │   ├── clubs_100.png.import
-│   │   │   │   ├── clubs_1000.png
-│   │   │   │   ├── clubs_1000.png.import
-│   │   │   │   ├── clubs_500.png
-│   │   │   │   ├── clubs_500.png.import
-│   │   │   │   ├── clubs_5000.png
-│   │   │   │   ├── clubs_5000.png.import
-│   │   │   │   ├── diamonds_10.png
-│   │   │   │   ├── diamonds_10.png.import
-│   │   │   │   ├── diamonds_100.png
-│   │   │   │   ├── diamonds_100.png.import
-│   │   │   │   ├── diamonds_1000.png
-│   │   │   │   ├── diamonds_1000.png.import
-│   │   │   │   ├── diamonds_500.png
-│   │   │   │   ├── diamonds_500.png.import
-│   │   │   │   ├── diamonds_5000.png
-│   │   │   │   ├── diamonds_5000.png.import
-│   │   │   │   ├── first_win.png
-│   │   │   │   ├── first_win.png.import
-│   │   │   │   ├── flipped_100.png
-│   │   │   │   ├── flipped_100.png.import
-│   │   │   │   ├── flipped_1000.png
-│   │   │   │   ├── flipped_1000.png.import
-│   │   │   │   ├── flipped_10000.png
-│   │   │   │   ├── flipped_10000.png.import
-│   │   │   │   ├── flipped_100000.png
-│   │   │   │   ├── flipped_100000.png.import
-│   │   │   │   ├── flipped_million.png
-│   │   │   │   ├── flipped_million.png.import
-│   │   │   │   ├── frames
-│   │   │   │   │   ├── frame_bronze.png
-│   │   │   │   │   ├── frame_bronze.png.import
-│   │   │   │   │   ├── frame_bronze_.png
-│   │   │   │   │   ├── frame_bronze_.png.import
-│   │   │   │   │   ├── frame_cosmos.png
-│   │   │   │   │   ├── frame_cosmos.png.import
-│   │   │   │   │   ├── frame_cosmos_.png
-│   │   │   │   │   ├── frame_cosmos_.png.import
-│   │   │   │   │   ├── frame_diamond.png
-│   │   │   │   │   ├── frame_diamond.png.import
-│   │   │   │   │   ├── frame_diamond_.png
-│   │   │   │   │   ├── frame_diamond_.png.import
-│   │   │   │   │   ├── frame_gold.png
-│   │   │   │   │   ├── frame_gold.png.import
-│   │   │   │   │   ├── frame_gold_.png
-│   │   │   │   │   ├── frame_gold_.png.import
-│   │   │   │   │   ├── frame_silver.png
-│   │   │   │   │   ├── frame_silver.png.import
-│   │   │   │   │   ├── frame_silver_.png
-│   │   │   │   │   └── frame_silver_.png.import
-│   │   │   │   ├── hearts_10.png
-│   │   │   │   ├── hearts_10.png.import
-│   │   │   │   ├── hearts_100.png
-│   │   │   │   ├── hearts_100.png.import
-│   │   │   │   ├── hearts_1000.png
-│   │   │   │   ├── hearts_1000.png.import
-│   │   │   │   ├── hearts_500.png
-│   │   │   │   ├── hearts_500.png.import
-│   │   │   │   ├── hearts_5000.png
-│   │   │   │   ├── hearts_5000.png.import
-│   │   │   │   ├── hundred_wins.png
-│   │   │   │   ├── hundred_wins.png.import
-│   │   │   │   ├── immortal.png
-│   │   │   │   ├── immortal.png.import
-│   │   │   │   ├── perfect_1.png
-│   │   │   │   ├── perfect_1.png.import
-│   │   │   │   ├── perfect_10.png
-│   │   │   │   ├── perfect_10.png.import
-│   │   │   │   ├── perfect_100.png
-│   │   │   │   ├── perfect_100.png.import
-│   │   │   │   ├── perfect_1000.png
-│   │   │   │   ├── perfect_1000.png.import
-│   │   │   │   ├── perfect_5000.png
-│   │   │   │   ├── perfect_5000.png.import
-│   │   │   │   ├── placeholders
-│   │   │   │   │   ├── cards.png
-│   │   │   │   │   ├── cards.png.import
-│   │   │   │   │   ├── clubs.png
-│   │   │   │   │   ├── clubs.png.import
-│   │   │   │   │   ├── diamonds.png
-│   │   │   │   │   ├── diamonds.png.import
-│   │   │   │   │   ├── hearts.png
-│   │   │   │   │   ├── hearts.png.import
-│   │   │   │   │   ├── loss.png
-│   │   │   │   │   ├── loss.png.import
-│   │   │   │   │   ├── perfect.png
-│   │   │   │   │   ├── perfect.png.import
-│   │   │   │   │   ├── speed.png
-│   │   │   │   │   ├── speed.png.import
-│   │   │   │   │   ├── streak.png
-│   │   │   │   │   ├── streak.png.import
-│   │   │   │   │   ├── wins.png
-│   │   │   │   │   └── wins.png.import
-│   │   │   │   ├── spades_10.png
-│   │   │   │   ├── spades_10.png.import
-│   │   │   │   ├── spades_100.png
-│   │   │   │   ├── spades_100.png.import
-│   │   │   │   ├── spades_1000.png
-│   │   │   │   ├── spades_1000.png.import
-│   │   │   │   ├── spades_500.png
-│   │   │   │   ├── spades_500.png.import
-│   │   │   │   ├── spades_5000.png
-│   │   │   │   ├── spades_5000.png.import
-│   │   │   │   ├── speed_1.png
-│   │   │   │   ├── speed_1.png.import
-│   │   │   │   ├── speed_2.png
-│   │   │   │   ├── speed_2.png.import
-│   │   │   │   ├── speed_3.png
-│   │   │   │   ├── speed_3.png.import
-│   │   │   │   ├── speed_4.png
-│   │   │   │   ├── speed_4.png.import
-│   │   │   │   ├── speed_5.png
-│   │   │   │   ├── speed_5.png.import
-│   │   │   │   ├── streak_10.png
-│   │   │   │   ├── streak_10.png.import
-│   │   │   │   ├── streak_100.png
-│   │   │   │   ├── streak_100.png.import
-│   │   │   │   ├── streak_5.png
-│   │   │   │   ├── streak_5.png.import
-│   │   │   │   ├── streak_50.png
-│   │   │   │   ├── streak_50.png.import
-│   │   │   │   ├── streak_500.png
-│   │   │   │   ├── streak_500.png.import
-│   │   │   │   ├── ten_wins.png
-│   │   │   │   └── ten_wins.png.import
-│   │   │   ├── backs
-│   │   │   │   ├── back_tally_ho.png
-│   │   │   │   ├── back_tally_ho.png.import
-│   │   │   │   ├── back_tally_ho_black.png
-│   │   │   │   ├── back_tally_ho_black.png.import
-│   │   │   │   ├── back_tally_ho_nologo.png
-│   │   │   │   ├── back_tally_ho_nologo.png.import
-│   │   │   │   ├── bicycle_magenta.png
-│   │   │   │   ├── bicycle_magenta.png.import
-│   │   │   │   ├── bicycle_magenta_square.png
-│   │   │   │   ├── bicycle_magenta_square.png.import
-│   │   │   │   ├── cyberpunk.png
-│   │   │   │   ├── cyberpunk.png.import
-│   │   │   │   ├── dark_fantasy.png
-│   │   │   │   ├── dark_fantasy.png.import
-│   │   │   │   ├── japan.png
-│   │   │   │   ├── japan.png.import
-│   │   │   │   ├── lines_dark.png
-│   │   │   │   ├── lines_dark.png.import
-│   │   │   │   ├── nature_dark.png
-│   │   │   │   ├── nature_dark.png.import
-│   │   │   │   ├── nature_light.png
-│   │   │   │   ├── nature_light.png.import
-│   │   │   │   ├── steampunk.png
-│   │   │   │   └── steampunk.png.import
-│   │   │   ├── decks
-│   │   │   │   ├── classic
-│   │   │   │   │   ├── 10_of_clubs.png
-│   │   │   │   │   ├── 10_of_clubs.png.import
-│   │   │   │   │   ├── 10_of_diamonds.png
-│   │   │   │   │   ├── 10_of_diamonds.png.import
-│   │   │   │   │   ├── 10_of_hearts.png
-│   │   │   │   │   ├── 10_of_hearts.png.import
-│   │   │   │   │   ├── 10_of_spades.png
-│   │   │   │   │   ├── 10_of_spades.png.import
-│   │   │   │   │   ├── 2_of_clubs.png
-│   │   │   │   │   ├── 2_of_clubs.png.import
-│   │   │   │   │   ├── 2_of_diamonds.png
-│   │   │   │   │   ├── 2_of_diamonds.png.import
-│   │   │   │   │   ├── 2_of_hearts.png
-│   │   │   │   │   ├── 2_of_hearts.png.import
-│   │   │   │   │   ├── 2_of_spades.png
-│   │   │   │   │   ├── 2_of_spades.png.import
-│   │   │   │   │   ├── 3_of_clubs.png
-│   │   │   │   │   ├── 3_of_clubs.png.import
-│   │   │   │   │   ├── 3_of_diamonds.png
-│   │   │   │   │   ├── 3_of_diamonds.png.import
-│   │   │   │   │   ├── 3_of_hearts.png
-│   │   │   │   │   ├── 3_of_hearts.png.import
-│   │   │   │   │   ├── 3_of_spades.png
-│   │   │   │   │   ├── 3_of_spades.png.import
-│   │   │   │   │   ├── 4_of_clubs.png
-│   │   │   │   │   ├── 4_of_clubs.png.import
-│   │   │   │   │   ├── 4_of_diamonds.png
-│   │   │   │   │   ├── 4_of_diamonds.png.import
-│   │   │   │   │   ├── 4_of_hearts.png
-│   │   │   │   │   ├── 4_of_hearts.png.import
-│   │   │   │   │   ├── 4_of_spades.png
-│   │   │   │   │   ├── 4_of_spades.png.import
-│   │   │   │   │   ├── 5_of_clubs.png
-│   │   │   │   │   ├── 5_of_clubs.png.import
-│   │   │   │   │   ├── 5_of_diamonds.png
-│   │   │   │   │   ├── 5_of_diamonds.png.import
-│   │   │   │   │   ├── 5_of_hearts.png
-│   │   │   │   │   ├── 5_of_hearts.png.import
-│   │   │   │   │   ├── 5_of_spades.png
-│   │   │   │   │   ├── 5_of_spades.png.import
-│   │   │   │   │   ├── 6_of_clubs.png
-│   │   │   │   │   ├── 6_of_clubs.png.import
-│   │   │   │   │   ├── 6_of_diamonds.png
-│   │   │   │   │   ├── 6_of_diamonds.png.import
-│   │   │   │   │   ├── 6_of_hearts.png
-│   │   │   │   │   ├── 6_of_hearts.png.import
-│   │   │   │   │   ├── 6_of_spades.png
-│   │   │   │   │   ├── 6_of_spades.png.import
-│   │   │   │   │   ├── 7_of_clubs.png
-│   │   │   │   │   ├── 7_of_clubs.png.import
-│   │   │   │   │   ├── 7_of_diamonds.png
-│   │   │   │   │   ├── 7_of_diamonds.png.import
-│   │   │   │   │   ├── 7_of_hearts.png
-│   │   │   │   │   ├── 7_of_hearts.png.import
-│   │   │   │   │   ├── 7_of_spades.png
-│   │   │   │   │   ├── 7_of_spades.png.import
-│   │   │   │   │   ├── 8_of_clubs.png
-│   │   │   │   │   ├── 8_of_clubs.png.import
-│   │   │   │   │   ├── 8_of_diamonds.png
-│   │   │   │   │   ├── 8_of_diamonds.png.import
-│   │   │   │   │   ├── 8_of_hearts.png
-│   │   │   │   │   ├── 8_of_hearts.png.import
-│   │   │   │   │   ├── 8_of_spades.png
-│   │   │   │   │   ├── 8_of_spades.png.import
-│   │   │   │   │   ├── 9_of_clubs.png
-│   │   │   │   │   ├── 9_of_clubs.png.import
-│   │   │   │   │   ├── 9_of_diamonds.png
-│   │   │   │   │   ├── 9_of_diamonds.png.import
-│   │   │   │   │   ├── 9_of_hearts.png
-│   │   │   │   │   ├── 9_of_hearts.png.import
-│   │   │   │   │   ├── 9_of_spades.png
-│   │   │   │   │   ├── 9_of_spades.png.import
-│   │   │   │   │   ├── ace_of_clubs.png
-│   │   │   │   │   ├── ace_of_clubs.png.import
-│   │   │   │   │   ├── ace_of_diamonds.png
-│   │   │   │   │   ├── ace_of_diamonds.png.import
-│   │   │   │   │   ├── ace_of_hearts.png
-│   │   │   │   │   ├── ace_of_hearts.png.import
-│   │   │   │   │   ├── ace_of_spades.png
-│   │   │   │   │   ├── ace_of_spades.png.import
-│   │   │   │   │   ├── back.png
-│   │   │   │   │   ├── back.png.import
-│   │   │   │   │   ├── black_joker.png
-│   │   │   │   │   ├── black_joker.png.import
-│   │   │   │   │   ├── jack_of_clubs.png
-│   │   │   │   │   ├── jack_of_clubs.png.import
-│   │   │   │   │   ├── jack_of_diamonds.png
-│   │   │   │   │   ├── jack_of_diamonds.png.import
-│   │   │   │   │   ├── jack_of_hearts.png
-│   │   │   │   │   ├── jack_of_hearts.png.import
-│   │   │   │   │   ├── jack_of_spades.png
-│   │   │   │   │   ├── jack_of_spades.png.import
-│   │   │   │   │   ├── king_of_clubs.png
-│   │   │   │   │   ├── king_of_clubs.png.import
-│   │   │   │   │   ├── king_of_diamonds.png
-│   │   │   │   │   ├── king_of_diamonds.png.import
-│   │   │   │   │   ├── king_of_hearts.png
-│   │   │   │   │   ├── king_of_hearts.png.import
-│   │   │   │   │   ├── king_of_spades.png
-│   │   │   │   │   ├── king_of_spades.png.import
-│   │   │   │   │   ├── queen_of_clubs.png
-│   │   │   │   │   ├── queen_of_clubs.png.import
-│   │   │   │   │   ├── queen_of_diamonds.png
-│   │   │   │   │   ├── queen_of_diamonds.png.import
-│   │   │   │   │   ├── queen_of_hearts.png
-│   │   │   │   │   ├── queen_of_hearts.png.import
-│   │   │   │   │   ├── queen_of_spades.png
-│   │   │   │   │   ├── queen_of_spades.png.import
-│   │   │   │   │   ├── red_joker.png
-│   │   │   │   │   └── red_joker.png.import
-│   │   │   │   ├── petit_cavalier
-│   │   │   │   │   ├── petit_cavalier_playing_cards_by_kurosujun-d5ggwge.jpg
-│   │   │   │   │   └── petit_cavalier_playing_cards_by_kurosujun-d5ggwge.jpg.import
-│   │   │   │   ├── russ1
-│   │   │   │   │   ├── f1e3f2f044858cb633fe968f1ef660e9.jpg
-│   │   │   │   │   └── f1e3f2f044858cb633fe968f1ef660e9.jpg.import
-│   │   │   │   ├── russ2
-│   │   │   │   │   ├── 48bd66ee18203e993d7d895d0572e17c.jpg
-│   │   │   │   │   └── 48bd66ee18203e993d7d895d0572e17c.jpg.import
-│   │   │   │   └── russian_style
-│   │   │   │       ├── 600010345843b1.jpg
-│   │   │   │       ├── 600010345843b1.jpg.import
-│   │   │   │       ├── Russian_playing_card_deck_(face_cards)_Russian_style_1911_original.jpg
-│   │   │   │       ├── Russian_playing_card_deck_(face_cards)_Russian_style_1911_original.jpg.import
-│   │   │   │       ├── king-cards-1.jpg
-│   │   │   │       ├── king-cards-1.jpg.import
-│   │   │   │       ├── russian-1134-1.jpg
-│   │   │   │       ├── russian-1134-1.jpg.import
-│   │   │   │       ├── slavic-costumes.jpg
-│   │   │   │       └── slavic-costumes.jpg.import
-│   │   │   ├── fonts
-│   │   │   │   ├── Preciosa.ttf
-│   │   │   │   ├── Preciosa.ttf.import
-│   │   │   │   ├── Romantica Antiqua.ttf
-│   │   │   │   ├── Romantica Antiqua.ttf.import
-│   │   │   │   ├── dehinted-HandveticaNeue-Regular.ttf
-│   │   │   │   └── dehinted-HandveticaNeue-Regular.ttf.import
-│   │   │   └── textures
-│   │   │       ├── green_nefrit.png
-│   │   │       ├── green_nefrit.png.import
-│   │   │       ├── green_velvet.png
-│   │   │       └── green_velvet.png.import
 │   │   ├── debug_tree.gd
-│   │   ├── debug_tree.gd.uid
 │   │   ├── export_presets.cfg
 │   │   ├── icon.svg
-│   │   ├── icon.svg.import
 │   │   ├── images
-│   │   │   ├── mtg-amonkhet-cards.png
-│   │   │   ├── mtg-amonkhet-cards.png.import
-│   │   │   ├── mtg_card_example1.png
-│   │   │   ├── mtg_card_example1.png.import
-│   │   │   ├── textures
-│   │   │   │   ├── black_leather.jpg
-│   │   │   │   ├── black_leather.jpg.import
-│   │   │   │   ├── black_leather1.jpg
-│   │   │   │   ├── black_leather1.jpg.import
-│   │   │   │   ├── black_leather2.jpg
-│   │   │   │   ├── black_leather2.jpg.import
-│   │   │   │   ├── black_leather3.jpg
-│   │   │   │   ├── black_leather3.jpg.import
-│   │   │   │   ├── black_leather4.jpg
-│   │   │   │   ├── black_leather4.jpg.import
-│   │   │   │   ├── black_leather5.jfif
-│   │   │   │   ├── black_leather6.jpg
-│   │   │   │   ├── black_leather6.jpg.import
-│   │   │   │   ├── black_leather7.jfif
-│   │   │   │   ├── blue_denim.webp
-│   │   │   │   ├── blue_denim.webp.import
-│   │   │   │   ├── blue_denim2.jpg
-│   │   │   │   ├── blue_denim2.jpg.import
-│   │   │   │   ├── blue_denim3.jpg
-│   │   │   │   ├── blue_denim3.jpg.import
-│   │   │   │   ├── blue_denim4.webp
-│   │   │   │   ├── blue_denim4.webp.import
-│   │   │   │   ├── blue_denim5.jpg
-│   │   │   │   ├── blue_denim5.jpg.import
-│   │   │   │   ├── blue_denim6.jpeg
-│   │   │   │   ├── blue_denim6.jpeg.import
-│   │   │   │   ├── blue_leather.jpg
-│   │   │   │   ├── blue_leather.jpg.import
-│   │   │   │   ├── blue_leather1.jpg
-│   │   │   │   ├── blue_leather1.jpg.import
-│   │   │   │   ├── blue_leather2.jpg
-│   │   │   │   ├── blue_leather2.jpg.import
-│   │   │   │   ├── blue_leather3.jpg
-│   │   │   │   ├── blue_leather3.jpg.import
-│   │   │   │   ├── blue_ornament.jpg
-│   │   │   │   ├── blue_ornament.jpg.import
-│   │   │   │   ├── blue_velvet.jpg
-│   │   │   │   ├── blue_velvet.jpg.import
-│   │   │   │   ├── blue_velvet2.jpg
-│   │   │   │   ├── blue_velvet2.jpg.import
-│   │   │   │   ├── blue_velvet3.jpg
-│   │   │   │   ├── blue_velvet3.jpg.import
-│   │   │   │   ├── blue_velvet4.jpg
-│   │   │   │   ├── blue_velvet4.jpg.import
-│   │   │   │   ├── blue_velvet5.jpg
-│   │   │   │   ├── blue_velvet5.jpg.import
-│   │   │   │   ├── blue_velvet6.jfif
-│   │   │   │   ├── blue_velvet7.jpg
-│   │   │   │   ├── blue_velvet7.jpg.import
-│   │   │   │   ├── bordo_concrete.jpg
-│   │   │   │   ├── bordo_concrete.jpg.import
-│   │   │   │   ├── bordo_leather.jfif
-│   │   │   │   ├── bordo_leather1.jpg
-│   │   │   │   ├── bordo_leather1.jpg.import
-│   │   │   │   ├── bordo_leather2.jfif
-│   │   │   │   ├── bordo_leather3.jfif
-│   │   │   │   ├── bordo_leather4.jfif
-│   │   │   │   ├── brown_leather.jpg
-│   │   │   │   ├── brown_leather.jpg.import
-│   │   │   │   ├── brown_leather1.jpg
-│   │   │   │   ├── brown_leather1.jpg.import
-│   │   │   │   ├── brown_leather2.jpg
-│   │   │   │   ├── brown_leather2.jpg.import
-│   │   │   │   ├── brown_leather3.jpg
-│   │   │   │   ├── brown_leather3.jpg.import
-│   │   │   │   ├── green_2.webp
-│   │   │   │   ├── green_2.webp.import
-│   │   │   │   ├── green_abstract.jpg
-│   │   │   │   ├── green_abstract.jpg.import
-│   │   │   │   ├── green_army.jfif
-│   │   │   │   ├── green_billiard.jpg
-│   │   │   │   ├── green_billiard.jpg.import
-│   │   │   │   ├── green_cards.jpeg
-│   │   │   │   ├── green_cards.jpeg.import
-│   │   │   │   ├── green_fish.jfif
-│   │   │   │   ├── green_flanel.jpg
-│   │   │   │   ├── green_flanel.jpg.import
-│   │   │   │   ├── green_leather.jpg
-│   │   │   │   ├── green_leather.jpg.import
-│   │   │   │   ├── green_montgomery.jfif
-│   │   │   │   ├── green_nefrit.jfif
-│   │   │   │   ├── green_ornament.webp
-│   │   │   │   ├── green_ornament.webp.import
-│   │   │   │   ├── green_shovel.jfif
-│   │   │   │   ├── green_velvet.jfif
-│   │   │   │   ├── old_wood.jpg
-│   │   │   │   ├── old_wood.jpg.import
-│   │   │   │   ├── old_wood1.jpg
-│   │   │   │   ├── old_wood1.jpg.import
-│   │   │   │   ├── red_leather.jpg
-│   │   │   │   ├── red_leather.jpg.import
-│   │   │   │   ├── red_leather1.jpg
-│   │   │   │   ├── red_leather1.jpg.import
-│   │   │   │   ├── red_leather2.jpg
-│   │   │   │   ├── red_leather2.jpg.import
-│   │   │   │   ├── wood.jpeg
-│   │   │   │   ├── wood.jpeg.import
-│   │   │   │   ├── wood1.jpg
-│   │   │   │   ├── wood1.jpg.import
-│   │   │   │   ├── wood2.jpg
-│   │   │   │   ├── wood2.jpg.import
-│   │   │   │   ├── wood3.jpg
-│   │   │   │   ├── wood3.jpg.import
-│   │   │   │   ├── wood4.jpg
-│   │   │   │   └── wood4.jpg.import
-│   │   │   ├── window-horizontal.png
-│   │   │   ├── window-horizontal.png.import
-│   │   │   ├── window-horizontal1.png
-│   │   │   └── window-horizontal1.png.import
 │   │   ├── main_theme.tres
 │   │   ├── project.godot
-│   │   └── scenes
-│   │       ├── AchievementCard.tscn
-│   │       ├── PlayerStats.tscn
-│   │       ├── card_test.gd
-│   │       ├── card_test.gd.uid
-│   │       ├── card_test.tscn
-│   │       ├── deck_manager.gd
-│   │       ├── deck_manager.gd.uid
-│   │       ├── game.gd
-│   │       ├── game.gd.uid
-│   │       ├── game.tscn
-│   │       ├── games
-│   │       │   ├── klondike.gd
-│   │       │   ├── klondike.gd.uid
-│   │       │   └── klondike.tscn
-│   │       ├── global.gd
-│   │       ├── global.gd.uid
-│   │       ├── menu.gd
-│   │       ├── menu.gd.uid
-│   │       ├── menu.tscn
-│   │       ├── player_stats.gd
-│   │       ├── player_stats.gd.uid
-│   │       ├── splash.gd
-│   │       ├── splash.gd.uid
-│   │       ├── splash.tscn
-│   │       └── ui
-│   │           ├── buttons.tscn
-│   │           ├── counters_container.tscn
-│   │           └── game_over_panel.tscn
+│   │   ├── scenes
+│   │   │   ├── AchievementCard.tscn
+│   │   │   ├── AchievementsAlbum.tscn
+│   │   │   ├── Card.tscn
+│   │   │   ├── PlayerStats.tscn
+│   │   │   ├── achievement_card.gd
+│   │   │   ├── achievements_album.gd
+│   │   │   ├── card.gd
+│   │   │   ├── card_test.gd
+│   │   │   ├── card_test.tscn
+│   │   │   ├── deck_manager.gd
+│   │   │   ├── game.gd
+│   │   │   ├── game.tscn
+│   │   │   ├── games
+│   │   │   │   ├── klondike.gd
+│   │   │   │   └── klondike.tscn
+│   │   │   ├── global.gd
+│   │   │   ├── menu.gd
+│   │   │   ├── menu.tscn
+│   │   │   ├── player_stats.gd
+│   │   │   ├── splash.gd
+│   │   │   ├── splash.tscn
+│   │   │   └── ui
+│   │   │       ├── buttons.tscn
+│   │   │       ├── counters_container.tscn
+│   │   │       └── game_over_panel.tscn
+│   │   └── shaders
+│   │       ├── card_outline.gdshader
+│   │       └── card_shadow.gdshader
 │   └── godot_bridge.py
 ├── main.py
 ├── main_gui.py
@@ -524,6 +71,7 @@ COSIN-K/
 │   │   └── stats_api.py
 │   ├── data
 │   │   ├── __init__.py
+│   │   ├── patience.db
 │   │   └── schema.py
 │   ├── database.py
 │   ├── events
@@ -541,6 +89,8 @@ COSIN-K/
 │       ├── __init__.py
 │       ├── player_identity.py
 │       └── stats_service.py
+├── stats_data
+│   └── player.identity
 └── view
     ├── __init__.py
     ├── base.py

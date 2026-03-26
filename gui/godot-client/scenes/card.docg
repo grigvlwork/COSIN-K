@@ -3,7 +3,12 @@
 ==================================================
 
 ## Функции:
+  - _ready()
   - setup()
   - _apply_shadow_shader()
+  - _apply_outline_shader()
+  - set_highlight()
   - _gui_input()
   - set_dragging()
+  - _on_mouse_entered()
+  - _on_mouse_exited()

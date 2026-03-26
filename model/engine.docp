@@ -18,6 +18,8 @@
     - draw()
     - move()
     - _execute_move()
+    - auto_complete_sequence()
+    - _find_auto_move()
     - undo()
     - redo()
     - check_win()

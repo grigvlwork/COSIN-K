@@ -10,6 +10,7 @@
   Методы:
     - __init__()
     - check_win()
+    - can_auto_complete()
     - get_pile_type()
     - deal()
     - _can_build_tableau()
