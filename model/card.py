@@ -40,10 +40,26 @@ class Card:
         return Card(self.suit, self.rank, self.id, not self.face_up)
 
     def make_face_up(self) -> 'Card':
-        return Card(self.suit, self.rank, self.id, True) if not self.face_up else self
+        if self.face_up:
+            return self
+
+        return Card(
+            suit=self.suit,
+            rank=self.rank,
+            id=self.id,
+            face_up=True
+        )
 
     def make_face_down(self) -> 'Card':
-        return Card(self.suit, self.rank, self.id, False) if self.face_up else self
+        if not self.face_up:
+            return self
+
+        return Card(
+            suit=self.suit,
+            rank=self.rank,
+            id=self.id,
+            face_up=False
+        )
 
     # === Сериализация ===
 

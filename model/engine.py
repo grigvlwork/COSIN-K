@@ -100,19 +100,20 @@ class SolitaireEngine:
         if not self._state:
             return None
 
-        # 1. Ищем в tableau и foundation
+        # 1. Ищем в tableau и foundation (state.piles — словарь)
         for name, pile in self._state.piles.items():
-            for idx, card in enumerate(pile.cards):
+            # Исправлено: pile сам по себе список карт
+            for idx, card in enumerate(pile):
                 if card.id == card_id:
                     return name, pile, idx
 
         # 2. Ищем в waste
-        for idx, card in enumerate(self._state.waste.cards):
+        for idx, card in enumerate(self._state.waste):
             if card.id == card_id:
                 return "waste", self._state.waste, idx
 
-        # 3. Ищем в stock (обычно нельзя двигать, но для поиска "[X]" полезно)
-        for idx, card in enumerate(self._state.stock.cards):
+        # 3. Ищем в stock
+        for idx, card in enumerate(self._state.stock):
             if card.id == card_id:
                 return "stock", self._state.stock, idx
 
@@ -153,7 +154,7 @@ class SolitaireEngine:
         # Если клиент передал несколько ID, проверяем, что они совпадают с тем, что на сервере
         if len(card_ids) > 1:
             # Проверяем, совпадают ли переданные ID с реальными картами "хвоста"
-            actual_ids = [c.id for c in source_pile.cards[start_index:]]
+            actual_ids = [c.id for c in source_pile[start_index:]]
             if actual_ids != card_ids:
                 print(f"❌ Move failed: ID sequence mismatch. Client: {card_ids}, Server: {actual_ids}")
                 return False
@@ -162,7 +163,7 @@ class SolitaireEngine:
         # Это ок, если правила разрешают.
 
         # 4. Проверка, что карта face_up (кроме waste, где это очевидно)
-        card_to_move = source_pile.cards[start_index]
+        card_to_move = source_pile[start_index]
         if not card_to_move.face_up:
             print(f"❌ Move failed: Card {first_card_id} is face down.")
             return False

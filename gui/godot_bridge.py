@@ -538,16 +538,16 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
 
         # ----- ХОДЫ -----
         if parsed.path == '/move':
-            from_pile = command.get('from')
+            card_ids = command.get('card_ids')  # Список UUID от клиента
             to_pile = command.get('to')
-            count = command.get('count', 1)
             player_id = command.get('player_id')
 
-            if not from_pile or not to_pile:
-                self._send_response({'success': False, 'error': 'Missing from or to pile'}, 400)
+            if not card_ids or not to_pile:
+                self._send_response({'success': False, 'error': 'Missing card_ids or to_pile'}, 400)
                 return
 
-            success = engine.move(from_pile, to_pile, count)
+            # Новый метод движка — ход по ID
+            success = engine.move(card_ids, to_pile)
 
             if success and game_id and self.stats_api:
                 self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
@@ -624,12 +624,23 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'game_won': engine.rules.check_win(engine.state) if success else False
             })
 
+
         elif parsed.path == '/auto_move':
-            from_pile = command.get('from')
+            card_id = command.get('card_id')  # UUID головной карты
             player_id = command.get('player_id')
             game_type = command.get('game_type')
+            if not card_id:
+                self._send_response({'success': False, 'error': 'Missing card_id'}, 400)
+                return
+            # Находим стопку по ID карты
+            location = engine._find_card_location(card_id)
+            if not location:
+                self._send_response({'success': False, 'error': f'Card {card_id} not found'}, 404)
+                return
+
+            from_pile = location[0]
             if not from_pile:
-                self._send_response({'success': False, 'error': 'Missing from pile'}, 400)
+                self._send_response({'success': False, 'error': 'Card not found'}, 404)
                 return
 
             moves = engine.rules.get_available_moves(engine.state)
@@ -650,7 +661,8 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 selected_move = tableau_moves[0]
 
             if selected_move:
-                success = engine.move(selected_move.from_pile, selected_move.to_pile, len(selected_move.cards))
+                card_ids_to_move = [c.id for c in selected_move.cards]
+                success = engine.move(card_ids_to_move, selected_move.to_pile)
                 if success and game_id and self.stats_api:
                     self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
 
