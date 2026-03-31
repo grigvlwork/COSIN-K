@@ -427,9 +427,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             player_id = command.get('player_id')
             force_new = command.get('force_new', False)
             request_seed = command.get('seed')
-
-            print(f"📥 [{session_id}] Запрос /new для {variant}. Seed: {request_seed}")
-
             if not force_new and player_id:
                 saves = self.stats_api.get_player_saves(player_id, variant)
                 autosaves = [s for s in saves if s.get('save_type') == 'autosave']
