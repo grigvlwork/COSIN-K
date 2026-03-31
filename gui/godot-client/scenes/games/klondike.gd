@@ -626,7 +626,7 @@ func _on_empty_stock_clicked(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if is_busy:
 			return
-		print("🃏 Recycle: Взять карту из сброса")
+		#print("🃏 Recycle: Взять карту из сброса")
 		var body = '{}'
 		var headers = ["Content-Type: application/json"]
 		last_request_type = "draw"
