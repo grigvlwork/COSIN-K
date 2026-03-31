@@ -133,6 +133,8 @@ func _ready():
 		print("🆕 Запрос новой игры...")
 		start_new_game(true)
 	update_layout()
+	#print("DEBUG SEED: ", GlobalState.get("seed"))
+	#print("DEBUG GAME_DATA: ", GlobalState.get("game_data"))
 
 func _resized():
 	# Откладываем расчет на следующий кадр, чтобы Godot успел обновить размеры контейнеров
@@ -290,7 +292,9 @@ func _on_request_completed(result, response_code, headers, body):
 				# 1. Обновляем данные
 				if data.has("state") and data["state"] != null:
 					game_state = data["state"]
-				
+				if data.has("seed"):
+					current_seed = data.seed
+					print("🌱 Сид обновлён: ", current_seed)
 				# 2. Запуск таймера (при первом ходе)
 				if not first_move_made and (last_request_type == "draw" or last_request_type == "auto_move" or last_request_type == "manual_move"):
 					first_move_made = true
