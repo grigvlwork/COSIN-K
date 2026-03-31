@@ -72,23 +72,23 @@ func clear_pending_save() -> void:
 	Очистить данные загрузки.
 	Вызывается в klondike.gd после применения состояния.
 	"""
-	print("\n=== 🧹 Global.clear_pending_save() ===")
-	print("До очистки:")
-	print("  - pending_game_state размер: ", pending_game_state.size())
-	print("  - pending_game_time: ", pending_game_time)
-	print("  - pending_game_id: ", pending_game_id)
-	print("  - has_pending_save(): ", has_pending_save())
+	#print("\n=== 🧹 Global.clear_pending_save() ===")
+	#print("До очистки:")
+	#print("  - pending_game_state размер: ", pending_game_state.size())
+	#print("  - pending_game_time: ", pending_game_time)
+	#print("  - pending_game_id: ", pending_game_id)
+	#print("  - has_pending_save(): ", has_pending_save())
 	
 	pending_game_state.clear()
 	pending_game_time = 0
 	pending_game_id = 0
 	
-	print("После очистки:")
-	print("  - pending_game_state размер: ", pending_game_state.size())
-	print("  - pending_game_time: ", pending_game_time)
-	print("  - pending_game_id: ", pending_game_id)
-	print("  - has_pending_save(): ", has_pending_save())
-	print("=== Конец clear_pending_save ===\n")
+	#print("После очистки:")
+	#print("  - pending_game_state размер: ", pending_game_state.size())
+	#print("  - pending_game_time: ", pending_game_time)
+	#print("  - pending_game_id: ", pending_game_id)
+	#print("  - has_pending_save(): ", has_pending_save())
+	#print("=== Конец clear_pending_save ===\n")
 
 func has_pending_save() -> bool:
 	"""

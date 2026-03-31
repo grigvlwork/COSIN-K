@@ -629,40 +629,27 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             if not card_id:
                 self._send_response({'success': False, 'error': 'Missing card_id'}, 400)
                 return
-            # Находим стопку по ID карты
-            location = engine._find_card_location(card_id)
-            if not location:
-                self._send_response({'success': False, 'error': f'Card {card_id} not found'}, 404)
+            # ✅ НОВОЕ: получаем ходы напрямую от карты
+            moves = engine.rules.get_moves_from_card_id(engine.state, card_id)
+            if not moves:
+                self._send_response({'success': False, 'error': f'No moves for card {card_id}'})
                 return
-
-            from_pile = location[0]
-            if not from_pile:
-                self._send_response({'success': False, 'error': 'Card not found'}, 404)
-                return
-
-            moves = engine.rules.get_available_moves(engine.state)
-            from_moves = [m for m in moves if m.from_pile == from_pile]
-
-            if not from_moves:
-                self._send_response({'success': False, 'error': f'No moves from {from_pile}'})
-                return
-
-            foundation_moves = [m for m in from_moves if m.to_pile.startswith('foundation_')]
-            tableau_moves = [m for m in from_moves if m.to_pile.startswith('tableau_')]
-
+            # --- приоритеты оставляем как раньше ---
+            foundation_moves = [m for m in moves if m.to_pile.startswith('foundation_')]
+            tableau_moves = [m for m in moves if m.to_pile.startswith('tableau_')]
             selected_move = None
             if foundation_moves:
                 selected_move = foundation_moves[0]
             elif tableau_moves:
                 tableau_moves.sort(key=lambda m: int(m.to_pile.split('_')[1]), reverse=True)
                 selected_move = tableau_moves[0]
-
             if selected_move:
+                # ✅ двигаем по id (но клиент об этом не знает)
                 card_ids_to_move = [c.id for c in selected_move.cards]
                 success = engine.move(card_ids_to_move, selected_move.to_pile)
+                # --- статистика (не трогаем) ---
                 if success and game_id and self.stats_api:
                     self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
-
                     game_won = engine.rules.check_win(engine.state) if success else False
                     if game_won and game_id and self.stats_api:
                         print(f"🏆 ПОБЕДА! game_id={game_id}")
@@ -678,15 +665,18 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                             cards_flipped=engine.cards_flipped_count,
                         )
                         self.stats_api.delete_autosave(player_id, game_type)
-
                         if session_id in self.games:
                             del self.games[session_id]
                         if session_id in self.game_ids:
                             del self.game_ids[session_id]
+                # ✅ ВАЖНО: формат ответа НЕ меняем
                 self._send_response({
                     'success': success,
-                    'move': {'from': selected_move.from_pile, 'to': selected_move.to_pile,
-                             'count': len(selected_move.cards)},
+                    'move': {
+                        'from': selected_move.from_pile,
+                        'to': selected_move.to_pile,
+                        'count': len(selected_move.cards)  # ← оставляем как было
+                    },
                     'state': engine.state if success else None,
                     'score': engine.state.score if success else 0,
                     'moves': engine.state.moves_count if success else 0,

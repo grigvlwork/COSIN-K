@@ -764,7 +764,7 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 			if is_busy:
 				return
 			if pile_name == "stock":
-				print("🃏 Клик по колоде -> Взять карту")
+				#print("🃏 Клик по колоде -> Взять карту")
 				var body = '{}'
 				var headers = ["Content-Type: application/json"]
 				last_request_type = "draw"
@@ -882,7 +882,7 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 	# === Обработка отпускания ===
 	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if is_dragging:
-			print("🏁 Отпускание карты")
+			#print("🏁 Отпускание карты")
 			_end_drag() 
 
 
@@ -908,7 +908,7 @@ func _end_drag():
 	var target_pile = _get_pile_under_mouse()
 	
 	if target_pile != "" and target_pile != drag_source_pile:
-		print("📂 Перенос карт по ID: ", drag_card_ids, " в: ", target_pile)
+		#print("📂 Перенос карт по ID: ", drag_card_ids, " в: ", target_pile)
 		
 		# === ИЗМЕНЕНИЕ: Отправляем список ID карт вместо count ===
 		pending_action_context = {

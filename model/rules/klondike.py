@@ -399,36 +399,43 @@ class KlondikeRules(RuleSet):
         return unique_moves
 
     def get_moves_from_card_id(self, state: "GameState", card_id: str) -> list["Move"]:
-        """
-        Все возможные ходы для последовательности, начинающейся с карты с указанным id.
-        Ищет карту по id в любом стеке (tableau/foundation/waste).
-        """
         from model import Move
-
         moves = []
+        pile = None
+        pile_name = None
+        card_index = -1
 
-        # 1. Найти карту в стопках
-        found = False
-        for pile_name, pile in state.piles.items():
-            for idx, card in enumerate(pile.cards):
+        # 1. Поиск в tableau + foundation
+        for name, p in state.piles.items():
+            for idx, card in enumerate(p):
                 if card.id == card_id:
+                    pile = p
+                    pile_name = name
                     card_index = idx
-                    found = True
                     break
-            if found:
+            if pile:
                 break
 
-        if not found:
-            # Карта не найдена
+        # 2. 🔥 ДОБАВЛЯЕМ ПОИСК В WASTE
+        if pile is None and state.waste:
+            for idx, card in enumerate(state.waste):
+                if card.id == card_id:
+                    pile = state.waste
+                    pile_name = "waste"
+                    card_index = idx
+                    break
+
+        if pile is None:
             return []
 
-        # 2. Получаем последовательность от карты
-        sequence = pile.cards[card_index:]
+        # 3. Последовательность
+        sequence = pile[card_index:]
+
         if not self._is_valid_sequence(sequence):
             return []
 
-        # 3. Ходы на tableau
-        if pile_name.startswith("tableau") or pile_name.startswith("foundation") or pile_name.startswith("waste"):
+        # 4. Ходы на tableau
+        if pile_name.startswith("tableau") or pile_name in ["foundation", "waste"]:
             for target_col in range(7):
                 target_name = f"tableau_{target_col}"
                 if target_name == pile_name:
@@ -443,7 +450,7 @@ class KlondikeRules(RuleSet):
                 if self.can_move(state, move):
                     moves.append(move)
 
-        # 4. Ходы на foundation (только одиночная карта)
+        # 5. Ходы на foundation
         if len(sequence) == 1 and sequence[0].face_up:
             for i in range(4):
                 target_name = f"foundation_{i}"
