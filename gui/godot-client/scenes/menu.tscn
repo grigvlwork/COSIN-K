@@ -2,6 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://dbnjvx44qqhqs" path="res://main_theme.tres" id="1_vjb58"]
 [ext_resource type="Script" uid="uid://bd6mydithxl4g" path="res://scenes/menu.gd" id="1_yqeox"]
+[ext_resource type="Texture2D" uid="uid://cf1gx817xgl3p" path="res://assets/menu_backgrounds/main_menu3-1.png" id="3_con2f"]
 
 [node name="Menu" type="Control" unique_id=115717317]
 layout_mode = 3
@@ -13,18 +14,21 @@ grow_vertical = 2
 theme = ExtResource("1_vjb58")
 script = ExtResource("1_yqeox")
 
+[node name="Background" type="TextureRect" parent="." unique_id=2023091303]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("3_con2f")
+stretch_mode = 4
+
 [node name="MainContainer" type="VBoxContainer" parent="." unique_id=1135688249]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -132.0
-offset_top = -100.5
-offset_right = 132.0
-offset_bottom = 100.5
-grow_horizontal = 2
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -196.0
+grow_horizontal = 0
 grow_vertical = 2
 theme_override_constants/separation = 20
 
