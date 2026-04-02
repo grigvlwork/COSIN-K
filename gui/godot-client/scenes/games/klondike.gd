@@ -31,7 +31,7 @@ var dragged_card_node = null # Ссылка на узел карты, котор
 var drag_offset = Vector2()  # Смещение, чтобы карта не прыгала центром к курсору
 var drag_nodes = [] # Список всех перетаскиваемых узлов
 
-const CARD_ASPECT_RATIO = 1.4 
+const CARD_ASPECT_RATIO = 1.54 
 const MIN_CARD_WIDTH = 80
 const MAX_CARD_WIDTH = 140
 const HORIZONTAL_MARGIN = 40

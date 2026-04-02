@@ -168,6 +168,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response({'success': False, 'error': 'Missing player_id'}, 400)
                 return
             data = self.stats_api.get_achievements_album(player_id)
+            print(data)
             self._send_response(data)
             return
 
@@ -179,6 +180,7 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 return
             achievements_data = self.stats_api.get_achievements(player_id)
             self._send_response(achievements_data)
+
             return
 
         # ===== НОВЫЙ МАРШРУТ: КОСМЕТИКА (GET) =====

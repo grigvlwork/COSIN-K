@@ -50,7 +50,7 @@ func _ready():
 
 func request_album_data():
 	var player_id = Global.player_id # Ваша глобальная переменная ID
-	var url = "http://localhost:8080/player/achievements/album?player_id=" + player_id
+	var url = Global.server_url + "/player/achievements/album?player_id=" + player_id
 	
 	http_request.request(url)
 
@@ -63,7 +63,7 @@ func _on_http_request_request_completed(result, response_code, headers, body):
 		return
 	
 	var response = json.get_data()
-	
+	print(response)
 	if response.success:
 		# 1. Применяем скин альбома
 		var current_skin = response.get("current_skin", "classic")
@@ -78,6 +78,7 @@ func _on_http_request_request_completed(result, response_code, headers, body):
 		current_page = 0
 		calculate_pages()
 		render_page()
+		
 
 func apply_skin(skin_id: String):
 	var file_name = SKIN_FILES.get(skin_id, "beige.png")
