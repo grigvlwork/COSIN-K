@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://bfimynrdptiql"]
 
 [ext_resource type="Script" uid="uid://cxkju2jwicxwv" path="res://scenes/achievements_album.gd" id="1_8a7v3"]
-[ext_resource type="Texture2D" uid="uid://dkjjv7hvtjtm4" path="res://assets/achievements/backgrounds/purple.png" id="2_m34sy"]
 
 [node name="AchievementsAlbum" type="Control" unique_id=1189430890]
 layout_mode = 3
@@ -13,10 +12,13 @@ grow_vertical = 2
 script = ExtResource("1_8a7v3")
 
 [node name="Background" type="TextureRect" parent="." unique_id=1343791904]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-texture = ExtResource("2_m34sy")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
 
 [node name="Cover" type="ColorRect" parent="Background" unique_id=916634162]
 layout_mode = 0
@@ -49,6 +51,8 @@ size_flags_vertical = 3
 
 [node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=1535074769]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Footer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=868348478]
 layout_mode = 2

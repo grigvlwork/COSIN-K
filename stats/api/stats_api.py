@@ -134,7 +134,7 @@ class StatsAPI:
         success = end_result.get('success', False)
         is_first_win = end_result.get('is_first_win', False)
         unlocked_ids = end_result.get('unlocked_achievements', [])
-
+        print(f"[DEBUG] Final games_lost for player: {self.stats.player_repo.get(session.get('player_id')).games_lost}")
         if success:
             player_id = session.get('player_id')
             if player_id:

@@ -21,6 +21,7 @@ var shadow_material = null # Кэшированный материал для т
 var _animating_cards: Dictionary = {}   # Ключ: "pile_name_index", значение: true
 var drag_card_ids: Array = []       # Массив ID перетаскиваемых карт
 var drag_head_card_id = ""     # ID головной карты
+var _pending_new_game_params: Dictionary = {}
 
 
 # ===== DRAG AND DROP =====
@@ -201,8 +202,23 @@ func update_ui():
 				seed_label.text = "Сид: %d" % current_seed
 
 func start_new_game(force_new: bool = true, specific_seed = null):
-	# <--- [7] Добавлен аргумент specific_seed для возможности перезапуска
 	print("🎮 Запрос новой игры (force_new: %s, seed: %s)" % [force_new, specific_seed])
+	print("is_game_active:", is_game_active, " current_game_id:", current_game_id)
+	# Если есть активная игра – сначала сдаём её
+	if is_game_active and current_game_id != null:
+		print("🔄 Активная игра обнаружена, сначала сдаёмся...")
+		# Сохраняем параметры для новой игры на случай, если нужно продолжить после сдачи
+		self._pending_new_game_params = {
+			"force_new": force_new,
+			"specific_seed": specific_seed
+		}
+		_confirm_surrender()
+		return  # Выходим, новая игра начнётся после ответа на abandon
+	
+	# Иначе – обычный старт
+	_do_start_new_game(force_new, specific_seed)
+
+func _do_start_new_game(force_new: bool, specific_seed):
 	game_time = 0
 	timer = 0
 	first_move_made = false
@@ -218,8 +234,6 @@ func start_new_game(force_new: bool = true, specific_seed = null):
 		"player_id": Global.player_id,
 		"force_new": force_new
 	}
-	
-	# <--- [8] Если передан конкретный сид, добавляем его в запрос
 	if specific_seed != null and specific_seed > 0:
 		payload["seed"] = specific_seed
 
@@ -284,8 +298,12 @@ func _on_request_completed(result, response_code, headers, body):
 		var data = json.data
 		
 		# === ПРОВЕРКА УСПЕШНОСТИ ===
+		if last_request_type == "new" and response_code == 200:
+			if data.has("game_id"):
+				current_game_id = data.game_id
+				print("✅ current_game_id установлен: ", current_game_id)
+				is_game_active = true
 		if data.has("success"):
-			
 			if data["success"] == true:
 				# --- УСПЕШНЫЙ ХОД ---
 				
