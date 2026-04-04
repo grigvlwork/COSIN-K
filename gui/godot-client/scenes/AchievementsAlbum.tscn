@@ -1,6 +1,18 @@
 [gd_scene format=3 uid="uid://bfimynrdptiql"]
 
 [ext_resource type="Script" uid="uid://cxkju2jwicxwv" path="res://scenes/achievements_album.gd" id="1_8a7v3"]
+[ext_resource type="FontFile" uid="uid://c0awkk5pr8h8k" path="res://assets/fonts/Preciosa.ttf" id="2_dh2hc"]
+[ext_resource type="Texture2D" uid="uid://cpi2g3vyn0apg" path="res://assets/textures/gold_star.png" id="3_wltu3"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_3itod"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_sphere_radius = 10.0
+gravity = Vector3(0, 20, 0)
+tangential_accel_min = -2.2351742e-06
+tangential_accel_max = 3.8699977
+scale_min = 0.099999994
+scale_max = 0.099999994
 
 [node name="AchievementsAlbum" type="Control" unique_id=1189430890]
 layout_mode = 3
@@ -20,11 +32,6 @@ grow_horizontal = 2
 grow_vertical = 2
 expand_mode = 1
 
-[node name="Cover" type="ColorRect" parent="Background" unique_id=916634162]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=11010174]
 layout_mode = 1
 anchors_preset = 15
@@ -41,39 +48,34 @@ layout_mode = 2
 
 [node name="Title" type="Label" parent="MarginContainer/VBoxContainer/Header" unique_id=362322499]
 layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 1
+theme_override_fonts/font = ExtResource("2_dh2hc")
+theme_override_font_sizes/font_size = 40
+text = "Достижения"
+horizontal_alignment = 1
 
 [node name="SettingsBtn" type="Button" parent="MarginContainer/VBoxContainer/Header" unique_id=1039902701]
 layout_mode = 2
+text = "*"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=803003186]
+[node name="CardsContainer" type="Control" parent="MarginContainer/VBoxContainer" unique_id=81067185]
 layout_mode = 2
-size_flags_vertical = 3
-
-[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=1535074769]
-layout_mode = 2
-size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Footer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=868348478]
 layout_mode = 2
 
-[node name="BtnPrev" type="Button" parent="MarginContainer/VBoxContainer/Footer" unique_id=1306255441]
-layout_mode = 2
-text = "<"
-
-[node name="PageLabel" type="Label" parent="MarginContainer/VBoxContainer/Footer" unique_id=1646799584]
-layout_mode = 2
-text = "1 / 5"
-
-[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/Footer" unique_id=1373089959]
-layout_mode = 2
-
 [node name="BtnMenu" type="Button" parent="MarginContainer/VBoxContainer/Footer" unique_id=925933893]
 layout_mode = 2
+size_flags_horizontal = 6
 text = "В меню"
 
-[node name="BtnNext" type="Button" parent="MarginContainer/VBoxContainer/Footer" unique_id=626979581]
-layout_mode = 2
-text = ">"
-
 [node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=311286532]
+
+[node name="GoldParticles" type="GPUParticles2D" parent="." unique_id=1815960893]
+position = Vector2(525, 229)
+emitting = false
+amount = 100
+texture = ExtResource("3_wltu3")
+process_material = SubResource("ParticleProcessMaterial_3itod")

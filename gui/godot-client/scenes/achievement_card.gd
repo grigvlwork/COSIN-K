@@ -1,4 +1,4 @@
-# \gui\godot-client\scenes\achievement_card.gd
+# gui/godot-client/scenes/achievement_card.gd
 extends Control
 class_name AchievementCard
 
@@ -27,11 +27,15 @@ const TIER_BG_FILES = {
 }
 
 # --- Узлы ---
+# ВНИМАНИЕ: Имена переменных должны совпадать с новыми именами в .tscn
+# HeaderLabel -> Название достижения
+@onready var name_label: Label = $HeaderLabel 
+# OpenedAt -> Дата или Статус
+@onready var status_label: Label = $OpenedAt 
+
 @onready var frame_rect: TextureRect = $FrameRect
 @onready var bg_texture: TextureRect = $IconPanel/BgTexture
 @onready var icon_rect: TextureRect = $IconPanel/IconRect
-@onready var header_label: Label = $HeaderLabel
-@onready var name_label: Label = $CategoryLabel
 @onready var desc_label: Label = $DescLabel
 @onready var quote_label: Label = $QuoteLabel
 @onready var current_score_label: Label = $CurrentScore
@@ -50,12 +54,8 @@ func setup(data: Dictionary):
 
 	# --- Разблокированное или заблокированное ---
 	var is_unlocked = data.get("unlocked", false)
-	if is_unlocked:
-		setup_unlocked_view(data, tier)
-	else:
-		setup_locked_view(data, tier)
-
-	# --- Текстовые данные ---
+	
+	# Устанавливаем название (всегда видно, если не секрет)
 	if data.get("is_secret") and not is_unlocked:
 		name_label.text = "???"
 		desc_label.text = "Секретное достижение"
@@ -65,9 +65,16 @@ func setup(data: Dictionary):
 		desc_label.text = data.get("description", "")
 		quote_label.text = "\"%s\"" % data.get("quote", "История умалчивает...")
 
+	if is_unlocked:
+		setup_unlocked_view(data, tier)
+	else:
+		setup_locked_view(data, tier)
+
 func setup_unlocked_view(data: Dictionary, tier: String):
-	# --- Header ---
-	setup_header_style(false, tier, data.get("unlocked_at", ""))
+	# --- Статус (Дата) ---
+	# Форматируем дату из "2026-03-26T..." в "26.03.2026"
+	var date_str = format_date(data.get("unlocked_at", ""))
+	setup_status_style(false, tier, date_str)
 
 	# --- Фон уровня ---
 	load_background(tier)
@@ -75,17 +82,16 @@ func setup_unlocked_view(data: Dictionary, tier: String):
 	# --- Иконка достижения ---
 	load_icon(data.get("icon", ""))
 
-	# --- Текущий и целевой счет ---
-	current_score_label.text = format_number_short(data.get("current", 0))
-	target_score_label.text = format_number_short(data.get("target", 0))
-
+	# --- Счет (Скрываем, так как достижение получено) ---
+	current_score_label.visible = false
+	target_score_label.visible = false
+	
+	# Визуальный режим
 	modulate = Color(1, 1, 1)
 
 func setup_locked_view(data: Dictionary, tier: String):
-	# --- Header (Прогресс) ---
-	var progress = data.get("progress", 0)
-	var target = data.get("target", 1)
-	setup_header_style(true, "", "%d / %d" % [progress, target])
+	# --- Статус (В процессе) ---
+	setup_status_style(true, "", "В процессе")
 
 	# --- Фон уровня ---
 	load_background(tier)
@@ -93,23 +99,32 @@ func setup_locked_view(data: Dictionary, tier: String):
 	# --- Заглушка для иконки ---
 	load_placeholder(data.get("category", "general"))
 
-	# --- Текущий и целевой счет ---
+	# --- Счет (Показываем прогресс) ---
+	var progress = data.get("progress", 0)
+	var target = data.get("target", 1)
+	
+	current_score_label.visible = true
+	target_score_label.visible = true
+	
 	current_score_label.text = format_number_short(progress)
 	target_score_label.text = format_number_short(target)
 
+	# Визуальный режим (Затемнение)
 	modulate = Color(0.6, 0.6, 0.6)
 
-# --- Header ---
-func setup_header_style(is_progress: bool, tier: String, text: String):
+# --- Статус (Бывший Header) ---
+func setup_status_style(is_progress: bool, tier: String, text: String):
+	# Настройка фона и цвета текста для узла OpenedAt
 	var style = StyleBoxFlat.new()
 	if is_progress:
 		style.bg_color = Color(0, 0, 0)
-		header_label.add_theme_color_override("font_color", Color.WHITE)
+		status_label.add_theme_color_override("font_color", Color.WHITE)
 	else:
 		style.bg_color = Color(0, 0, 0, 0.3)
-		header_label.add_theme_color_override("font_color", DATE_COLORS.get(tier, Color.WHITE))
-	header_label.add_theme_stylebox_override("panel", style)
-	header_label.text = text
+		status_label.add_theme_color_override("font_color", DATE_COLORS.get(tier, Color.WHITE))
+	
+	status_label.add_theme_stylebox_override("panel", style)
+	status_label.text = text
 
 # --- Фон уровня ---
 func load_background(tier: String):
@@ -117,13 +132,10 @@ func load_background(tier: String):
 	var path = BACKGROUNDS_PATH + file
 	if ResourceLoader.exists(path):
 		bg_texture.texture = load(path)
-	else:
-		printerr("Background texture not found: ", path)
 
 # --- Иконка ---
 func load_icon(filename: String):
-	if filename == "":
-		return
+	if filename == "": return
 	var path = ICONS_PATH + filename + ".png"
 	if ResourceLoader.exists(path):
 		icon_rect.texture = load(path)
@@ -146,6 +158,14 @@ func load_placeholder(category: String):
 	var path = PLACEHOLDERS_PATH + file
 	if ResourceLoader.exists(path):
 		icon_rect.texture = load(path)
+
+# --- Форматирование даты ---
+func format_date(iso_date: String) -> String:
+	if iso_date == "" or iso_date == null: return ""
+	# Превращает "2026-03-26T23:03:05..." в словарь
+	var dict = Time.get_datetime_dict_from_datetime_string(iso_date, false)
+	# Возвращает "26.03.2026"
+	return "%02d.%02d.%04d" % [dict.day, dict.month, dict.year]
 
 # --- Сокращение больших чисел ---
 func format_number_short(value: int) -> String:

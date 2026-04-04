@@ -10,6 +10,8 @@ var draw_three = false            # 1 карта
 var player_id: String = ""
 var player_name: String = ""
 var is_player_loaded: bool = false
+var has_new_achievement: bool = false
+var last_achievement_id: String = ""
 const PLAYER_DATA_FILE = "user://player.identity"
 
 # ===== ПЕРЕДАЧА ДАННЫХ МЕЖДУ СЦЕНАМИ =====

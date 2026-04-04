@@ -11,7 +11,17 @@ var first_move_made = false
 var timer_active = false
 var last_request_type = ""
 var is_game_active = false	  # Игра началась (первый ход сделан)
-var current_game_id = null	  # ID игры от сервера
+#var current_game_id = null	  # ID игры от сервера
+var _current_game_id = null
+
+var current_game_id:
+	set(value):
+		print("🧨 current_game_id SET:", value)
+		print_stack()
+		_current_game_id = value
+	get:
+		return _current_game_id
+
 var current_seed = 0          # Переменная для хранения сида
 var is_first_win = true	      # Переменная для хранения статуса победы
 var is_replay_mode = false
@@ -204,41 +214,39 @@ func update_ui():
 func start_new_game(force_new: bool = true, specific_seed = null):
 	print("🎮 Запрос новой игры (force_new: %s, seed: %s)" % [force_new, specific_seed])
 	print("is_game_active:", is_game_active, " current_game_id:", current_game_id)
-	# Если есть активная игра – сначала сдаём её
-	if is_game_active and current_game_id != null:
-		print("🔄 Активная игра обнаружена, сначала сдаёмся...")
-		# Сохраняем параметры для новой игры на случай, если нужно продолжить после сдачи
-		self._pending_new_game_params = {
+	# === 1. Если есть ЛЮБАЯ незавершённая игра — сначала завершаем ===
+	if current_game_id != null:
+		print("🔄 Найдена незавершённая игра (game_id: %s), сначала завершаем..." % current_game_id)
+		# Сохраняем параметры новой игры
+		_pending_new_game_params = {
 			"force_new": force_new,
 			"specific_seed": specific_seed
 		}
-		_confirm_surrender()
-		return  # Выходим, новая игра начнётся после ответа на abandon
-	
-	# Иначе – обычный старт
-	_do_start_new_game(force_new, specific_seed)
-
-func _do_start_new_game(force_new: bool, specific_seed):
+		_confirm_surrender()  # должен вызвать /game/end
+		return
+	# === 2. Чистый старт новой игры ===
+	print("🆕 Старт новой игры")
+	# Сброс локального состояния (НО game_id уже null, это важно)
 	game_time = 0
 	timer = 0
 	first_move_made = false
 	timer_active = false
 	is_game_active = false
-	current_game_id = null
 	update_time_display()
 	if game_over_panel:
 		game_over_panel.hide()
-
 	var payload = {
-		"variant": "klondike", 
+		"variant": "klondike",
 		"player_id": Global.player_id,
 		"force_new": force_new
 	}
+
 	if specific_seed != null and specific_seed > 0:
 		payload["seed"] = specific_seed
 
 	var body = JSON.new().stringify(payload)
 	var headers = ["Content-Type: application/json"]
+
 	last_request_type = "new"
 	http.request(Global.server_url + "/new", headers, HTTPClient.METHOD_POST, body)
 
@@ -306,7 +314,38 @@ func _on_request_completed(result, response_code, headers, body):
 		if data.has("success"):
 			if data["success"] == true:
 				# --- УСПЕШНЫЙ ХОД ---
-				
+				if last_request_type == "end" and response_code == 200:
+					print("✅ Игра завершена на сервере")
+
+					current_game_id = null
+					is_game_active = false
+
+					# 🔥 запускаем отложенную новую игру
+					if not _pending_new_game_params.is_empty():
+						var params = _pending_new_game_params
+						_pending_new_game_params.clear()
+
+						print("🔁 Запускаем новую игру после завершения")
+
+						start_new_game(params.force_new, params.specific_seed)
+
+					return
+				if last_request_type == "abandon" and response_code == 200:
+					print("✅ Игра успешно сдана (abandon)")
+
+					current_game_id = null
+					is_game_active = false
+
+					# 🔥 продолжаем запуск новой игры
+					if _pending_new_game_params != null and not _pending_new_game_params.is_empty():
+						var params = _pending_new_game_params
+						_pending_new_game_params.clear()
+
+						print("🔁 Запускаем новую игру после abandon")
+
+						start_new_game(true)
+
+					return
 				# 1. Обновляем данные
 				if data.has("state") and data["state"] != null:
 					game_state = data["state"]
