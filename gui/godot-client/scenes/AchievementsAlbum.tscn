@@ -74,6 +74,7 @@ text = "В меню"
 [node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=311286532]
 
 [node name="GoldParticles" type="GPUParticles2D" parent="." unique_id=1815960893]
+z_index = 15
 emitting = false
 amount = 100
 texture = ExtResource("3_wltu3")
