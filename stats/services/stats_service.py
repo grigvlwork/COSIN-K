@@ -180,14 +180,27 @@ class StatsService:
             if not self.achievement_repo.get(ach.id):
                 self.achievement_repo.create(ach)
 
-    def end_game(self, game_id: int, result: str, score: int = 0, game_state: Optional[Dict] = None,
-                 suits_completed: Optional[List[str]] = None, cards_moved: int = 0,
-                 cards_flipped: int = 0, was_perfect: bool = False) -> Dict[str, Any]:
+    def end_game(
+            self,
+            game_id: int,
+            result: str,
+            score: int = 0,
+            game_state: Optional[Dict] = None,
+            suits_completed: Optional[List[str]] = None,
+            cards_moved: int = 0,
+            cards_flipped: int = 0,
+            was_perfect: bool = False
+    ) -> Dict[str, Any]:
+
         session_data = None
         is_first_win = False
+
+        # --- Получаем данные игры ---
         if game_id not in self._active_games:
             game = self.game_repo.get(game_id)
-            if not game: return {'success': False}
+            if not game:
+                return {'success': False}
+
             start_time = game.started_at
             player_id = game.player_id
             game_type = game.game_type
@@ -207,30 +220,70 @@ class StatsService:
             hints = session_data['hints']
             deck_cycles = session_data['deck_cycles']
 
+        # --- Проверка первой победы ---
         if result == 'won' and seed:
             already_won = self.game_repo.has_won_seed(player_id, seed)
-            if not already_won: is_first_win = True
+            if not already_won:
+                is_first_win = True
 
+        # --- Формирование объекта игры ---
         end_time = datetime.now()
         duration = int((end_time - start_time).total_seconds())
         hour = end_time.hour
         weekday = end_time.weekday()
         is_weekend = weekday >= 5
 
-        game = Game(id=game_id, player_id=player_id, game_type=game_type, seed=seed, started_at=start_time,
-                    ended_at=end_time, result=result, score=score, duration_seconds=duration, moves_count=moves,
-                    undos_used=undos, hints_used=hints, deck_cycles=deck_cycles, suits_completed=suits_completed or [],
-                    first_suit=suits_completed[0] if suits_completed else None, was_perfect=was_perfect,
-                    hour_of_day=hour, day_of_week=weekday, is_weekend=is_weekend)
+        game = Game(
+            id=game_id,
+            player_id=player_id,
+            game_type=game_type,
+            seed=seed,
+            started_at=start_time,
+            ended_at=end_time,
+            result=result,
+            score=score,
+            duration_seconds=duration,
+            moves_count=moves,
+            undos_used=undos,
+            hints_used=hints,
+            deck_cycles=deck_cycles,
+            suits_completed=suits_completed or [],
+            first_suit=suits_completed[0] if suits_completed else None,
+            was_perfect=was_perfect,
+            hour_of_day=hour,
+            day_of_week=weekday,
+            is_weekend=is_weekend
+        )
 
+        # --- Сохраняем игру ---
         success = self.game_repo.update(game_id, game.to_dict())
-        if success:
-            self._update_player_stats(player_id, result, score, duration, is_first_win,
-                                      cards_moved=cards_moved, cards_flipped=cards_flipped,
-                                      suits_completed=suits_completed, was_perfect=was_perfect)
-            newly_unlocked = self.check_and_update_achievements(player_id, game)
-            return {'success': True, 'is_first_win': is_first_win, 'unlocked_achievements': newly_unlocked}
-        return {'success': False}
+        if not success:
+            return {'success': False}
+
+        # --- Обновляем статистику игрока ---
+        self._update_player_stats(
+            player_id,
+            result,
+            score,
+            duration,
+            is_first_win,
+            cards_moved=cards_moved,
+            cards_flipped=cards_flipped,
+            suits_completed=suits_completed,
+            was_perfect=was_perfect
+        )
+
+        # --- Обновляем достижения ---
+        newly_unlocked_ids = self.check_and_update_achievements(player_id, game)
+
+        if newly_unlocked_ids:
+            print(f"🎉 New achievements unlocked: {newly_unlocked_ids}")
+
+        return {
+            'success': True,
+            'is_first_win': is_first_win,
+            'unlocked_achievements': newly_unlocked_ids
+        }
 
     def _update_player_stats(self, player_id: str, result: str, score: int, duration: int,
                              is_first_win: bool = False, cards_moved: int = 0, cards_flipped: int = 0,
@@ -266,53 +319,84 @@ class StatsService:
             for key, value in kwargs.items():
                 if key in self._active_games[game_id]: self._active_games[game_id][key] = value
 
-    def check_and_update_achievements(self, player_id: str, game_result: Game) -> List[Dict]:
+    def check_and_update_achievements(self, player_id: str, game: Game) -> List[str]:
         all_achievements = self.achievement_repo.get_all()
         player = self.player_repo.get(player_id)
-        newly_unlocked = []
-        if not player: return []
+
+        if not player:
+            return []
+
+        new_unlocked_ids = []
 
         for ach in all_achievements:
             pa = self.player_achievement_repo.get_player_achievement(player_id, ach.id)
-            if pa and pa.unlocked: continue
+
+            # Уже открыто → пропускаем
+            if pa and pa.unlocked:
+                continue
+
             current_progress = 0
             condition_met = False
 
+            # --- Условия ---
             if ach.condition_type == 'wins':
                 current_progress = player.games_won
                 condition_met = current_progress >= ach.target
+
             elif ach.condition_type == 'streak':
                 current_progress = player.current_win_streak
                 condition_met = current_progress >= ach.target
+
             elif ach.condition_type == 'cards_moved':
                 current_progress = player.total_cards_moved
                 condition_met = current_progress >= ach.target
+
             elif ach.condition_type == 'cards_flipped':
                 current_progress = player.total_cards_flipped
                 condition_met = current_progress >= ach.target
+
             elif ach.condition_type.startswith('completed_'):
                 if hasattr(player, ach.condition_type):
                     current_progress = getattr(player, ach.condition_type)
                     condition_met = current_progress >= ach.target
+
             elif ach.condition_type == 'time_lt':
-                if game_result.result == 'won' and game_result.duration_seconds:
-                    current_progress = game_result.duration_seconds
-                    condition_met = game_result.duration_seconds < ach.target
-                    if condition_met: current_progress = ach.target
+                if game.result == 'won' and game.duration_seconds:
+                    current_progress = game.duration_seconds
+                    condition_met = game.duration_seconds < ach.target
+                    if condition_met:
+                        current_progress = ach.target
+
             elif ach.condition_type == 'losses':
                 current_progress = player.games_lost
                 condition_met = current_progress >= ach.target
+
             elif ach.condition_type == 'perfect_wins':
                 current_progress = player.total_perfect_wins
                 condition_met = current_progress >= ach.target
 
-            if condition_met and not (pa and pa.unlocked):
-                self.player_achievement_repo.update_progress(player_id, ach.id, ach.target, True)
-                newly_unlocked.append(ach.to_dict())
-                print(f"🏆 Достижение получено: {ach.name}")
-            elif pa and pa.progress < current_progress and not pa.unlocked:
-                self.player_achievement_repo.update_progress(player_id, ach.id, current_progress, False)
-        return newly_unlocked
+            # --- Обновление через репозиторий ---
+            if condition_met:
+                is_new = self.player_achievement_repo.update_progress(
+                    player_id,
+                    ach.id,
+                    ach.target,
+                    True
+                )
+
+                if is_new:
+                    new_unlocked_ids.append(ach.id)
+                    print(f"🏆 Achievement unlocked: {ach.name}")
+
+            elif pa and not pa.unlocked and current_progress > pa.progress:
+                self.player_achievement_repo.update_progress(
+                    player_id,
+                    ach.id,
+                    current_progress,
+                    False
+                )
+
+        return new_unlocked_ids
 
     # ===== АЛЬБОМ И ДОСТИЖЕНИЯ =====
 

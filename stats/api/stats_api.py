@@ -114,13 +114,11 @@ class StatsAPI:
                  cards_moved: int = 0,
                  cards_flipped: int = 0
                  ) -> Dict[str, Any]:
-
         print(f"\n=== StatsAPI.end_game ===")
         print(f"  game_id: {game_id}, result: {result}")
-
         session = self._active_games.pop(game_id, {})
         total_moves = moves or session.get('moves', 0)
-
+        # --- Завершаем игру и получаем полный результат ---
         end_result = self.stats.end_game(
             game_id=game_id,
             result=result,
@@ -130,12 +128,18 @@ class StatsAPI:
             cards_flipped=cards_flipped,
             was_perfect=was_perfect
         )
-
         success = end_result.get('success', False)
         is_first_win = end_result.get('is_first_win', False)
-        unlocked_ids = end_result.get('unlocked_achievements', [])
-
-        # print(f"[DEBUG] Final games_lost for player: {self.stats.player_repo.get(session.get('player_id')).games_lost}")
+        newly_unlocked = end_result.get('unlocked_achievements', [])
+        # --- Если сервер возвращает только ID, преобразуем в dict (безопасно) ---
+        full_achievements = []
+        for a in newly_unlocked:
+            if isinstance(a, str):
+                ach_obj = self.stats.achievement_repo.get(a)
+                if ach_obj:
+                    full_achievements.append(ach_obj.to_dict())
+            elif isinstance(a, dict):
+                full_achievements.append(a)
         if success:
             player_id = session.get('player_id')
             if player_id:
@@ -148,7 +152,7 @@ class StatsAPI:
                         'score': score,
                         'moves': total_moves,
                         'is_first_win': is_first_win,
-                        'unlocked_achievements': unlocked_ids,
+                        'unlocked_achievements': full_achievements,
                         'player_stats': {
                             'games_won': stats.player.games_won,
                             'games_played': stats.player.games_started,
@@ -163,9 +167,8 @@ class StatsAPI:
                 'result': result,
                 'score': score,
                 'is_first_win': is_first_win,
-                'unlocked_achievements': unlocked_ids
+                'unlocked_achievements': full_achievements
             }
-
         return {'success': False, 'error': 'Не удалось завершить игру'}
 
     def update_game_progress(self, game_id: int, **kwargs) -> bool:

@@ -1,4 +1,3 @@
-# gui/godot-client/scenes/AchievementsAlbum.tscn
 extends Control
 
 # --- Константы и Пути ---
@@ -53,8 +52,11 @@ var pos_right_x: float
 signal close_requested
 
 func _ready():
-	# Расчет координат
-	# Центр контейнера
+	# ВАЖНО: Ждем один кадр, чтобы Godot рассчитал реальные размеры VBoxContainer и CardsContainer.
+	# Без этого cards_container.size.x будет равен 0, и карты уедут за левый край.
+	await get_tree().process_frame
+	
+	# Расчет координат (теперь size.x имеет корректное значение)
 	var center = cards_container.size.x / 2
 	pos_center_x = center - (CARD_WIDTH / 2)
 	
@@ -262,12 +264,8 @@ func update_single_card(card: Control, data_idx: int):
 
 # --- Настройка контента карты ---
 
-func setup_card_view(card: Control, data: Dictionary):
+func setup_card_view(card, data: Dictionary):
 	card.setup(data)
-	
-	if card.has_node("CategoryLabel"):
-		card.get_node("CategoryLabel").text = data.get("category", "Общее")
-	
 	if card.has_node("CurrentScore") and card.has_node("TargetScore"):
 		var p = data.get("progress", 0)
 		var t = data.get("target", 1)
@@ -277,10 +275,16 @@ func setup_card_view(card: Control, data: Dictionary):
 # --- Эффекты ---
 
 func start_celebration():
-	# Центрируем эмиттер на центральной карте
-	gold_particles.position = Vector2(cards_container.size.x / 2, cards_container.size.y / 2)
+	# Получаем глобальные координаты области карт, чтобы поставить эмиттер четко над ней
+	var container_rect = cards_container.get_global_rect()
+	
+	# Ставим эмиттер по центру ширине, и в самый верх по высоте
+	gold_particles.global_position = Vector2(
+		container_rect.position.x + (container_rect.size.x / 2),
+		container_rect.position.y
+	)
+	
 	gold_particles.emitting = true
-	# Можно добавить звук отсюда: $AudioStreamPlayer.play()
 
 # --- Обработка ввода ---
 

@@ -301,10 +301,14 @@ func _on_request_completed(result, response_code, headers, body):
 	var response_text = body.get_string_from_utf8()
 	var json = JSON.new()
 	var error = json.parse(response_text)
-
 	if error == OK:
 		var data = json.data
-		
+		#print("📥 RESPONSE: ", data)
+		# === ДОСТИЖЕНИЯ (ловим ВСЕГДА) ===
+		if data.has("unlocked_achievements"):
+			var unlocked = data["unlocked_achievements"]
+			if unlocked.size() > 0:
+				_handle_new_achievements(unlocked)
 		# === ПРОВЕРКА УСПЕШНОСТИ ===
 		if last_request_type == "new" and response_code == 200:
 			if data.has("game_id"):
@@ -313,129 +317,98 @@ func _on_request_completed(result, response_code, headers, body):
 				is_game_active = true
 		if data.has("success"):
 			if data["success"] == true:
-				# --- УСПЕШНЫЙ ХОД ---
+				# --- УСПЕШНОЕ ЗАВЕРШЕНИЕ ИГРЫ ---
 				if last_request_type == "end" and response_code == 200:
 					print("✅ Игра завершена на сервере")
-
 					current_game_id = null
 					is_game_active = false
-
-					# 🔥 запускаем отложенную новую игру
+					# 🔥 новая игра
 					if not _pending_new_game_params.is_empty():
 						var params = _pending_new_game_params
 						_pending_new_game_params.clear()
-
 						print("🔁 Запускаем новую игру после завершения")
-
 						start_new_game(params.force_new, params.specific_seed)
-
 					return
 				if last_request_type == "abandon" and response_code == 200:
 					print("✅ Игра успешно сдана (abandon)")
-
+					# Обрабатываем достижения
+					if data.has("unlocked_achievements") and data.unlocked_achievements.size() > 0:
+						_handle_new_achievements(data.unlocked_achievements)
 					current_game_id = null
 					is_game_active = false
-
-					# 🔥 продолжаем запуск новой игры
 					if _pending_new_game_params != null and not _pending_new_game_params.is_empty():
 						var params = _pending_new_game_params
 						_pending_new_game_params.clear()
-
 						print("🔁 Запускаем новую игру после abandon")
-
 						start_new_game(true)
-
 					return
-				# 1. Обновляем данные
+				# --- ОБНОВЛЕНИЕ СОСТОЯНИЯ ---
 				if data.has("state") and data["state"] != null:
 					game_state = data["state"]
 				if data.has("seed"):
 					current_seed = data.seed
 					print("🌱 Сид обновлён: ", current_seed)
-				# 2. Запуск таймера (при первом ходе)
+				# --- СТАРТ ТАЙМЕРА ---
 				if not first_move_made and (last_request_type == "draw" or last_request_type == "auto_move" or last_request_type == "manual_move"):
 					first_move_made = true
 					timer_active = true
 					is_game_active = true
-
-				# 3. Логика Победы
+				# --- ПОБЕДА ---
 				var game_won = data.get("game_won", false)
 				if game_won:
 					is_first_win = data.get("is_first_win", true)
 					update_ui()
-					draw_game() # Финальная отрисовка
+					draw_game()
 					show_win()
 					pending_action_context = {}
-					return # Выходим, дальше ничего делать не надо
-
-				# 4. Обновляем интерфейс (счет, ходы)
+					return
+				# --- UI ---
 				update_ui()
-				
-				# === АНИМАЦИЯ УСПЕХА (Шаг 3) ===
+				# === АНИМАЦИИ ===
 				var context_type = pending_action_context.get("type", "")
-				
 				if context_type == "manual_move":
-					# Ручной ход
 					var nodes = pending_action_context.get("nodes", [])
 					var target_pile = pending_action_context.get("target_pile", "")
-					
 					if nodes.size() > 0 and target_pile != "":
 						_animate_success_flight(nodes, target_pile)
 					else:
 						draw_game()
-						
 				elif context_type == "auto_move":
-					# Авто-ход: берем цель из ответа сервера
 					if data.has("move"):
 						var move_info = data["move"]
 						var target_pile = move_info["to"]
 						var nodes = pending_action_context.get("nodes", [])
-						
 						if nodes.size() > 0:
 							_animate_success_flight(nodes, target_pile)
 						else:
 							draw_game()
 					else:
 						draw_game()
-						
 				elif last_request_type == "draw":
-					# Для взятия карт пока оставляем мгновенную смену
 					draw_game()
 				else:
-					# Для new, undo и т.д.
 					draw_game()
-
 				pending_action_context = {}
-				
 			else:
-				# --- ОШИБКА ХОДА ---
+				# --- ОШИБКА ---
 				var err_code = data.get("error")
 				printerr("⚠️ Ошибка сервера: ", err_code)
-				
-				# РАЗБИРАЕМ КОНТЕКСТ
 				var context_type = pending_action_context.get("type", "")
-				
 				if context_type == "auto_move":
-					# Авто-ход не удался -> Трясем карту
-					# Берем первый узел из списка (карта, по которой кликнули)
 					var nodes = pending_action_context.get("nodes", [])
 					if nodes.size() > 0 and is_instance_valid(nodes[0]):
 						_animate_shake(nodes[0])
-				
 				elif context_type == "manual_move":
-					# Ручной ход не удался -> Возвращаем карты
 					var nodes = pending_action_context.get("nodes", [])
 					var positions = pending_action_context.get("start_positions", [])
 					if nodes.size() > 0:
 						_animate_return(nodes, positions)
-				
-				# Сбрасываем контекст после обработки ошибки
 				pending_action_context = {}
-				
 		else:
 			printerr("⚠️ Некорректный формат ответа (нет ключа success)")
 	else:
 		printerr("❌ Ошибка парсинга JSON")
+
 func show_win():
 	if game_over_panel:
 		game_over_panel.show()
@@ -622,8 +595,6 @@ func _apply_slot_sizes():
 	# Нижний ряд (Табло)
 	for t in tableau_slots:
 		t.custom_minimum_size = slot_size
-
-
 
 func draw_game():
 	_clear_cards_from_slot(stock_slot)
@@ -1433,3 +1404,45 @@ func _get_card_textures(card_data: Dictionary) -> Dictionary:
 		result["face"] = result["back"]
 	
 	return result
+
+func _handle_new_achievements(unlocked: Array):
+	print("💡 New achievements:", unlocked)
+	for ach in unlocked:
+		show_achievement_notification(ach)
+	
+	# 👉 сохраняем последнее достижение для альбома
+	var last = unlocked[-1]
+	Global.has_new_achievement = true
+	Global.last_achievement_id = last.get("id")
+
+func show_achievement_notification(ach: Dictionary) -> void:
+	var popup = Label.new()
+	popup.text = "🏆 " + ach.get("name", "Достижение!")
+	popup.modulate = Color(1, 1, 1, 0)
+	popup.position = Vector2(50, 50)
+	
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(popup)
+	
+	var tween = create_tween()
+	tween.tween_property(popup, "modulate:a", 1.0, 0.3)
+	tween.tween_interval(2.0)
+	tween.tween_property(popup, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(popup.queue_free)
+
+	# ✅ корректное подключение сигнала
+	popup.gui_input.connect(Callable(self, "_on_popup_clicked").bind(popup))
+
+func _on_popup_clicked(event: InputEvent, popup: Label) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		open_achievements_album()
+		if is_instance_valid(popup):
+			popup.queue_free()
+	
+func open_achievements_album():
+	var scene = load("res://scenes/AchievementsAlbum.tscn").instantiate()
+	get_tree().root.add_child(scene)
+	
+	scene.close_requested.connect(func():
+		scene.queue_free()
+	)

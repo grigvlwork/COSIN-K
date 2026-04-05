@@ -398,12 +398,11 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
         if parsed.path == '/abandon':
             player_id = command.get('player_id')
             game_type = command.get('game_type', 'klondike')
-
             engine = self._get_engine(session_id)
             game_id = self._get_game_id(session_id)
-
             if game_id and engine:
-                self.stats_api.end_game(
+                # ✅ ЕДИНСТВЕННЫЙ вызов
+                result = self.stats_api.end_game(
                     game_id=game_id,
                     result='lost',
                     score=engine.state.score,
@@ -412,15 +411,17 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     cards_moved=engine.cards_moved_count,
                     cards_flipped=engine.cards_flipped_count,
                 )
-
+            else:
+                result = {'success': False, 'error': 'No active game'}
+            # удаляем автосейв
             self.stats_api.delete_autosave(player_id, game_type)
-
+            # чистим сессию
             if session_id in self.games:
                 del self.games[session_id]
             if session_id in self.game_ids:
                 del self.game_ids[session_id]
-
-            self._send_response({'success': True, 'message': 'Game abandoned'})
+            # 🔥 отправляем результат (с достижениями)
+            self._send_response(result)
             return
 
         # ===== СОЗДАНИЕ НОВОЙ ИГРЫ =====
@@ -443,22 +444,17 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                         'score': save.get('score', 0)
                     }, 409)
                     return
-
             engine = self._create_engine(session_id, variant)
-
             if engine:
                 final_seed = request_seed if request_seed is not None else random.randint(0, 999999999)
-
                 engine.new_game(seed=final_seed)
                 engine._seed = final_seed
-
                 game_id = None
                 if player_id and self.stats_api:
                     result = self.stats_api.start_game(player_id, variant, seed=final_seed)
                     if result.get('success'):
                         game_id = result.get('game_id')
                         self.game_ids[session_id] = game_id
-
                 response_data = {
                     'success': True,
                     'variant': variant,
@@ -469,7 +465,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 }
                 if game_id:
                     response_data['game_id'] = game_id
-
                 self._send_response(response_data)
             else:
                 self._send_response({'success': False, 'error': f'Failed to create game: {variant}'}, 400)
@@ -482,22 +477,18 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             score = command.get('score', 0)
             moves = command.get('moves', 0)
             time_val = command.get('time', 0)
-
             engine = self._get_engine(session_id)
             game_id = self._get_game_id(session_id)
-
             suits_completed = []
             was_perfect = False
             cards_moved = 0
             cards_flipped = 0
-
             if engine and engine.state:
                 engine.update_play_time(time_val)
                 suits_completed = self._get_suits_completed(engine.state)
                 was_perfect = self._check_perfect_game(engine, engine.state)
                 cards_moved = engine.cards_moved_count
                 cards_flipped = engine.cards_flipped_count
-
             if game_id and self.stats_api:
                 stats_result = self.stats_api.end_game(
                     game_id=game_id,
@@ -510,15 +501,12 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     cards_moved=cards_moved,
                     cards_flipped=cards_flipped,
                 )
-
                 if result_str == 'won':
                     self.stats_api.delete_autosave(player_id, "klondike")
-
                 if session_id in self.games:
                     del self.games[session_id]
                 if session_id in self.game_ids:
                     del self.game_ids[session_id]
-
                 self._send_response(stats_result)
             else:
                 self._send_response({'success': True, 'game_completed': True, 'result': result_str})
@@ -540,26 +528,21 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
             card_ids = command.get('card_ids')  # Список UUID от клиента
             to_pile = command.get('to')
             player_id = command.get('player_id')
-
             if not card_ids or not to_pile:
                 self._send_response({'success': False, 'error': 'Missing card_ids or to_pile'}, 400)
                 return
-
             # Новый метод движка — ход по ID
             success = engine.move(card_ids, to_pile)
-
             if success and game_id and self.stats_api:
                 self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
-
             available = []
             if success and hasattr(engine.rules, 'get_available_moves'):
                 available = engine.rules.get_available_moves(engine.state)
-
             game_won = engine.rules.check_win(engine.state) if success else False
-
+            end_result = None  # 👈 добавь в начале
             if game_won and game_id and self.stats_api:
                 print(f"🏆 ПОБЕДА! game_id={game_id}")
-                self.stats_api.end_game(
+                end_result = self.stats_api.end_game(
                     game_id=game_id,
                     result='won',
                     score=engine.state.score,
@@ -571,20 +554,87 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     cards_flipped=engine.cards_flipped_count,
                 )
                 self.stats_api.delete_autosave(player_id, "klondike")
-
                 if session_id in self.games:
                     del self.games[session_id]
                 if session_id in self.game_ids:
                     del self.game_ids[session_id]
-            self._send_response({
+            response = {
                 'success': success,
                 'state': engine.state if success else None,
                 'score': engine.state.score if success else 0,
                 'moves': engine.state.moves_count if success else 0,
                 'available_moves': len(available) if success else 0,
                 'game_won': game_won
-            })
-
+            }
+            if end_result:
+                response['unlocked_achievements'] = end_result.get('unlocked_achievements', [])
+                response['is_first_win'] = end_result.get('is_first_win', False)
+            self._send_response(response)
+        elif parsed.path == '/auto_move':
+            card_id = command.get('card_id')  # UUID головной карты
+            player_id = command.get('player_id')
+            game_type = command.get('game_type')
+            if not card_id:
+                self._send_response({'success': False, 'error': 'Missing card_id'}, 400)
+                return
+            # ✅ НОВОЕ: получаем ходы напрямую от карты
+            moves = engine.rules.get_moves_from_card_id(engine.state, card_id)
+            if not moves:
+                self._send_response({'success': False, 'error': f'No moves for card {card_id}'})
+                return
+            # --- приоритеты оставляем как раньше ---
+            foundation_moves = [m for m in moves if m.to_pile.startswith('foundation_')]
+            tableau_moves = [m for m in moves if m.to_pile.startswith('tableau_')]
+            selected_move = None
+            if foundation_moves:
+                selected_move = foundation_moves[0]
+            elif tableau_moves:
+                tableau_moves.sort(key=lambda m: int(m.to_pile.split('_')[1]), reverse=True)
+                selected_move = tableau_moves[0]
+            if selected_move:
+                # ✅ двигаем по id (но клиент об этом не знает)
+                card_ids_to_move = [c.id for c in selected_move.cards]
+                success = engine.move(card_ids_to_move, selected_move.to_pile)
+                # --- статистика (не трогаем) ---
+                if success and game_id and self.stats_api:
+                    self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
+                    available = []
+                    if success and hasattr(engine.rules, 'get_available_moves'):
+                        available = engine.rules.get_available_moves(engine.state)
+                    game_won = engine.rules.check_win(engine.state) if success else False
+                    end_result = None  # 👈 добавь в начале
+                    if game_won and game_id and self.stats_api:
+                        print(f"🏆 ПОБЕДА! game_id={game_id}")
+                        end_result = self.stats_api.end_game(
+                            game_id=game_id,
+                            result='won',
+                            score=engine.state.score,
+                            moves=engine.state.moves_count,
+                            game_type="klondike",
+                            suits_completed=self._get_suits_completed(engine.state),
+                            was_perfect=self._check_perfect_game(engine, engine.state),
+                            cards_moved=engine.cards_moved_count,
+                            cards_flipped=engine.cards_flipped_count,
+                        )
+                        self.stats_api.delete_autosave(player_id, "klondike")
+                        if session_id in self.games:
+                            del self.games[session_id]
+                        if session_id in self.game_ids:
+                            del self.game_ids[session_id]
+                    response = {
+                        'success': success,
+                        'state': engine.state if success else None,
+                        'score': engine.state.score if success else 0,
+                        'moves': engine.state.moves_count if success else 0,
+                        'available_moves': len(available) if success else 0,
+                        'game_won': game_won
+                    }
+                    if end_result:
+                        response['unlocked_achievements'] = end_result.get('unlocked_achievements', [])
+                        response['is_first_win'] = end_result.get('is_first_win', False)
+                    self._send_response(response)
+            else:
+                self._send_response({'success': False, 'error': 'No suitable move'})
         elif parsed.path == '/draw':
             success = engine.draw()
             if success and game_id and self.stats_api:
@@ -622,70 +672,6 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                 'moves': engine.state.moves_count if success else 0,
                 'game_won': engine.rules.check_win(engine.state) if success else False
             })
-
-
-        elif parsed.path == '/auto_move':
-            card_id = command.get('card_id')  # UUID головной карты
-            player_id = command.get('player_id')
-            game_type = command.get('game_type')
-            if not card_id:
-                self._send_response({'success': False, 'error': 'Missing card_id'}, 400)
-                return
-            # ✅ НОВОЕ: получаем ходы напрямую от карты
-            moves = engine.rules.get_moves_from_card_id(engine.state, card_id)
-            if not moves:
-                self._send_response({'success': False, 'error': f'No moves for card {card_id}'})
-                return
-            # --- приоритеты оставляем как раньше ---
-            foundation_moves = [m for m in moves if m.to_pile.startswith('foundation_')]
-            tableau_moves = [m for m in moves if m.to_pile.startswith('tableau_')]
-            selected_move = None
-            if foundation_moves:
-                selected_move = foundation_moves[0]
-            elif tableau_moves:
-                tableau_moves.sort(key=lambda m: int(m.to_pile.split('_')[1]), reverse=True)
-                selected_move = tableau_moves[0]
-            if selected_move:
-                # ✅ двигаем по id (но клиент об этом не знает)
-                card_ids_to_move = [c.id for c in selected_move.cards]
-                success = engine.move(card_ids_to_move, selected_move.to_pile)
-                # --- статистика (не трогаем) ---
-                if success and game_id and self.stats_api:
-                    self.stats_api.update_game_progress(game_id, moves=engine.state.moves_count)
-                    game_won = engine.rules.check_win(engine.state) if success else False
-                    if game_won and game_id and self.stats_api:
-                        print(f"🏆 ПОБЕДА! game_id={game_id}")
-                        self.stats_api.end_game(
-                            game_id=game_id,
-                            result='won',
-                            score=engine.state.score,
-                            moves=engine.state.moves_count,
-                            game_type="klondike",
-                            suits_completed=self._get_suits_completed(engine.state),
-                            was_perfect=self._check_perfect_game(engine, engine.state),
-                            cards_moved=engine.cards_moved_count,
-                            cards_flipped=engine.cards_flipped_count,
-                        )
-                        self.stats_api.delete_autosave(player_id, game_type)
-                        if session_id in self.games:
-                            del self.games[session_id]
-                        if session_id in self.game_ids:
-                            del self.game_ids[session_id]
-                # ✅ ВАЖНО: формат ответа НЕ меняем
-                self._send_response({
-                    'success': success,
-                    'move': {
-                        'from': selected_move.from_pile,
-                        'to': selected_move.to_pile,
-                        'count': len(selected_move.cards)  # ← оставляем как было
-                    },
-                    'state': engine.state if success else None,
-                    'score': engine.state.score if success else 0,
-                    'moves': engine.state.moves_count if success else 0,
-                    'game_won': engine.rules.check_win(engine.state) if success else False
-                })
-            else:
-                self._send_response({'success': False, 'error': 'No suitable move'})
 
         elif parsed.path == '/hint':
             hint = engine.rules.get_hint(engine.state)

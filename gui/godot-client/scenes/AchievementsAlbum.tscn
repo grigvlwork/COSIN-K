@@ -6,8 +6,8 @@
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_3itod"]
 particle_flag_disable_z = true
-emission_shape = 1
-emission_sphere_radius = 10.0
+emission_shape = 3
+emission_box_extents = Vector3(200, 400, 1)
 gravity = Vector3(0, 20, 0)
 tangential_accel_min = -2.2351742e-06
 tangential_accel_max = 3.8699977
@@ -74,8 +74,8 @@ text = "В меню"
 [node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=311286532]
 
 [node name="GoldParticles" type="GPUParticles2D" parent="." unique_id=1815960893]
-position = Vector2(525, 229)
 emitting = false
 amount = 100
 texture = ExtResource("3_wltu3")
+lifetime = 2.5
 process_material = SubResource("ParticleProcessMaterial_3itod")
