@@ -302,6 +302,7 @@ func _input(event):
 
 func _on_menu_pressed():
 	emit_signal("close_requested")
+	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 # --- Вспомогательные ---
 
