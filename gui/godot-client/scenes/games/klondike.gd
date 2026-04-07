@@ -374,6 +374,7 @@ func _on_request_completed(result, response_code, headers, body):
 					else:
 						draw_game()
 				elif context_type == "auto_move":
+					#print("🐛 DEBUG auto_move response: ", data)
 					if data.has("move"):
 						var move_info = data["move"]
 						var target_pile = move_info["to"]

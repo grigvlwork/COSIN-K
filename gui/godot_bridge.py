@@ -627,6 +627,11 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                         'score': engine.state.score if success else 0,
                         'moves': engine.state.moves_count if success else 0,
                         'available_moves': len(available) if success else 0,
+                        'move': {
+                            'from': selected_move.from_pile,
+                            'to': selected_move.to_pile,
+                            'card_count': len(selected_move.cards)
+                        },
                         'game_won': game_won
                     }
                     if end_result:

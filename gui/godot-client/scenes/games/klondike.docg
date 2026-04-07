@@ -52,3 +52,7 @@
   - _is_card_animating()
   - _create_card_node()
   - _get_card_textures()
+  - _handle_new_achievements()
+  - show_achievement_notification()
+  - _on_popup_clicked()
+  - open_achievements_album()
