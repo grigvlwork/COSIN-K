@@ -1,164 +1,165 @@
-[gd_scene load_steps=3 format=3 uid="uid://c10rm88rne71i"]
+[gd_scene format=3 uid="uid://c10rm88rne71i"]
 
 [ext_resource type="Script" uid="uid://dwjogtafuborq" path="res://scenes/player_stats.gd" id="1_d0gwb"]
 [ext_resource type="Theme" uid="uid://dbnjvx44qqhqs" path="res://main_theme.tres" id="1_e030u"]
 
-[node name="PlayerStats" type="Window"]
+[node name="PlayerStats" type="Window" unique_id=1825816375]
 oversampling_override = 1.0
 title = "Статистика"
+position = Vector2i(0, 36)
 size = Vector2i(750, 350)
 theme = ExtResource("1_e030u")
 script = ExtResource("1_d0gwb")
 
-[node name="MainContainer" type="VBoxContainer" parent="."]
+[node name="MainContainer" type="VBoxContainer" parent="." unique_id=1346611702]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MainContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MainContainer" unique_id=1875194650]
 layout_mode = 2
 
-[node name="PlayerNameLabel" type="Label" parent="MainContainer/HBoxContainer"]
+[node name="PlayerNameLabel" type="Label" parent="MainContainer/HBoxContainer" unique_id=1078531513]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Загрузка..."
 
-[node name="EditNameButton" type="Button" parent="MainContainer/HBoxContainer"]
+[node name="EditNameButton" type="Button" parent="MainContainer/HBoxContainer" unique_id=14663590]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 text = "✏️"
 
-[node name="StatsTabs" type="TabContainer" parent="MainContainer"]
+[node name="StatsTabs" type="TabContainer" parent="MainContainer" unique_id=1675110861]
 layout_mode = 2
 current_tab = 0
 
-[node name="OverviewTab" type="VBoxContainer" parent="MainContainer/StatsTabs"]
+[node name="OverviewTab" type="VBoxContainer" parent="MainContainer/StatsTabs" unique_id=586826724]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="GridContainer" type="GridContainer" parent="MainContainer/StatsTabs/OverviewTab"]
+[node name="GridContainer" type="GridContainer" parent="MainContainer/StatsTabs/OverviewTab" unique_id=1735487547]
 layout_mode = 2
 columns = 2
 
-[node name="GamesPlayedLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="GamesPlayedLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=2123121366]
 layout_mode = 2
 text = "Игр сыграно:"
 
-[node name="GamesPlayedValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="GamesPlayedValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=2118715333]
 layout_mode = 2
 text = "0"
 
-[node name="GamesWonLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="GamesWonLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=697591393]
 layout_mode = 2
 text = "Побед:"
 
-[node name="GamesWonValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="GamesWonValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=367593456]
 layout_mode = 2
 text = "0"
 
-[node name="WinRateLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="WinRateLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=309393086]
 layout_mode = 2
 text = "Процент побед:"
 
-[node name="WinRateValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="WinRateValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=795613739]
 layout_mode = 2
 text = "0%"
 
-[node name="TotalScoreLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="TotalScoreLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=821240686]
 layout_mode = 2
 text = "Всего очков:"
 
-[node name="TotalScoreValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="TotalScoreValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=1615064918]
 layout_mode = 2
 text = "0"
 
-[node name="HighestScoreLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="HighestScoreLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=1999388779]
 layout_mode = 2
 text = "Рекорд:"
 
-[node name="HighestScoreValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="HighestScoreValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=1836826637]
 layout_mode = 2
 text = "0"
 
-[node name="TotalHoursLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="TotalHoursLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=42938702]
 layout_mode = 2
 text = "Время в игре:"
 
-[node name="TotalHoursValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer"]
+[node name="TotalHoursValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/GridContainer" unique_id=2118545898]
 layout_mode = 2
 text = "0.0"
 
-[node name="StreaksPanel" type="Panel" parent="MainContainer/StatsTabs/OverviewTab"]
+[node name="StreaksPanel" type="Panel" parent="MainContainer/StatsTabs/OverviewTab" unique_id=2031509662]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel" unique_id=1288998877]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 theme_override_constants/separation = 10
 
-[node name="CurrentWinStreaklabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="CurrentWinStreaklabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=1814610661]
 layout_mode = 2
 text = "Серия побед:"
 
-[node name="CurrentWinStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="CurrentWinStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=228123421]
 layout_mode = 2
 text = "0"
 
-[node name="MaxWinStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="MaxWinStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=1940267648]
 layout_mode = 2
 text = "Макс.побед:"
 
-[node name="MaxWinStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="MaxWinStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=104669856]
 layout_mode = 2
 text = "0"
 
-[node name="CurrentLooseStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="CurrentLooseStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=1928358027]
 layout_mode = 2
 text = "Серия неудач:"
 
-[node name="CurrentLooseStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="CurrentLooseStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=1251628982]
 layout_mode = 2
 text = "0"
 
-[node name="MaxLooseStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="MaxLooseStreakLabel" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=1497424408]
 layout_mode = 2
 text = "Максимум неудач:"
 
-[node name="MaxLooseStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer"]
+[node name="MaxLooseStreakValue" type="Label" parent="MainContainer/StatsTabs/OverviewTab/StreaksPanel/HBoxContainer" unique_id=1476007247]
 layout_mode = 2
 text = "0"
 
-[node name="HistoryTab" type="VBoxContainer" parent="MainContainer/StatsTabs"]
+[node name="HistoryTab" type="VBoxContainer" parent="MainContainer/StatsTabs" unique_id=806163021]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="HistoryList" type="ItemList" parent="MainContainer/StatsTabs/HistoryTab"]
+[node name="HistoryList" type="ItemList" parent="MainContainer/StatsTabs/HistoryTab" unique_id=869994817]
 layout_mode = 2
 
-[node name="AchievementsTab" type="VBoxContainer" parent="MainContainer/StatsTabs"]
+[node name="AchievementsTab" type="VBoxContainer" parent="MainContainer/StatsTabs" unique_id=833261965]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="AchievmentsScroll" type="ScrollContainer" parent="MainContainer/StatsTabs/AchievementsTab"]
+[node name="AchievmentsScroll" type="ScrollContainer" parent="MainContainer/StatsTabs/AchievementsTab" unique_id=540540217]
 layout_mode = 2
 
-[node name="AchievementsContainer" type="VBoxContainer" parent="MainContainer/StatsTabs/AchievementsTab/AchievmentsScroll"]
+[node name="AchievementsContainer" type="VBoxContainer" parent="MainContainer/StatsTabs/AchievementsTab/AchievmentsScroll" unique_id=523868443]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="FooterPanel" type="HBoxContainer" parent="MainContainer"]
+[node name="FooterPanel" type="HBoxContainer" parent="MainContainer" unique_id=943280742]
 layout_mode = 2
 
-[node name="Spacer" type="Control" parent="MainContainer/FooterPanel"]
+[node name="Spacer" type="Control" parent="MainContainer/FooterPanel" unique_id=56669174]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Button" type="Button" parent="MainContainer/FooterPanel"]
+[node name="Button" type="Button" parent="MainContainer/FooterPanel" unique_id=1889066603]
 layout_mode = 2
 text = "Закрыть"
 

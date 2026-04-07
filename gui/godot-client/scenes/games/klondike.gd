@@ -394,6 +394,14 @@ func _on_request_completed(result, response_code, headers, body):
 				# --- ОШИБКА ---
 				var err_code = data.get("error")
 				printerr("⚠️ Ошибка сервера: ", err_code)
+				if last_request_type == "end" and not _pending_new_game_params.is_empty():
+					print("⚠️ Игра уже завершена на сервере, но есть отложенный запуск. Сбрасываем локально и запускаем новую.")
+					current_game_id = null
+					is_game_active = false
+					var params = _pending_new_game_params.duplicate() # Копируем перед очисткой
+					_pending_new_game_params.clear()
+					start_new_game(params.force_new, params.specific_seed)
+					return # Выходим, чтобы не выполнять анимации ошибки
 				var context_type = pending_action_context.get("type", "")
 				if context_type == "auto_move":
 					var nodes = pending_action_context.get("nodes", [])
