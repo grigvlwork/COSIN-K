@@ -405,7 +405,7 @@ class StatsService:
         player_progress = self.player_achievement_repo.get_by_player(player_id)
         progress_map = {pa.achievement_id: pa for pa in player_progress}
 
-        all_achievements.sort(key=lambda x: (x.condition_type, x.target))
+        all_achievements.sort(key=_achievement_sort_key)
         visible_achievements = []
 
         for condition_type, group in groupby(all_achievements, key=lambda x: x.condition_type):
@@ -595,3 +595,10 @@ class StatsService:
             'cosmetics': '{}'
         }
         return self.player_repo.update(player_id, reset_data)
+
+def _achievement_sort_key(ach: Achievement):
+    """Ключ сортировки: для time_lt инвертируем target, т.к. меньше время = сложнее."""
+    if ach.condition_type == 'time_lt':
+        # Инвертируем: больший target (легче) → меньшее значение ключа → раньше в списке
+        return (ach.condition_type, -ach.target)
+    return (ach.condition_type, ach.target)

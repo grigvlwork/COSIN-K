@@ -60,6 +60,7 @@ layout_mode = 2
 text = "*"
 
 [node name="CardsContainer" type="Control" parent="MarginContainer/VBoxContainer" unique_id=81067185]
+custom_minimum_size = Vector2(1100, 0)
 layout_mode = 2
 size_flags_vertical = 3
 

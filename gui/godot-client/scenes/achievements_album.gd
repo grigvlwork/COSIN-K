@@ -1,3 +1,4 @@
+# gui/godot-client/scenes/achievements_album.gd
 extends Control
 
 # --- Константы и Пути ---
@@ -16,10 +17,11 @@ const CATEGORY_TRANSLATIONS = {
 }
 
 # Настройки Карусели (под твои размеры)
-const CARD_WIDTH: float = 400.0   # Ширина твоей карты
-const CARD_HEIGHT: float = 576.0  # Высота твоей карты
-const CARD_GAP: float = 40.0      # Расстояние между картами
-const SIDE_SCALE: float = 0.75    # Масштаб боковых карт
+const CARD_WIDTH: float = 320.0
+const CARD_HEIGHT: float = 460.0
+const CARD_GAP: float = 80.0
+const SIDE_SCALE: float = 0.6
+# sconst SIDE_SCALE: float = 0.75    # Масштаб боковых карт
 const SIDE_ALPHA: float = 0.7     # Прозрачность боковых карт
 
 const SKIN_FILES = {
@@ -52,26 +54,50 @@ var pos_right_x: float
 signal close_requested
 
 func _ready():
-	# ВАЖНО: Ждем один кадр, чтобы Godot рассчитал реальные размеры VBoxContainer и CardsContainer.
-	# Без этого cards_container.size.x будет равен 0, и карты уедут за левый край.
+	# 1. Настраиваем поведение контейнера ДО расчётов
+	cards_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cards_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	cards_container.custom_minimum_size = Vector2(1100, CARD_HEIGHT + 20)
+	cards_container.clip_contents = false
+	if cards_container.get_parent() is Control:
+		cards_container.get_parent().clip_contents = false
+	
+	# 2. Ждём, пока Godot 4 применит layout (иногда нужно 2 кадра)
 	await get_tree().process_frame
+	await get_tree().process_frame
+	cards_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cards_container.size = get_viewport().get_visible_rect().size
+	# 3. Рассчитываем позиции
+	_calculate_positions()
 	
-	# Расчет координат (теперь size.x имеет корректное значение)
-	var center = cards_container.size.x / 2
-	pos_center_x = center - (CARD_WIDTH / 2)
-	
-	# Левая позиция (учитывая масштаб боковой карты)
-	pos_left_x = pos_center_x - (CARD_WIDTH * SIDE_SCALE) - CARD_GAP + (CARD_WIDTH * (1.0 - SIDE_SCALE) / 2)
-	
-	# Правая позиция
-	pos_right_x = pos_center_x + CARD_WIDTH + CARD_GAP - (CARD_WIDTH * (1.0 - SIDE_SCALE) / 2)
-
-	# Связи
+	# 4. Инициализация
 	btn_menu.pressed.connect(_on_menu_pressed)
 	http_request.request_completed.connect(_on_http_request_request_completed)
 	
-	# Запрос данных
 	request_album_data()
+
+func _calculate_positions():
+	# Получаем ширину с защитой от нулевого размера
+	var w = cards_container.size.x
+	if w < 100:
+		# Фоллбэк: берём ширину окна, если контейнер ещё не растянулся
+		w = get_viewport().get_visible_rect().size.x - 100
+	print("REAL WIDTH:", cards_container.size.x)
+		
+	var center = w / 2.0
+
+	pos_center_x = center - CARD_WIDTH / 2.0
+
+	var side_width = CARD_WIDTH * SIDE_SCALE
+
+	# 🔥 ДОБАВЛЯЕМ РЕАЛЬНЫЙ ОТСТУП
+	var safe_gap = CARD_GAP + 40  # <-- ключевая строка
+
+	pos_left_x = pos_center_x - side_width - safe_gap
+	pos_right_x = pos_center_x + CARD_WIDTH + safe_gap
+	cards_container.position.y = 50
+	
+	print("📏 Container: %.0fpx | L:%.0f C:%.0f R:%.0f" % [w, pos_left_x, pos_center_x, pos_right_x])
 
 func request_album_data():
 	var player_id = Global.player_id
@@ -115,18 +141,22 @@ func _on_http_request_request_completed(result, response_code, headers, body):
 # --- Настройка карусели ---
 
 func setup_carousel():
-	# Очистка старого
+	# Очистка
 	for child in cards_container.get_children():
 		child.queue_free()
 	card_nodes.clear()
 	
-	# Создаем 3 карты
 	for i in range(3):
 		var card = CARD_SCENE.instantiate()
 		cards_container.add_child(card)
 		card_nodes.append(card)
 		
-		# Скрываем, если достижений нет
+		# 🔥 ОТКЛЮЧАЕМ АВТО-ЛЕЙАУТ КОНТЕЙНЕРА (3 = LAYOUT_MODE_POSITION)
+		card.layout_mode = 3
+		
+		# 🎯 Масштабирование от центра карты, а не от левого верхнего угла
+		#card.pivot_offset = Vector2(CARD_WIDTH / 2.0, CARD_HEIGHT / 2.0)
+		
 		if all_achievements.is_empty():
 			card.visible = false
 			continue
@@ -136,36 +166,35 @@ func setup_carousel():
 	update_cards_data(true)
 
 func update_cards_data(instant: bool = false):
-	# Индексы данных для 3 карт
-	var idx_left = current_index - 1
-	var idx_center = current_index
-	var idx_right = current_index + 1
-	
-	# Обновляем данные и позиции
+	if all_achievements.size() == 0:
+		for c in card_nodes:
+			c.visible = false
+		return
+
+	var N = all_achievements.size()
+	var indices = []
+
+	for offset in [-1, 0, 1]:
+		var idx = (current_index + offset + N) % N  # wrap-around
+		indices.append(idx)
+
 	for i in range(3):
 		var card = card_nodes[i]
-		var data_index: int
-		
-		if i == 0: data_index = idx_left
-		elif i == 1: data_index = idx_center
-		else: data_index = idx_right
-		
-		# Если индекс валиден - показываем, иначе скрываем
-		if data_index >= 0 and data_index < all_achievements.size():
+		var data_index = indices[i]
+
+		if data_index >= 0 and data_index < N:
 			card.visible = true
 			setup_card_view(card, all_achievements[data_index])
 		else:
 			card.visible = false
-		
-		# Применяем позицию и масштаб
+
+		# позиция и масштаб
 		if instant:
 			apply_card_transform(card, i, 0.0)
 		else:
-			# Анимация не нужна при обновлении данных, только при скролле
-			apply_card_transform(card, i, 0.0)
+			apply_card_transform(card, i, 0.25)
 
 func apply_card_transform(card: Control, pos_type: int, duration: float):
-	# pos_type: 0=Left, 1=Center, 2=Right
 	var target_x: float
 	var target_scale: float
 	var target_modulate: Color = Color(1, 1, 1, 1)
@@ -183,73 +212,66 @@ func apply_card_transform(card: Control, pos_type: int, duration: float):
 			target_scale = SIDE_SCALE
 			target_modulate = Color(1, 1, 1, SIDE_ALPHA)
 	
+	# Центрируем по вертикали **по середине контейнера**:
+	var y_center = cards_container.size.y / 2
+	var y = y_center - CARD_HEIGHT / 2.0  # фиксируем верхнюю координату независимо от масштаба
+
 	if duration > 0:
 		var tween = create_tween().set_parallel(true)
 		tween.tween_property(card, "position:x", target_x, duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUART)
 		tween.tween_property(card, "scale", Vector2(target_scale, target_scale), duration).set_ease(Tween.EASE_OUT)
 		tween.tween_property(card, "modulate", target_modulate, duration)
 	else:
-		card.position.x = target_x
-		card.position.y = (cards_container.size.y - CARD_HEIGHT) / 2 # Центрирование по вертикали
+		card.position = Vector2(target_x, y)
 		card.scale = Vector2(target_scale, target_scale)
-		card.modulate = target_modulate
-
+		match pos_type:
+			0: card.z_index = 1
+			1: card.z_index = 2
+			2: card.z_index = 1
 # --- Анимация переключения ---
 
 func move_carousel(direction: int):
-	# direction: -1 (влево), 1 (вправо)
 	if is_animating: return
 	
 	var new_index = current_index + direction
-	
-	# Проверка границ
-	if new_index < 0 or new_index >= all_achievements.size():
-		return # Можно добавить "резиновый" эффект возврата
-		
+	if new_index < 0 or new_index >= all_achievements.size(): return
+
 	is_animating = true
-	current_index = new_index
-	
-	# Анимация перемещения узлов
-	# Логика "Конвейера"
-	
-	# 1. Сдвигаем текущие 3 карты
+	current_index = clamp(new_index, 0, all_achievements.size() - 1)
+
+	# анимация текущих 3 карт
 	for i in range(3):
 		var card = card_nodes[i]
-		# Если двигаемся вправо (->), то Left улетает, Center становится Left, Right становится Center
-		# Индексы анимации: 0->-1 (out), 1->0 (left), 2->1 (center)
 		var anim_type = i - direction 
 		if anim_type >= 0 and anim_type <= 2:
 			apply_card_transform(card, anim_type, 0.3)
 		else:
-			# Улетает за край
 			var out_tween = create_tween()
 			var out_x = pos_left_x - CARD_WIDTH if direction > 0 else pos_right_x + CARD_WIDTH
 			out_tween.tween_property(card, "position:x", out_x, 0.3)
-	
-	# 2. Ждем конца анимации, чтобы обновить данные и переставить узлы
+
 	await get_tree().create_timer(0.3).timeout
-	
-	# Перестановка узлов в массиве для реюзинга (для бесконечного скролла)
-	# Если шли вправо: 0-й узел (левый) стал не нужен, его делаем правым
+
+	# переставляем узлы
 	if direction > 0:
+		# идём вправо → левая карта уходит → переносим её за правый край
 		var left_card = card_nodes.pop_front()
 		card_nodes.append(left_card)
-	# Если шли влево: 2-й узел (правый) стал не нужен, его делаем левым
+		var new_idx = (current_index + 1) % all_achievements.size()
+		update_single_card(left_card, new_idx)
+		left_card.position.x = pos_right_x + CARD_WIDTH  # появляется справа
 	else:
+		# идём влево → правая карта уходит → переносим её за левый край
 		var right_card = card_nodes.pop_back()
 		card_nodes.push_front(right_card)
-		
-	# Обновляем данные у "новых" карт (у того, который только что телепортировался)
-	# Нам нужно обновить только одну карту, которая появилась с края
-	if direction > 0:
-		# Обновляем последнюю карту (Right)
-		update_single_card(card_nodes[2], current_index + 1)
-		card_nodes[2].position.x = pos_right_x + CARD_WIDTH # Телепортируем за правый край перед появлением (если нужно)
-	else:
-		# Обновляем первую карту (Left)
-		update_single_card(card_nodes[0], current_index - 1)
-		card_nodes[0].position.x = pos_left_x - CARD_WIDTH # Телепортируем за левый край
-	
+		var new_idx = (current_index - 1 + all_achievements.size()) % all_achievements.size()
+		update_single_card(right_card, new_idx)
+		right_card.position.x = pos_left_x - CARD_WIDTH  # появляется слева
+
+	# финальная анимация всех карт
+	for i in range(3):
+		apply_card_transform(card_nodes[i], i, 0.25)
+
 	is_animating = false
 
 func update_single_card(card: Control, data_idx: int):

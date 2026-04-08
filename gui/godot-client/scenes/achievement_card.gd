@@ -145,14 +145,14 @@ func load_icon(filename: String):
 # --- Заглушка ---
 func load_placeholder(category: String):
 	var mapping = {
-		"progress": "cat_wins.png",
-		"suits": "cat_suits.png",
-		"cards": "cat_cards.png",
-		"exploration": "cat_explore.png",
-		"resilience": "cat_loss.png",
-		"perfection": "cat_perfect.png",
-		"speed": "cat_speed.png",
-		"streak": "cat_streak.png"
+		"progress": "wins.png",      # был "cat_wins.png"
+		"suits": "suits.png",            # был "cat_suits.png"
+		"cards": "cards.png",            # был "cat_cards.png"
+		"exploration": "exploration.png", # был "cat_explore.png"
+		"resilience": "resilience.png",        # был "cat_loss.png" (или resilience.png)
+		"perfection": "perfect.png",  # был "cat_perfect.png"
+		"speed": "speed.png",            # был "cat_speed.png"
+		"streak": "streak.png"           # был "cat_streak.png"
 	}
 	var file = mapping.get(category, "cat_default.png")
 	var path = PLACEHOLDERS_PATH + file
