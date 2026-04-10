@@ -405,6 +405,9 @@ class StatsService:
         player_progress = self.player_achievement_repo.get_by_player(player_id)
         progress_map = {pa.achievement_id: pa for pa in player_progress}
 
+        player = self.player_repo.get(player_id)
+        player_data = player.to_dict() if player else {}
+
         all_achievements.sort(key=_achievement_sort_key)
         visible_achievements = []
 
@@ -416,6 +419,18 @@ class StatsService:
                 pa = progress_map.get(ach.id)
                 is_unlocked = pa.unlocked if pa else False
 
+                if not pa:
+                    # 🔥 Передаем player_id для расчета агрегатов
+                    progress_val = self._calculate_progress(ach.condition_type, player_data, player_id)
+
+                    class TempPA:
+                        pass
+
+                    pa = TempPA()
+                    pa.progress = progress_val
+                    pa.unlocked = False
+                    pa.unlocked_at = None
+
                 if is_unlocked:
                     item = self._prepare_ach_item(ach, pa, is_unlocked=True, is_secret=False, index=index)
                     visible_achievements.append(item)
@@ -426,6 +441,55 @@ class StatsService:
 
         visible_achievements.sort(key=lambda x: x.get('category', 'z'))
         return visible_achievements
+
+    def _calculate_progress(self, condition_type: str, player_data: dict, player_id: str) -> int:
+        """Считает прогресс из player_data или из агрегатов БД."""
+        if not player_data:
+            return 0
+
+        # Поля напрямую из таблицы players
+        field_map = {
+            'games_played': 'games_started',
+            'games_won': 'games_won',
+            'total_score': 'total_score',
+            'cards_moved': 'total_cards_moved',
+            'cards_flipped': 'total_cards_flipped',
+            'perfect_games': 'total_perfect_wins',
+            'time_played': 'total_play_time_seconds',
+            'current_streak': 'current_win_streak',
+            'best_streak': 'best_win_streak',
+            'spades_completed': 'completed_spades',
+            'hearts_completed': 'completed_hearts',
+            'diamonds_completed': 'completed_diamonds',
+            'clubs_completed': 'completed_clubs',
+        }
+
+        if condition_type in field_map:
+            val = player_data.get(field_map[condition_type], 0)
+            return int(val) if val else 0
+
+        # 🔥 Агрегаты из таблицы games
+        if condition_type == 'moves_made':
+            return self._get_total_moves(player_id)
+
+        if condition_type == 'suits_completed':
+            suits = ['completed_spades', 'completed_hearts',
+                     'completed_diamonds', 'completed_clubs']
+            return sum(int(player_data.get(s, 0) or 0) for s in suits)
+
+        return 0
+
+    def _get_total_moves(self, player_id: str) -> int:
+        """Сумма ходов по всем завершенным играм."""
+        query = """
+            SELECT COALESCE(SUM(moves_count), 0) as total
+            FROM games 
+            WHERE player_id = ? AND result IS NOT NULL
+        """
+        results = self._execute(query, (player_id,))
+        if results and results[0]:
+            return int(results[0]['total'] or 0)
+        return 0
 
     def _prepare_ach_item(self, ach: Achievement, pa: Optional[Any], is_unlocked: bool, is_secret: bool,
                           index: int = 0) -> Dict:
