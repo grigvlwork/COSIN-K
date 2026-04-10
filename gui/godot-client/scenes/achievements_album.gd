@@ -173,107 +173,162 @@ func update_cards_data(instant: bool = false):
 		return
 
 	var N = all_achievements.size()
-	var indices = []
+	var left_idx = current_index - 1
+	var center_idx = current_index
+	var right_idx = current_index + 1
 
-	for offset in [-1, 0, 1]:
-		var idx = (current_index + offset + N) % N  # wrap-around
-		indices.append(idx)
+	# Левая карточка
+	if left_idx >= 0:
+		card_nodes[0].visible = true
+		setup_card_view(card_nodes[0], all_achievements[left_idx])
+		apply_card_transform(card_nodes[0], 0, 0.0 if instant else 0.25)
+	else:
+		card_nodes[0].visible = false
+		card_nodes[0].position = Vector2(pos_left_x - CARD_WIDTH * 2, _get_card_y())
 
-	for i in range(3):
-		var card = card_nodes[i]
-		var data_index = indices[i]
+	# Центральная всегда есть
+	card_nodes[1].visible = true
+	setup_card_view(card_nodes[1], all_achievements[center_idx])
+	apply_card_transform(card_nodes[1], 1, 0.0 if instant else 0.25)
 
-		if data_index >= 0 and data_index < N:
-			card.visible = true
-			setup_card_view(card, all_achievements[data_index])
+	# Правая карточка
+	if right_idx < N:
+		card_nodes[2].visible = true
+		setup_card_view(card_nodes[2], all_achievements[right_idx])
+		apply_card_transform(card_nodes[2], 2, 0.0 if instant else 0.25)
+	else:
+		card_nodes[2].visible = false
+		card_nodes[2].position = Vector2(pos_right_x + CARD_WIDTH * 2, _get_card_y())
+
+func move_carousel(direction: int):
+	if is_animating or all_achievements.size() < 2:
+		return
+	
+	var N = all_achievements.size()
+	var new_index = current_index + direction
+	
+	# Проверяем границы — если у края, не листаем
+	if new_index < 0 or new_index >= N:
+		return
+	
+	is_animating = true
+	current_index = new_index
+
+	# Считаем индексы для новых позиций
+	var left_idx = current_index - 1
+	var center_idx = current_index
+	var right_idx = current_index + 1
+	
+	# Проверяем существование левой и правой карточек
+	var has_left = left_idx >= 0
+	var has_right = right_idx < N
+
+	if direction > 0:  # → вправо (смотрим следующую карточку)
+		var old_left = card_nodes[0]
+		
+		# Анимируем уходящую влево (исчезает)
+		var out_tween = create_tween()
+		out_tween.set_parallel(true)
+		out_tween.tween_property(old_left, "position:x", pos_left_x - CARD_WIDTH * 1.5, 0.25)
+		out_tween.tween_property(old_left, "modulate:a", 0.0, 0.25)
+		
+		# Сдвигаем оставшиеся: центр→лево, право→центр
+		apply_card_transform(card_nodes[1], 0, 0.3)  # был центр, станет левым
+		apply_card_transform(card_nodes[2], 1, 0.3)  # был правым, станет центром
+		
+		await get_tree().create_timer(0.3).timeout
+		
+		# Переставляем массив
+		card_nodes.pop_front()
+		card_nodes.append(old_left)
+		
+		# Готовим новую правую карточку (если есть)
+		if has_right:
+			update_single_card(old_left, right_idx)
+			# Появляется справа
+			old_left.position = Vector2(pos_right_x + CARD_WIDTH * 1.5, _get_card_y())
+			old_left.modulate = Color(1, 1, 1, 0)
+			apply_card_transform(old_left, 2, 0.25)  # 2 = Right
 		else:
-			card.visible = false
-
-		# позиция и масштаб
-		if instant:
-			apply_card_transform(card, i, 0.0)
+			# Нет карточки справа — просто прячем
+			old_left.visible = false
+			old_left.position = Vector2(pos_right_x + CARD_WIDTH * 2, _get_card_y())  # за экран
+		
+	else:  # ← влево
+		var old_right = card_nodes[2]
+		
+		# Анимируем уходящую вправо (исчезает)
+		var out_tween = create_tween()
+		out_tween.set_parallel(true)
+		out_tween.tween_property(old_right, "position:x", pos_right_x + CARD_WIDTH * 1.5, 0.25)
+		out_tween.tween_property(old_right, "modulate:a", 0.0, 0.25)
+		
+		# Сдвигаем оставшиеся: лево→центр, центр→право
+		apply_card_transform(card_nodes[0], 1, 0.3)  # был левым, станет центром
+		apply_card_transform(card_nodes[1], 2, 0.3)  # был центром, станет правым
+		
+		await get_tree().create_timer(0.3).timeout
+		
+		# Переставляем массив
+		card_nodes.pop_back()
+		card_nodes.push_front(old_right)
+		
+		# Готовим новую левую карточку (если есть)
+		if has_left:
+			update_single_card(old_right, left_idx)
+			# Появляется слева
+			old_right.position = Vector2(pos_left_x - CARD_WIDTH * 1.5, _get_card_y())
+			old_right.modulate = Color(1, 1, 1, 0)
+			apply_card_transform(old_right, 0, 0.25)  # 0 = Left
 		else:
-			apply_card_transform(card, i, 0.25)
+			# Нет карточки слева — просто прячем
+			old_right.visible = false
+			old_right.position = Vector2(pos_left_x - CARD_WIDTH * 2, _get_card_y())  # за экран
+	
+	is_animating = false
 
+# Вспомогательная функция для Y-позиции
+func _get_card_y() -> float:
+	var y_center = cards_container.size.y / 2
+	return y_center - CARD_HEIGHT / 2.0 + CARD_VERTICAL_OFFSET
+
+# Исправленный apply_card_transform с z_index и Y
 func apply_card_transform(card: Control, pos_type: int, duration: float):
 	var target_x: float
 	var target_scale: float
+	var target_z: int
 	var target_modulate: Color = Color(1, 1, 1, 1)
 	
 	match pos_type:
 		0: # Left
 			target_x = pos_left_x
 			target_scale = SIDE_SCALE
+			target_z = 1
 			target_modulate = Color(1, 1, 1, SIDE_ALPHA)
 		1: # Center
 			target_x = pos_center_x
 			target_scale = 1.0
+			target_z = 2
 		2: # Right
 			target_x = pos_right_x
 			target_scale = SIDE_SCALE
+			target_z = 1
 			target_modulate = Color(1, 1, 1, SIDE_ALPHA)
 	
-	# Центрируем по вертикали **по середине контейнера**:
-	var y_center = cards_container.size.y / 2
-	var y = y_center - CARD_HEIGHT / 2.0 + CARD_VERTICAL_OFFSET
-
+	var target_y = _get_card_y()
+	var target_pos = Vector2(target_x, target_y)
+	
+	card.z_index = target_z  # Всегда обновляем z_index
+	
 	if duration > 0:
 		var tween = create_tween().set_parallel(true)
-		tween.tween_property(card, "position:x", target_x, duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUART)
+		tween.tween_property(card, "position", target_pos, duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUART)
 		tween.tween_property(card, "scale", Vector2(target_scale, target_scale), duration).set_ease(Tween.EASE_OUT)
 		tween.tween_property(card, "modulate", target_modulate, duration)
 	else:
-		card.position = Vector2(target_x, y)
+		card.position = target_pos
 		card.scale = Vector2(target_scale, target_scale)
-		match pos_type:
-			0: card.z_index = 1
-			1: card.z_index = 2
-			2: card.z_index = 1
-# --- Анимация переключения ---
-
-func move_carousel(direction: int):
-	if is_animating: return
-	
-	var new_index = current_index + direction
-	if new_index < 0 or new_index >= all_achievements.size(): return
-
-	is_animating = true
-	current_index = clamp(new_index, 0, all_achievements.size() - 1)
-
-	# анимация текущих 3 карт
-	for i in range(3):
-		var card = card_nodes[i]
-		var anim_type = i - direction 
-		if anim_type >= 0 and anim_type <= 2:
-			apply_card_transform(card, anim_type, 0.3)
-		else:
-			var out_tween = create_tween()
-			var out_x = pos_left_x - CARD_WIDTH if direction > 0 else pos_right_x + CARD_WIDTH
-			out_tween.tween_property(card, "position:x", out_x, 0.3)
-
-	await get_tree().create_timer(0.3).timeout
-
-	# переставляем узлы
-	if direction > 0:
-		# идём вправо → левая карта уходит → переносим её за правый край
-		var left_card = card_nodes.pop_front()
-		card_nodes.append(left_card)
-		var new_idx = (current_index + 1) % all_achievements.size()
-		update_single_card(left_card, new_idx)
-		left_card.position.x = pos_right_x + CARD_WIDTH  # появляется справа
-	else:
-		# идём влево → правая карта уходит → переносим её за левый край
-		var right_card = card_nodes.pop_back()
-		card_nodes.push_front(right_card)
-		var new_idx = (current_index - 1 + all_achievements.size()) % all_achievements.size()
-		update_single_card(right_card, new_idx)
-		right_card.position.x = pos_left_x - CARD_WIDTH  # появляется слева
-
-	# финальная анимация всех карт
-	for i in range(3):
-		apply_card_transform(card_nodes[i], i, 0.25)
-
-	is_animating = false
+		card.modulate = target_modulate
 
 func update_single_card(card: Control, data_idx: int):
 	if data_idx >= 0 and data_idx < all_achievements.size():
