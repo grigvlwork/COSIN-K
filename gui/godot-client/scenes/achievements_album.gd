@@ -343,6 +343,9 @@ func update_single_card(card: Control, data_idx: int):
 # --- Настройка контента карты ---
 
 func setup_card_view(card, data: Dictionary):
+	#print("🔒 Locked achievement: ", data.get("name", "???"))
+	#print("   Progress: ", data.get("progress", "MISSING"))
+	#print("   Target: ", data.get("target", "MISSING"))
 	card.setup(data)
 	if card.has_node("CurrentScore") and card.has_node("TargetScore"):
 		var p = data.get("progress", 0)

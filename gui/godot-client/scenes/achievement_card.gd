@@ -92,7 +92,6 @@ func setup_unlocked_view(data: Dictionary, tier: String):
 func setup_locked_view(data: Dictionary, tier: String):
 	# --- Статус (В процессе) ---
 	setup_status_style(true, "", "В процессе")
-
 	# --- Фон уровня ---
 	load_background(tier)
 
