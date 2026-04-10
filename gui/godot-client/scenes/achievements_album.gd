@@ -19,10 +19,11 @@ const CATEGORY_TRANSLATIONS = {
 # Настройки Карусели (под твои размеры)
 const CARD_WIDTH: float = 320.0
 const CARD_HEIGHT: float = 460.0
-const CARD_GAP: float = 80.0
-const SIDE_SCALE: float = 0.6
-# sconst SIDE_SCALE: float = 0.75    # Масштаб боковых карт
-const SIDE_ALPHA: float = 0.7     # Прозрачность боковых карт
+const CARD_GAP: float = 60.0
+#const SIDE_SCALE: float = 0.6
+const SIDE_SCALE: float = 0.7    # Масштаб боковых карт
+const SIDE_ALPHA: float = 0.6     # Прозрачность боковых карт
+const CARD_VERTICAL_OFFSET: float = -120.0 
 
 const SKIN_FILES = {
 	"classic": "beige.png",
@@ -214,7 +215,7 @@ func apply_card_transform(card: Control, pos_type: int, duration: float):
 	
 	# Центрируем по вертикали **по середине контейнера**:
 	var y_center = cards_container.size.y / 2
-	var y = y_center - CARD_HEIGHT / 2.0  # фиксируем верхнюю координату независимо от масштаба
+	var y = y_center - CARD_HEIGHT / 2.0 + CARD_VERTICAL_OFFSET
 
 	if duration > 0:
 		var tween = create_tween().set_parallel(true)

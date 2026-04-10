@@ -357,9 +357,15 @@ func _on_request_completed(result, response_code, headers, body):
 				var game_won = data.get("game_won", false)
 				if game_won:
 					is_first_win = data.get("is_first_win", true)
+
+					is_game_active = false
+					current_game_id = null
+					last_request_type = "end"
+
 					update_ui()
 					draw_game()
 					show_win()
+
 					pending_action_context = {}
 					return
 				# --- UI ---
