@@ -454,14 +454,17 @@ class StatsService:
             'total_score': 'total_score',
             'cards_moved': 'total_cards_moved',
             'cards_flipped': 'total_cards_flipped',
-            'perfect_games': 'total_perfect_wins',
+            'perfect_wins': 'total_perfect_wins',
+            'wins': 'games_won',  # ← ДОБАВИТЬ
+            'losses': 'games_lost',  # ← скорее всего тоже нужно
+            'streak': 'current_win_streak',
             'time_played': 'total_play_time_seconds',
             'current_streak': 'current_win_streak',
             'best_streak': 'best_win_streak',
-            'spades_completed': 'completed_spades',
-            'hearts_completed': 'completed_hearts',
-            'diamonds_completed': 'completed_diamonds',
-            'clubs_completed': 'completed_clubs',
+            'completed_spades': 'completed_spades',
+            'completed_hearts': 'completed_hearts',
+            'completed_diamonds': 'completed_diamonds',
+            'completed_clubs': 'completed_clubs',  # ← исправить
         }
 
         if condition_type in field_map:
