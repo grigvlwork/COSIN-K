@@ -42,6 +42,14 @@ var dragged_card_node = null # Ссылка на узел карты, котор
 var drag_offset = Vector2()  # Смещение, чтобы карта не прыгала центром к курсору
 var drag_nodes = [] # Список всех перетаскиваемых узлов
 
+var pressed_card_node = null
+var pressed_card_data = null
+var pressed_pile_name = ""
+var press_mouse_pos = Vector2.ZERO
+
+var drag_started = false
+const DRAG_THRESHOLD = 10.0
+
 const CARD_ASPECT_RATIO = 1.54 
 const MIN_CARD_WIDTH = 80
 const MAX_CARD_WIDTH = 140
@@ -262,6 +270,11 @@ func _process(delta):
 			game_time += 1
 			update_time_display()
 	# Перетаскивание
+	# === НОВОЕ: проверка начала drag ===
+	if pressed_card_node and not drag_started:
+		var dist = get_global_mouse_position().distance_to(press_mouse_pos)
+		if dist > DRAG_THRESHOLD:
+			_start_drag()
 	if is_dragging and dragged_card_node:
 		var mouse_pos = get_global_mouse_position()
 		dragged_card_node.global_position = mouse_pos - drag_offset
@@ -271,6 +284,63 @@ func _process(delta):
 			var node = drag_nodes[i]
 			var offset_from_head = node.get_meta("drag_offset_from_head", Vector2.ZERO)
 			node.global_position = dragged_card_node.global_position + offset_from_head
+
+func _start_drag():
+	if not pressed_card_node:
+		return
+	
+	if pressed_card_node:
+		pressed_card_node.set_pressed(false)
+	is_dragging = true
+	drag_started = true
+
+	var card_node = pressed_card_node
+	var card_data = pressed_card_data
+	var pile_name = pressed_pile_name
+
+	drag_source_pile = pile_name
+	drag_card_data = card_data
+	dragged_card_node = card_node
+
+	var card_id = card_node.get_meta("card_id", card_data.get("id", -1))
+	drag_head_card_id = card_id
+
+	drag_nodes.clear()
+	drag_nodes.append(card_node)
+	drag_card_ids = [card_id]
+
+	if pile_name.begins_with("tableau"):
+		var slot = card_node.get_parent()
+		if slot:
+			var my_index = card_node.get_meta("card_index", 0)
+			for child in slot.get_children():
+				if not is_instance_valid(child):
+					continue
+				if child == card_node:
+					continue
+				if child.get_meta("card_index", 0) > my_index:
+					drag_nodes.append(child)
+					var child_card_id = child.get_meta("card_id", -1)
+					if child_card_id != "":
+						drag_card_ids.append(child_card_id)
+
+	#drag_nodes.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
+	drag_nodes = drag_nodes.filter(func(n): return is_instance_valid(n))
+
+	drag_nodes.sort_custom(func(a, b):
+		return a.get_meta("card_index", 0) < b.get_meta("card_index", 0)
+	)
+
+	var head_pos = card_node.global_position
+	for i in range(1, drag_nodes.size()):
+		var node = drag_nodes[i]
+		node.set_meta("drag_offset_from_head", node.global_position - head_pos)
+
+	for node in drag_nodes:
+		node.z_index = 100
+
+	var mouse_pos = get_global_mouse_position()
+	drag_offset = mouse_pos - card_node.global_position
 
 func update_time_display():
 	var minutes = game_time / 60
@@ -626,6 +696,8 @@ func draw_game():
 
 func _clear_cards_from_slot(slot: Control):
 	for child in slot.get_children():
+		if not is_instance_valid(child):
+			continue
 		# Проверяем, есть ли у карты id и не находится ли она в анимации
 		if child.has_meta("card_id") and _is_card_animating(child.get_meta("card_id")):
 			continue  # Не трогаем "летящую" карту
@@ -804,7 +876,7 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 		
 		# --- Левая кнопка: Перетаскивание ---
 		if event.button_index == MOUSE_BUTTON_LEFT:
-			if is_busy:
+			if is_busy or is_animating:
 				return
 			if pile_name == "stock":
 				#print("🃏 Клик по колоде -> Взять карту")
@@ -815,24 +887,31 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 				return
 			if not card_data["face_up"]:
 				return
-			
+			pressed_card_node = card_node
+			pressed_card_data = card_data
+			pressed_pile_name = pile_name
+			press_mouse_pos = get_global_mouse_position()
+			drag_started = false
+
+			# визуально "приподнять"
+			card_node.z_index = 50
 			# === ИЗМЕНЕНИЕ: Получаем card_id из meta или card_data ===
 			var card_id = card_node.get_meta("card_id", card_data.get("id", -1))
 			#if card_id == -1:
 				#push_error("❌ Карта без ID: " + str(card_data))
 				#return
-			
-			is_dragging = true
-			drag_source_pile = pile_name
-			drag_card_data = card_data 
-			dragged_card_node = card_node
-			
-			# === ИЗМЕНЕНИЕ: Сохраняем ID головной карты для хода ===
-			drag_head_card_id = card_id
-			
-			# 1. ЗАПОЛНЯЕМ СПИСОК drag_nodes
-			drag_nodes.clear() 
-			drag_nodes.append(card_node) 
+			#
+			#is_dragging = true
+			#drag_source_pile = pile_name
+			#drag_card_data = card_data 
+			#dragged_card_node = card_node
+			#
+			## === ИЗМЕНЕНИЕ: Сохраняем ID головной карты для хода ===
+			#drag_head_card_id = card_id
+			#
+			## 1. ЗАПОЛНЯЕМ СПИСОК drag_nodes
+			#drag_nodes.clear() 
+			#drag_nodes.append(card_node) 
 			
 			# === ИЗМЕНЕНИЕ: Собираем ID всех перетаскиваемых карт ===
 			drag_card_ids = [card_id]
@@ -842,6 +921,8 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 				if slot:
 					var my_index = card_node.get_meta("card_index", 0)
 					for child in slot.get_children():
+						if not is_instance_valid(child):
+							continue
 						if child == card_node: 
 							continue
 						if child.get_meta("card_index", 0) > my_index:
@@ -851,7 +932,11 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 							if child_card_id != "":
 								drag_card_ids.append(child_card_id)
 			
-			drag_nodes.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
+			#drag_nodes.sort_custom(func(a, b): return a.get_meta("card_index", 0) < b.get_meta("card_index", 0))
+			drag_nodes = drag_nodes.filter(func(n): return is_instance_valid(n))
+			drag_nodes.sort_custom(func(a, b):
+				return a.get_meta("card_index", 0) < b.get_meta("card_index", 0)
+			)
 			
 			# 2. Запоминаем смещения хвоста
 			var head_pos = card_node.global_position
@@ -866,68 +951,129 @@ func _on_card_clicked(event, pile_name, card_data, card_node):
 			var mouse_pos = get_global_mouse_position()
 			drag_offset = mouse_pos - card_node.global_position
 			
-		# --- Правая кнопка: Авто-ход ---
-		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			if is_busy or is_animating:
-				return
-
-			if pile_name == "stock":
-				return 
-
-			if not card_data["face_up"]:
-				return
-
-			# === ИЗМЕНЕНИЕ: Получаем card_id из meta ===
-			var card_id: String = card_node.get_meta("card_id")
-			#if card_id == -1:
-				#push_error("❌ Карта без ID для автохода")
+		## --- Правая кнопка: Авто-ход ---
+		#elif event.button_index == MOUSE_BUTTON_RIGHT:
+			#if is_busy or is_animating:
 				#return
-
-			#print("🃏 Авто-ход (ПКМ) из карты id: ", card_id)
-
-			# === Собираем стек карт для анимации ===
-			var nodes_stack = [card_node]
-
-			if pile_name.begins_with("tableau"):
-				var slot = card_node.get_parent()
-				if slot:
-					var my_index = card_node.get_meta("card_index", 0)
-					for child in slot.get_children():
-						if child == card_node:
-							continue
-						if child.get_meta("card_index", 0) > my_index:
-							nodes_stack.append(child)
-
-			# Сортируем хвост
-			nodes_stack.sort_custom(func(a, b):
-				return a.get_meta("card_index", 0) < b.get_meta("card_index", 0)
-			)
-
-			# Сохраняем контекст для анимации
-			pending_action_context = {
-				"type": "auto_move",
-				"nodes": nodes_stack,
-				"count": nodes_stack.size(),
-				"card_id": card_id,  # ID верхней карты
-			}
-			last_request_type = "auto_move"
-
-			# --- Отправка запроса на сервер ---
-			var body_dict = {
-				"card_id": card_id,  # === ИЗМЕНЕНИЕ: Отправляем ID вместо координат ===
-				"player_id": Global.player_id,
-				"game_type": "klondike"
-			}
-			var headers = ["Content-Type: application/json"]
-			var body_json = JSON.stringify(body_dict)  
-			http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body_json)
+#
+			#if pile_name == "stock":
+				#return 
+#
+			#if not card_data["face_up"]:
+				#return
+#
+			## === ИЗМЕНЕНИЕ: Получаем card_id из meta ===
+			#var card_id: String = card_node.get_meta("card_id")
+			##if card_id == -1:
+				##push_error("❌ Карта без ID для автохода")
+				##return
+#
+			##print("🃏 Авто-ход (ПКМ) из карты id: ", card_id)
+#
+			## === Собираем стек карт для анимации ===
+			#var nodes_stack = [card_node]
+#
+			#if pile_name.begins_with("tableau"):
+				#var slot = card_node.get_parent()
+				#if slot:
+					#var my_index = card_node.get_meta("card_index", 0)
+					#for child in slot.get_children():
+						#if child == card_node:
+							#continue
+						#if child.get_meta("card_index", 0) > my_index:
+							#nodes_stack.append(child)
+#
+			## Сортируем хвост
+			#nodes_stack.sort_custom(func(a, b):
+				#return a.get_meta("card_index", 0) < b.get_meta("card_index", 0)
+			#)
+#
+			## Сохраняем контекст для анимации
+			#pending_action_context = {
+				#"type": "auto_move",
+				#"nodes": nodes_stack,
+				#"count": nodes_stack.size(),
+				#"card_id": card_id,  # ID верхней карты
+			#}
+			#last_request_type = "auto_move"
+#
+			## --- Отправка запроса на сервер ---
+			#var body_dict = {
+				#"card_id": card_id,  # === ИЗМЕНЕНИЕ: Отправляем ID вместо координат ===
+				#"player_id": Global.player_id,
+				#"game_type": "klondike"
+			#}
+			#var headers = ["Content-Type: application/json"]
+			#var body_json = JSON.stringify(body_dict)  
+			#http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body_json)
 			
 	# === Обработка отпускания ===
 	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if is_dragging:
-			#print("🏁 Отпускание карты")
-			_end_drag() 
 
+		# === если был drag ===
+		if is_dragging:
+			_end_drag()
+
+		# === если это клик ===
+		elif pressed_card_node and not drag_started:
+			_do_auto_move_click()
+
+		# сброс
+		pressed_card_node = null
+		pressed_card_data = null
+		pressed_pile_name = "" 
+
+func _do_auto_move_click():
+	if is_busy or is_animating:
+		return
+
+	var card_node = pressed_card_node
+	var card_data = pressed_card_data
+	var pile_name = pressed_pile_name
+
+	if pile_name == "stock":
+		return
+	if not card_data["face_up"]:
+		return
+
+	var card_id: String = card_node.get_meta("card_id")
+
+	var nodes_stack = [card_node]
+
+	if pile_name.begins_with("tableau"):
+		var slot = card_node.get_parent()
+		if slot:
+			var my_index = card_node.get_meta("card_index", 0)
+			for child in slot.get_children():
+				if not is_instance_valid(child):
+					continue
+				if child == card_node:
+					continue
+				if child.get_meta("card_index", 0) > my_index:
+					nodes_stack.append(child)
+
+	nodes_stack.sort_custom(func(a, b):
+		return a.get_meta("card_index", 0) < b.get_meta("card_index", 0)
+	)
+
+	pending_action_context = {
+		"type": "auto_move",
+		"nodes": nodes_stack,
+		"count": nodes_stack.size(),
+		"card_id": card_id,
+	}
+
+	last_request_type = "auto_move"
+
+	var body_dict = {
+		"card_id": card_id,
+		"player_id": Global.player_id,
+		"game_type": "klondike"
+	}
+	var headers = ["Content-Type: application/json"]
+	var body_json = JSON.stringify(body_dict)
+
+	http.request(Global.server_url + "/auto_move", headers, HTTPClient.METHOD_POST, body_json)
 
 func _end_drag():
 	if not is_dragging:

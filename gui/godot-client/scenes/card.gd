@@ -7,6 +7,7 @@ signal card_clicked(event, pile_name, card_data, card_node)
 var card_data: Dictionary
 var pile_name: String
 var card_index: int
+var is_pressed := false
 
 @onready var texture_rect: TextureRect = $Texture
 @onready var shadow: ColorRect = $Shadow
@@ -20,8 +21,8 @@ var outline_material: ShaderMaterial
 func _ready():
 	# 1. ПОДКЛЮЧАЕМ СИГНАЛЫ НАВЕДЕНИЯ
 	# Это критически важная часть, без этого функции ниже не вызовутся
-	mouse_entered.connect(_on_mouse_entered)
-	mouse_exited.connect(_on_mouse_exited)
+	#mouse_entered.connect(_on_mouse_entered)
+	#mouse_exited.connect(_on_mouse_exited)
 	
 	# 2. НАСТРАИВАЕМ ФИЛЬТРЫ МЫШИ
 	# Корневой узел карты должен "ловить" мышь (STOP)
@@ -108,6 +109,15 @@ func set_highlight(color: Variant = null):
 # ============================================================
 
 func _gui_input(event):
+	if event is InputEventMouseButton:
+		
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			
+			if event.pressed:
+				set_pressed(true)
+			else:
+				set_pressed(false)
+	
 	emit_signal("card_clicked", event, pile_name, card_data, self)
 
 # ============================================================
@@ -135,16 +145,28 @@ func set_dragging(active: bool):
 		shadow.modulate = Color(1, 1, 1, 0.5)
 		
 # ============================================================
-# ОБРАБОТКА НАВЕДЕНИЯ МЫШИ (АВТОПОДСВЕТКА)
+# ОБРАБОТКА НАЖАТИЯ МЫШИ (АВТОПОДСВЕТКА)
 # ============================================================
 
-func _on_mouse_entered():
-	# При наведении делаем контур зеленым
-	# Если карта "лицом вниз", возможно, подсвечивать не нужно, добавьте проверку:
-	# if not card_data.get("face_up", true): return 
+func set_pressed(active: bool):
+	is_pressed = active
 	
-	set_highlight(Color.GREEN) # Или Color(0, 1, 0.5) для более приятного оттенка
+	if active:
+		scale = Vector2(1.03, 1.03)
+		set_highlight(Color(1.0, 0.9, 0.3)) # золотистый
+		shadow.modulate = Color(0, 0, 0, 0.7)
+	else:
+		scale = Vector2.ONE
+		set_highlight()
+		shadow.modulate = Color(1, 1, 1, 0.5)
 
-func _on_mouse_exited():
-	# Когда мышь уходит, возвращаем черный
-	set_highlight()
+#func _on_mouse_entered():
+	## При наведении делаем контур зеленым
+	## Если карта "лицом вниз", возможно, подсвечивать не нужно, добавьте проверку:
+	## if not card_data.get("face_up", true): return 
+	#
+	#set_highlight(Color.GREEN) # Или Color(0, 1, 0.5) для более приятного оттенка
+#
+#func _on_mouse_exited():
+	## Когда мышь уходит, возвращаем черный
+	#set_highlight()
