@@ -4,12 +4,14 @@
 
 ## Функции:
   - _ready()
+  - _calculate_positions()
   - request_album_data()
   - _on_http_request_request_completed()
   - setup_carousel()
   - update_cards_data()
-  - apply_card_transform()
   - move_carousel()
+  - _get_card_y()
+  - apply_card_transform()
   - update_single_card()
   - setup_card_view()
   - start_celebration()

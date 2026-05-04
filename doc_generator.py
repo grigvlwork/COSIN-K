@@ -6,6 +6,9 @@ from pathlib import Path
 BASE_DIR = Path.cwd()
 BASE_FOLDER_NAME = BASE_DIR.name
 
+# --- НАСТРОЙКИ ИСКЛЮЧЕНИЙ ---
+# Добавьте сюда имена папок, которые нужно пропустить (работает для любой вложенности)
+EXCLUDE_FOLDERS = {'.venv', '.godot', '__pycache__', '.git', 'node_modules'}
 
 def get_relative_path(file_path):
     """Возвращает путь относительно родителя директории запуска (сохраняя имя папки запуска)."""
@@ -138,10 +141,18 @@ def process_directory(start_path='.'):
 
     display_start = get_relative_path(start_path)
     print(f"Начинаю обработку с: {display_start}\n")
-    print(f"Базовая директория: {BASE_DIR}\n")
+    print(f"Базовая директория: {BASE_DIR}")
+    print(f"Исключаемые папки: {', '.join(EXCLUDE_FOLDERS)}\n")
 
     for root, dirs, files in os.walk(start_path):
         root_path = Path(root)
+
+        # --- ЛОГИКА ИСКЛЮЧЕНИЯ ПАПОК ---
+        # Изменяем список dirs "на месте" (in-place).
+        # os.walk видит это изменение и не заходит в удаленные папки.
+        # Это исключит .venv и .godot независимо от того, где они находятся.
+        dirs[:] = [d for d in dirs if d not in EXCLUDE_FOLDERS]
+        # -------------------------------
 
         for file in files:
             file_path = root_path / file

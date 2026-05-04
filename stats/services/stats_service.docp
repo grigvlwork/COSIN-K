@@ -2,7 +2,8 @@
 Путь: ./COSIN-K\stats\services\stats_service.py
 ==================================================
 
-## Функции: (нет)
+## Функции:
+  - _achievement_sort_key()
 
 ## Классы:
 
@@ -16,6 +17,8 @@
     - update_game_progress()
     - check_and_update_achievements()
     - get_achievement_album()
+    - _calculate_progress()
+    - _get_total_moves()
     - _prepare_ach_item()
     - get_cosmetics()
     - set_cosmetic()
