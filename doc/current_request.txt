@@ -1,9 +1,8 @@
 Не используй в этом чате никаких данных из старых обсуждений, считай это работой с чистого листа, так как многое изменилось.
 У меня есть проект пасьянс Косынка, сервер на Python, клиент на Godot 4.6.1 я пишу его с применением нескольких нейросетей
-в зависимости от того какая в данным момент мне доступна Я хочу добавить анимацию когда карта перемещается из колоды на сброс,
-она должна сначала быстро перевернуться лицевой стороны а затем перелететь из колоды на сброс. А также нужно поменять
-поведение при щелчке на карту в колоде оно должно отличаться от щелчка по открытой карте, когда она немного приподнимается
-и выделяется контуром. Щелчок по карте в колоде должен просто запускать анимацию переворота и полета в сброс. Вот структура
+в зависимости от того какая в данным момент мне доступна Я хочу добавить кнопку, которая будет запускать автосбор карт на базы
+когда на табло не осталось неперевернутых карт и вся колода разобрана и в сбросе не осталось карт. Я уже кое-какие функции
+писал предварительно, но не помню на чем остановился. Вот структура
 # Документация для: klondike.gd
 Путь: ./COSIN-K\gui\godot-client\scenes\games\klondike.gd
 ==================================================
@@ -15,6 +14,7 @@
   - update_ui()
   - start_new_game()
   - _process()
+  - _start_drag()
   - update_time_display()
   - _auto_save()
   - _on_request_completed()
@@ -40,11 +40,13 @@
   - draw_tableau()
   - draw_card()
   - _on_card_clicked()
+  - _do_auto_move_click()
   - _end_drag()
   - _get_pile_under_mouse()
   - _animate_success_flight()
   - _animate_shake()
   - _animate_return()
+  - _animate_stock_to_waste()
   - _get_card_global_position()
   - _get_shadow_material()
   - _calculate_target_position()
@@ -62,4 +64,69 @@
   - show_achievement_notification()
   - _on_popup_clicked()
   - open_achievements_album()
+
+# Документация для: godot_bridge.py
+Путь: ./COSIN-K\gui\godot_bridge.py
+==================================================
+
+## Функции:
+  - start_server()
+
+## Классы:
+
+### Класс: GameStateEncoder
+  Методы:
+    - default()
+
+### Класс: GodotBridgeHandler
+  Методы:
+    - _get_session_id()
+    - _get_engine()
+    - _get_game_id()
+    - _create_engine()
+    - _get_suits_completed()
+    - _check_perfect_game()
+    - _send_response()
+    - do_OPTIONS()
+    - do_GET()
+    - do_POST()
+    - log_message()
+
+# Документация для: klondike.py
+Путь: ./COSIN-K\model\rules\klondike.py
+==================================================
+
+## Функции: (нет)
+
+## Классы:
+
+### Класс: KlondikeRules
+  Методы:
+    - __init__()
+    - check_win()
+    - can_auto_complete()
+    - get_pile_type()
+    - deal()
+    - _can_build_tableau()
+    - _can_build_foundation()
+    - can_draw()
+    - can_take()
+    - _validate_tableau_sequence()
+    - score_move()
+    - score_draw()
+    - score_recycle()
+    - get_draw_count()
+    - get_flipped_cards()
+    - _check_all_foundations_full()
+    - get_available_moves()
+    - get_moves_from_card_id()
+    - _is_valid_sequence()
+    - get_hint()
+    - get_game_help()
+    - get_shortcuts_text()
+    - get_quick_moves_text()
+    - validate_shortcut()
+    - __repr__()
+
+Мне кажется can_auto_complete() проверяет можно ли собрать все на базы
 Напиши какие модули тебе нужны для работы я отправлю

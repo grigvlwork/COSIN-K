@@ -465,6 +465,79 @@ class KlondikeRules(RuleSet):
 
         return moves
 
+    def get_auto_finish_moves(self, state: "GameState") -> List["Move"]:
+        """
+        Генерирует последовательность ходов для автосбора (Auto-Complete).
+        Использует копию состояния для симуляции игры до победы.
+        """
+        from model import Move  # Локальный импорт во избежание циклов
+
+        # 1. Создаем рабочую копию состояния
+        # Pile.copy() создает новые списки, но объекты Card внутри те же (по ссылке).
+        # Это значит ID карт сохранятся, что важно для анимации на клиенте.
+        sim_state = state.copy()
+        moves_plan = []
+
+        # Страхуемся от бесконечного цикла (максимум 52 карты * 2)
+        safety_counter = 0
+
+        # 2. Играем до победы
+        while not self.check_win(sim_state) and safety_counter < 150:
+            safety_counter += 1
+            move_found = False
+
+            # Приоритет поиска ходов:
+            # 1. Из Tableau на Foundation
+            # 2. Из Waste на Foundation (если вдруг там что-то осталось, хотя can_auto_complete это проверяет)
+
+            sources = [f"tableau_{i}" for i in range(7)]
+            if not sim_state.waste.is_empty():
+                sources.insert(0, "waste")
+
+            for src_name in sources:
+                src_pile = sim_state.get_pile(src_name)
+                if not src_pile or src_pile.is_empty():
+                    continue
+
+                # Берем только верхнюю карту (в автосборе двигаем по одной)
+                card = src_pile.top()
+
+                # Пробуем положить на базы
+                for i in range(4):
+                    dst_name = f"foundation_{i}"
+                    dst_pile = sim_state.get_pile(dst_name)
+
+                    # Используем существующий метод проверки правил
+                    if self._can_build_foundation(dst_pile, [card]):
+                        # --- ХОД НАЙДЕН ---
+
+                        # Создаем объект Move
+                        # card - это ссылка на объект из оригинальной колоды, ID совпадают
+                        move = Move(
+                            from_pile=src_name,
+                            to_pile=dst_name,
+                            cards=[card],
+                            from_index=len(src_pile) - 1
+                        )
+                        moves_plan.append(move)
+
+                        # Применяем ход к симуляции
+                        # Внимание: take удаляет карту из sim_state pile
+                        src_pile.take(1)
+                        dst_pile.put(card)
+
+                        move_found = True
+                        break  # Прерываем цикл по базам (нашли куда положить)
+
+                if move_found:
+                    break  # Прерываем цикл по источникам (начинаем поиск с начала)
+
+            # Если ходов не найдено, но победы нет -> тупик (теоретически невозможно при can_auto_complete=True)
+            if not move_found:
+                break
+
+        return moves_plan
+
     def _is_valid_sequence(self, cards: List["Card"]) -> bool:
         """Проверка, что карты образуют правильную последовательность для перемещения."""
         if len(cards) <= 1:
