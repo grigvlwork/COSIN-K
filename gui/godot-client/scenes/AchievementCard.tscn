@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://bm32eya04tsd0"]
 
 [ext_resource type="Script" uid="uid://cmyxwmprb2qwc" path="res://scenes/achievement_card.gd" id="1_ri1iy"]
-[ext_resource type="Texture2D" uid="uid://viuk2urm7xkw" path="res://assets/achievements/backgrounds/blue_velvet.png" id="2_r7dvy"]
+[ext_resource type="Texture2D" uid="uid://crrtp3koleow" path="res://assets/achievements/backgrounds/blue_velvet.png" id="2_r7dvy"]
 [ext_resource type="Texture2D" uid="uid://bxlnmmirw84jl" path="res://assets/achievements/cards_100.png" id="3_cy2hi"]
-[ext_resource type="Texture2D" uid="uid://daamt8uwx4im2" path="res://assets/achievements/frames/frame_bronze.png" id="4_c1wof"]
+[ext_resource type="Texture2D" uid="uid://dhkytvqou1hfe" path="res://assets/achievements/frames/frame_bronze.png" id="4_c1wof"]
 [ext_resource type="FontFile" uid="uid://dcd4lbfep57qr" path="res://assets/fonts/Romantica Antiqua.ttf" id="5_cy2hi"]
-[ext_resource type="FontFile" uid="uid://rq5m7i2ua2dc" path="res://assets/fonts/KalissaRegular_0.otf" id="6_c1wof"]
+[ext_resource type="FontFile" uid="uid://2xedlnym0ajm" path="res://assets/fonts/KalissaRegular_0.otf" id="6_c1wof"]
 
 [node name="AchievementCard" type="Control" unique_id=1133623063]
 custom_minimum_size = Vector2(400, 576)

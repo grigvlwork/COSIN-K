@@ -1201,8 +1201,6 @@ func _animate_return(nodes: Array, positions: Array):
 func _animate_stock_to_waste(card_node: Control, card_data: Dictionary) -> void:
 	# Блокируем другие действия
 	is_animating = true
-	print("CLIENT TOP:", card_data["rank"], card_data["suit"])
-	#print("CLIENT TOP:", cards[-1])
 	# --- 1. Создаем слой для анимации ---
 	var flying_layer = Control.new()
 	flying_layer.name = "FlyingLayer"
