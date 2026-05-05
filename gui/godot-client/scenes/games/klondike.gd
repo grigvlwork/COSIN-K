@@ -66,6 +66,7 @@ var animations_enabled: bool = true
 var animate_flight: bool = true
 var animate_flip: bool = true
 var animate_waste_shift: bool = true
+var is_auto_finishing: bool = false 
 
 
 # Настройки отступов (в процентах от высоты карты)
@@ -97,6 +98,7 @@ var tableau_available_height: float = 0.0
 @onready var menu_button = $Display/MainLayout/Buttons/MenuButton
 @onready var surrender_button = $Display/MainLayout/Buttons/SurrenderButton
 @onready var replay_button = $Display/MainLayout/Buttons/ReplayButton
+@onready var auto_finish_button = $Display/MainLayout/UpperRow/AutoFinishButton
 
 # ===== ССЫЛКИ НА ИГРОВЫЕ ЭЛЕМЕНТЫ =====
 @onready var stock_slot = $Display/MainLayout/UpperRow/StockSlot
@@ -132,6 +134,8 @@ func _ready():
 	if replay_button:
 		replay_button.pressed.connect(_on_replay_pressed)
 
+	if auto_finish_button:
+		auto_finish_button.pressed.connect(_on_auto_finish_pressed)
 		# Настройка фильтров мыши
 	stock_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	waste_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -438,6 +442,20 @@ func _on_request_completed(result, response_code, headers, body):
 
 					pending_action_context = {}
 					return
+				# === ОБРАБОТКА АВТОСБОРА ===
+				elif last_request_type == "auto_finish":
+					var final_state = data.get("state", null)
+
+					# ⚠️ НЕ трогаем game_state!
+					# ⚠️ НЕ вызываем draw_game()
+
+					# 1. Считаем план анимации на основе ТЕКУЩЕГО состояния
+					var plan = _build_auto_finish_plan(game_state)
+
+					# 2. Запускаем анимацию и передаём финальное состояние
+					_run_auto_finish_animation(plan, final_state)
+
+					return
 				# --- UI ---
 				update_ui()
 				# === АНИМАЦИИ ===
@@ -560,6 +578,21 @@ func _on_replay_pressed():
 	# Если игра активна, можно спросить подтверждение, но обычно это не требуется, 
 	# так как игрок намеренно хочет переиграть.
 	start_new_game(true, current_seed)
+
+func _on_auto_finish_pressed():
+	if is_busy or is_animating or is_auto_finishing:
+		print("⏳ Игра занята, автосбор невозможен")
+		return
+	
+	print("🚀 Запрос автосбора...")
+	is_busy = true
+	last_request_type = "auto_finish"
+	
+	var body = JSON.new().stringify({
+		"player_id": Global.player_id
+	})
+	var headers = ["Content-Type: application/json"]
+	http.request(Global.server_url + "/auto_finish", headers, HTTPClient.METHOD_POST, body)
 
 func _confirm_surrender():
 	last_request_type = "abandon"
@@ -693,6 +726,7 @@ func draw_game():
 	draw_waste()
 	draw_foundations()
 	draw_tableau()
+	_update_auto_finish_visibility()
 
 func _clear_cards_from_slot(slot: Control):
 	for child in slot.get_children():
@@ -857,6 +891,8 @@ func draw_card(card_data: Dictionary, parent_slot: Control, pile_name: String,
 	
 	# Сохраняем id в meta для удобного доступа
 	card_control.set_meta("card_id", card_id)
+	card_control.set_meta("suit", card_data.get("suit"))
+	card_control.set_meta("rank", card_data.get("rank"))
 	
 	# Устанавливаем позицию и подключаем сигнал клика
 	card_control.position = offset
@@ -1287,6 +1323,246 @@ func _animate_stock_to_waste(card_node: Control, card_data: Dictionary) -> void:
 		is_animating = false
 	)
 
+func _get_empty_foundation_slots(state: Dictionary) -> Array:
+	var result: Array = []
+	var slots = ["foundation_0", "foundation_1", "foundation_2", "foundation_3"]
+
+	for slot in slots:
+		var pile = state["piles"].get(slot, null)
+
+		if pile == null:
+			result.append(slot)
+			continue
+
+		var cards = pile.get("cards", [])
+		if cards.size() == 0:
+			result.append(slot)
+
+	return result
+
+func _collect_all_cards_on_table() -> Array:
+	var result = []
+	var all_slots = [waste_slot] + tableau_slots
+	
+	for slot in all_slots:
+		for child in slot.get_children():
+			if child.has_meta("card_id"):
+				result.append(child)
+	
+	return result
+
+func _build_foundation_suit_map() -> Dictionary:
+	var map = {}
+	
+	for slot in foundation_slots():
+		for child in slot.get_children():
+			if child.has_meta("suit"):
+				var suit = child.get_meta("suit")
+				map[suit] = slot
+				break
+	
+	return map
+
+func _resolve_foundation_for_card(card_node: Control, suit_map: Dictionary, empty_slots: Array) -> Control:
+	var suit = card_node.get_meta("suit")
+	
+	if suit_map.has(suit):
+		return suit_map[suit]
+	
+	if empty_slots.size() > 0:
+		var slot = empty_slots.pop_front()
+		suit_map[suit] = slot
+		return slot
+	
+	return foundation_slots()[0]
+
+func _rank_to_value(rank: String) -> int:
+	match rank:
+		"A": return 1
+		"2": return 2
+		"3": return 3
+		"4": return 4
+		"5": return 5
+		"6": return 6
+		"7": return 7
+		"8": return 8
+		"9": return 9
+		"10": return 10
+		"J": return 11
+		"Q": return 12
+		"K": return 13
+	return 0
+
+func _build_auto_finish_plan(state: Dictionary) -> Array:
+	var plan: Array = []
+
+	# --- 1. Инициализация foundations ---
+	var foundation_slots = ["foundation_0", "foundation_1", "foundation_2", "foundation_3"]
+
+	# состояние баз:
+	# slot -> { suit, top_rank }
+	var foundations = {}
+
+	for slot in foundation_slots:
+		var pile = state["piles"].get(slot, {})
+		var cards = pile.get("cards", [])
+
+		if cards.size() == 0:
+			foundations[slot] = { "suit": null, "top_rank": 0 }
+		else:
+			var top = cards[-1]
+			foundations[slot] = {
+				"suit": top["suit"],
+				"top_rank": _rank_to_value(top["rank"])
+			}
+
+	# --- 2. Собираем ВСЕ карты из tableau ---
+	var all_cards = []
+
+	for i in range(7):
+		var pile_name = "tableau_" + str(i)
+		var pile = state["piles"].get(pile_name, {})
+		var cards = pile.get("cards", [])
+
+		for card in cards:
+			if card["face_up"]:
+				all_cards.append({
+					"card": card,
+					"from": pile_name
+				})
+
+	# --- 3. Сортируем по возрастанию ранга ---
+	all_cards.sort_custom(func(a, b):
+		return _rank_to_value(a.card["rank"]) < _rank_to_value(b.card["rank"])
+	)
+
+	# --- 4. Основной проход ---
+	for item in all_cards:
+		var card = item["card"]
+		var from = item["from"]
+
+		var suit = card["suit"]
+		var rank_val = _rank_to_value(card["rank"])
+
+		var target_slot = ""
+
+		# 4.1 ищем базу с той же мастью
+		for slot in foundation_slots:
+			var f = foundations[slot]
+
+			if f["suit"] == suit and f["top_rank"] == rank_val - 1:
+				target_slot = slot
+				break
+
+		# 4.2 если не нашли — ищем пустую базу под туза
+		if target_slot == "" and rank_val == 1:
+			for slot in foundation_slots:
+				var f = foundations[slot]
+				if f["suit"] == null:
+					target_slot = slot
+					break
+
+		# 4.3 если нашли — добавляем ход
+		if target_slot != "":
+			plan.append({
+				"card_id": card["id"],
+				"from": from,
+				"to": target_slot
+			})
+
+			# обновляем состояние базы
+			foundations[target_slot]["suit"] = suit
+			foundations[target_slot]["top_rank"] = rank_val
+
+	return plan
+
+func _build_card_index() -> Dictionary:
+	var map: Dictionary = {}
+
+	# Все зоны, где могут быть карты
+	var slots = []
+
+	# stock / waste / foundations / tableau
+	slots.append(stock_slot)
+	slots.append(waste_slot)
+
+	for f in foundation_slots():
+		slots.append(f)
+
+	for t in tableau_slots:
+		slots.append(t)
+
+	# обходим все узлы
+	for slot in slots:
+		if not is_instance_valid(slot):
+			continue
+
+		for child in slot.get_children():
+			if not is_instance_valid(child):
+				continue
+
+			# важно: только реальные карты
+			if not child.has_meta("card_id"):
+				continue
+
+			var id = str(child.get_meta("card_id"))
+			map[id] = child
+
+	return map
+
+func _run_auto_finish_animation(plan: Array, final_state: Dictionary):
+	is_auto_finishing = true
+	is_animating = true
+
+	var flying_layer = Control.new()
+	flying_layer.name = "AutoFinishLayer"
+	flying_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flying_layer.z_index = 300
+	$Display.add_child(flying_layer)
+
+	# 🔥 важно: фиксируем стартовое состояние
+	var id_to_node = _build_card_index()
+
+	for move in plan:
+
+		var node = id_to_node.get(move.card_id, null)
+		if node == null:
+			continue
+
+		# 1. создаём ghost
+		var ghost = _create_ghost_card(node)
+		ghost.global_position = node.global_position
+		flying_layer.add_child(ghost)
+
+		# 2. вычисляем цель (ОЧЕНЬ просто теперь)
+		var target = _calculate_target_position(
+			move.to,
+			0,
+			1
+		)
+
+		# 3. скрываем оригинал
+		node.visible = false
+		_mark_card_animating(move.card_id)
+
+		# 4. анимация
+		var tween = create_tween()
+		tween.tween_property(ghost, "global_position", target, 0.12)
+		tween.tween_callback(ghost.queue_free)
+
+		await tween.finished
+
+	# --- финал ---
+	flying_layer.queue_free()
+	_clear_animating_marks()
+
+	game_state = final_state
+	draw_game()
+	show_win()
+
+	is_auto_finishing = false
+	is_animating = false
+
 func _get_card_global_position(pile_name: String, card_index: int) -> Vector2:
 	"""Вычисляет глобальную позицию карты на основе состояния игры"""
 	var slot_node = null
@@ -1409,6 +1685,25 @@ func _calculate_target_position(pile_name: String, card_offset: int, total_moved
 		return slot_node.global_position + base_pos
 	return Vector2.ZERO
 
+func _update_auto_finish_visibility():
+	if not game_state or not auto_finish_button or not waste_slot:
+		return
+
+	# 1. Проверяем базовые условия: колода и сброс должны быть пусты
+	var stock_empty = not game_state.get("stock", {}).get("cards", []).size() > 0
+	var waste_empty = not game_state.get("waste", {}).get("cards", []).size() > 0
+	
+	# 2. Условия для показа кнопки
+	# Кнопка показывается только если сток и сброс пусты.
+	# Сервер сам проверит, все ли карты открыты (can_auto_complete).
+	if stock_empty and waste_empty and is_game_active:
+		# Показываем кнопку, скрываем слот (или делаем его нулевым, но visible=false проще)
+		auto_finish_button.visible = true
+		waste_slot.visible = false
+	else:
+		# Скрываем кнопку, показываем слот
+		auto_finish_button.visible = false
+		waste_slot.visible = true
 
 func _hide_target_cards(pile_name: String, count: int):
 	"""Скрывает карты в целевом слоте, которые заменяются призраками"""

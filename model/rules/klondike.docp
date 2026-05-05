@@ -26,6 +26,7 @@
     - _check_all_foundations_full()
     - get_available_moves()
     - get_moves_from_card_id()
+    - get_auto_finish_moves()
     - _is_valid_sequence()
     - get_hint()
     - get_game_help()

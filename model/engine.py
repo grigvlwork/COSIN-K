@@ -297,32 +297,59 @@ class SolitaireEngine:
 
         return new_state, executed_move
 
-    def auto_complete_sequence(self) -> List[Move]:
-        """Автосбор."""
-        if not self._state or not hasattr(self.rules, "can_auto_complete"):
-            return []
-        if not self.rules.can_auto_complete(self._state):
-            return []
+    def auto_complete_sequence(self) -> dict:
+        """
+        Выполняет автосбор игры.
+        1. Проверяет условия (через rules).
+        2. Запрашивает план ходов (через rules).
+        3. Выполняет ходы через стандартный self.move() для сохранения статистики.
+        """
+        # 1. Проверка поддержки и условий
+        if not hasattr(self.rules, 'can_auto_complete'):
+            return {"success": False, "error": "Rules do not support auto-complete"}
 
-        moves: List[Move] = []
-        for _ in range(100):
-            move = self._find_auto_move()
-            if not move:
+        if not self.rules.can_auto_complete(self.state):
+            return {"success": False, "error": "Conditions not met"}
+
+        # 2. Получаем план ходов от правил
+        # Правила (klondike.py) возвращают список объектов Move, рассчитанный на копии состояния
+        moves_plan = self.rules.get_auto_finish_moves(self.state)
+
+        if not moves_plan:
+            return {"success": False, "error": "No moves generated"}
+
+        performed_moves = []
+
+        # 3. Выполняем каждый ход через движок
+        for move in moves_plan:
+            # Преобразуем объект Move в аргументы для engine.move()
+            card_ids = [c.id for c in move.cards]
+            target_pile = move.to_pile
+
+            # Выполняем ход.
+            # ВАЖНО: self.move() сам обновит очки, статистику и историю (undo).
+            success = self.move(card_ids, target_pile)
+
+            if success:
+                # Сохраняем данные для анимации на клиенте
+                performed_moves.append({
+                    "card_ids": card_ids,
+                    "from": move.from_pile,
+                    "to": target_pile
+                })
+            else:
+                # Если вдруг ход не прошел (теоретически невозможно при правильном планировании)
+                print(f"⚠️ Auto-complete move failed unexpectedly: {move}")
                 break
 
-            # Используем ID для вызова нового метода move
-            # Но auto_complete должен быть мгновенным и без уведомлений?
-            # Обычно да. Используем _execute_move напрямую.
+        # 4. Проверяем итог
+        won = self.check_win()
 
-            new_state, executed_move = self._execute_move(
-                move.from_pile,
-                move.to_pile,
-                len(move.cards)
-            )
-            moves.append(executed_move)
-            self._state = new_state
-
-        return moves
+        return {
+            "success": won,
+            "moves": performed_moves,
+            "final_state": self.state
+        }
 
     def _find_auto_move(self) -> Optional[Move]:
         # (Код без изменений)

@@ -640,6 +640,66 @@ class GodotBridgeHandler(BaseHTTPRequestHandler):
                     self._send_response(response)
             else:
                 self._send_response({'success': False, 'error': 'No suitable move'})
+        elif parsed.path == '/auto_finish':
+            player_id = command.get('player_id')
+
+            # 1. Вызываем метод движка, который выполняет все ходы сразу
+            # Метод auto_complete_sequence мы написали в engine.py
+            # Он возвращает словарь: {'success': bool, 'moves': list, 'final_state': state}
+            result = engine.auto_complete_sequence()
+
+            if result.get('success'):
+                # 2. Если успешно (игра выиграна) — обновляем статистику
+                game_won = True  # При успехе автосбора это всегда победа
+
+                # Данные для статистики
+                suits_completed = self._get_suits_completed(engine.state)
+                was_perfect = self._check_perfect_game(engine, engine.state)
+
+                end_result = {}
+                if game_id and self.stats_api:
+                    print(f"🏆 ПОБЕДА (Auto Finish)! game_id={game_id}")
+                    end_result = self.stats_api.end_game(
+                        game_id=game_id,
+                        result='won',
+                        score=engine.state.score,
+                        moves=engine.state.moves_count,
+                        game_type="klondike",
+                        suits_completed=suits_completed,
+                        was_perfect=was_perfect,
+                        cards_moved=engine.cards_moved_count,
+                        cards_flipped=engine.cards_flipped_count,
+                    )
+
+                    # Удаляем автосейв
+                    if player_id:
+                        self.stats_api.delete_autosave(player_id, "klondike")
+
+                    # Чистим сессию
+                    if session_id in self.games:
+                        del self.games[session_id]
+                    if session_id in self.game_ids:
+                        del self.game_ids[session_id]
+
+                # 3. Формируем ответ клиенту
+                response = {
+                    'success': True,
+                    'state': result.get('final_state', engine.state),
+                    'score': engine.state.score,
+                    'moves': engine.state.moves_count,
+                    'game_won': game_won,
+                    'auto_finish_moves': result.get('moves', []),
+                    'unlocked_achievements': end_result.get('unlocked_achievements', []),
+                    'is_first_win': end_result.get('is_first_win', False)
+                }
+                self._send_response(response)
+            else:
+                # 4. Если автосбор невозможен (условия не выполнены)
+                self._send_response({
+                    'success': False,
+                    'error': result.get('error', 'Auto complete conditions not met')
+                })
+
         elif parsed.path == '/draw':
             success = engine.draw()
             if success and game_id and self.stats_api:

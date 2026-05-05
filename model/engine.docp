@@ -29,3 +29,4 @@
     - add_listener()
     - remove_listener()
     - _notify()
+    - auto_complete_sequence()
